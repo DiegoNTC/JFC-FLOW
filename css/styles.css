@@ -1,0 +1,740 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html,
+body{
+  min-height:100%;
+}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:#e5e7eb;
+  color:#222;
+  overflow-x:hidden;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+  background:#111827;
+  color:white;
+  padding:18px 24px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.12);
+}
+
+.header h1{
+  font-size:30px;
+  margin-bottom:4px;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.container{
+  display:flex;
+  align-items:flex-start;
+  width:100%;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+  width:280px;
+  min-width:280px;
+
+  background:#f8fafc;
+
+  border-right:1px solid #dbe2ea;
+
+  padding:24px;
+
+  overflow-y:auto;
+}
+
+.sidebar h2{
+  font-size:28px;
+  margin-bottom:20px;
+  color:#0f172a;
+}
+
+/* =========================
+   SKU CARD
+========================= */
+
+.sku-card{
+  background:white;
+
+  border:1px solid #dbe2ea;
+
+  border-radius:12px;
+
+  padding:16px;
+
+  margin-bottom:14px;
+
+  cursor:grab;
+
+  font-weight:700;
+
+  transition:0.2s;
+
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+.sku-card:hover{
+  transform:translateY(-2px);
+  background:#f1f5f9;
+}
+
+.sku-card:active{
+  cursor:grabbing;
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content{
+  flex:1;
+  min-width:0;
+  padding:28px;
+}
+
+.content h2{
+  font-size:42px;
+  margin-bottom:22px;
+  color:#0f172a;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.optimize-btn{
+  background:#2563eb;
+
+  color:white;
+
+  border:none;
+
+  padding:14px 22px;
+
+  border-radius:12px;
+
+  font-size:15px;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  transition:0.2s;
+
+  margin-right:12px;
+  margin-bottom:20px;
+}
+
+.optimize-btn:hover{
+  background:#1d4ed8;
+  transform:translateY(-2px);
+}
+
+/* =========================
+   LINES
+========================= */
+
+.lines-container{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  width:100%;
+}
+
+/* =========================
+   LINE
+========================= */
+
+.line{
+  background:white;
+
+  border-radius:24px;
+
+  padding:24px;
+
+  box-shadow:0 4px 14px rgba(0,0,0,0.08);
+
+  min-width:0;
+
+  overflow:hidden;
+}
+
+/* =========================
+   LINE HEADER
+========================= */
+
+.line-header{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  margin-bottom:20px;
+}
+
+.line-title{
+  font-size:42px;
+  font-weight:800;
+  color:#0f172a;
+}
+
+/* =========================
+   KPI
+========================= */
+
+.kpi-container{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.kpi-box{
+  min-width:120px;
+  min-height:78px;
+
+  border-radius:14px;
+
+  padding:12px 16px;
+
+  color:white;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+
+  box-shadow:0 4px 10px rgba(0,0,0,0.12);
+}
+
+.kpi-label{
+  font-size:12px;
+  opacity:0.85;
+  margin-bottom:4px;
+}
+
+.kpi-value{
+  font-size:20px;
+  font-weight:800;
+}
+
+.kpi-time{
+  background:#0f172a;
+}
+
+.kpi-clock{
+  background:#2563eb;
+}
+
+.kpi-capacity{
+  background:#059669;
+}
+
+.kpi-oee{
+  background:#111827;
+}
+
+/* STATUS */
+
+.kpi-status{
+  color:white;
+  transition:0.3s;
+}
+
+.kpi-status.status-normal{
+  background:#16a34a;
+}
+
+.kpi-status.status-warning{
+  background:#eab308;
+  color:#111827;
+}
+
+.kpi-status.status-danger{
+  background:#dc2626;
+}
+
+/* =========================
+   DROPZONE
+========================= */
+
+.dropzone{
+  min-height:240px;
+
+  border:2px dashed #cbd5e1;
+
+  border-radius:18px;
+
+  background:#f8fafc;
+
+  padding:18px;
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:16px;
+
+  align-content:flex-start;
+
+  transition:0.2s;
+}
+
+.dropzone:hover{
+  border-color:#94a3b8;
+}
+
+/* =========================
+   ITEM
+========================= */
+
+.sequenced-item{
+  width:280px;
+  min-width:280px;
+
+  background:linear-gradient(
+    135deg,
+    #172033,
+    #0f172a
+  );
+
+  color:white;
+
+  border-radius:18px;
+
+  padding:18px;
+
+  box-shadow:0 6px 16px rgba(0,0,0,0.15);
+
+  transition:0.2s;
+}
+
+.sequenced-item:hover{
+  transform:translateY(-2px);
+}
+
+.setup-danger{
+  border:2px solid #ef4444;
+}
+
+/* =========================
+   ITEM HEADER
+========================= */
+
+.item-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.item-title{
+  font-size:20px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+/* =========================
+   ACTIONS
+========================= */
+
+.item-actions{
+  display:flex;
+  gap:8px;
+}
+
+.move-btn{
+  width:32px;
+  height:32px;
+
+  border:none;
+
+  border-radius:10px;
+
+  background:#334155;
+
+  color:white;
+
+  cursor:pointer;
+
+  transition:0.2s;
+
+  font-size:14px;
+  font-weight:bold;
+}
+
+.move-btn:hover{
+  background:#475569;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.item-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.badge{
+  padding:7px 12px;
+
+  border-radius:999px;
+
+  font-size:13px;
+
+  font-weight:700;
+}
+
+.badge-category{
+  background:#2563eb;
+  color:white;
+}
+
+.badge-weight{
+  background:#475569;
+  color:white;
+}
+
+.badge-time{
+  background:#10b981;
+  color:white;
+}
+
+.badge-setup{
+  background:#ef4444;
+  color:white;
+}
+
+/* =========================
+   ITEM TIME
+========================= */
+
+.item-time{
+  margin-top:14px;
+
+  background:rgba(255,255,255,0.08);
+
+  border-radius:10px;
+
+  padding:10px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+
+  font-size:14px;
+  font-weight:700;
+
+  color:#f8fafc;
+}
+
+/* =========================
+   GANTT MODERNO
+========================= */
+
+.gantt-wrapper{
+
+  margin-top:24px;
+
+  width:100%;
+
+  overflow-x:auto;
+  overflow-y:auto;
+
+  background:#f8fafc;
+
+  border:1px solid #dbe2ea;
+
+  border-radius:18px;
+
+  padding:20px;
+
+}
+
+/* =========================
+   ESCALA
+========================= */
+
+.gantt-scale{
+
+  position:relative;
+
+  display:flex;
+
+  min-width:3360px;
+
+  height:40px;
+
+  border-bottom:1px solid #dbe2ea;
+
+}
+
+.scale-hour{
+
+  width:240px;
+
+  flex-shrink:0;
+
+  padding-left:8px;
+
+  border-left:1px solid #cbd5e1;
+
+  font-size:12px;
+
+  font-weight:700;
+
+  color:#64748b;
+
+}
+
+/* =========================
+   TIMELINE
+========================= */
+
+.gantt{
+
+  position:relative;
+
+  min-width:3360px;
+
+}
+
+/* =========================
+   GRID DO GANTT
+========================= */
+
+.gantt-timeline{
+
+  position:relative;
+
+  min-width:3360px;
+
+  background:
+
+    repeating-linear-gradient(
+      to right,
+
+      #e2e8f0 0px,
+      #e2e8f0 1px,
+
+      transparent 1px,
+      transparent 240px
+    );
+
+}
+
+/* =========================
+   LINHAS HORIZONTAIS
+========================= */
+
+.gantt-row-line{
+
+  position:absolute;
+
+  left:0;
+
+  width:100%;
+
+  height:1px;
+
+  background:#e2e8f0;
+
+}
+
+/* =========================
+   BLOCOS BASE
+========================= */
+
+.gantt-block{
+
+  position:absolute;
+
+  border-radius:14px;
+
+  padding:10px 14px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:flex-start;
+
+  overflow:hidden;
+
+  transition:0.2s;
+
+  box-shadow:
+    0 4px 10px rgba(0,0,0,0.12);
+
+}
+
+.gantt-block:hover{
+
+  transform:translateY(-2px);
+
+  z-index:10;
+
+}
+
+/* =========================
+   PRODUÇÃO
+========================= */
+
+.gantt-production{
+
+  background:#2563eb;
+
+  color:white;
+
+  min-height:58px;
+
+  z-index:1;
+
+}
+
+/* =========================
+   SETUP
+========================= */
+
+.gantt-setup{
+
+  background:#f59e0b;
+
+  color:#111827;
+
+  min-height:28px;
+
+  border-radius:10px;
+
+  z-index:2;
+
+}
+
+/* =========================
+   CONTEÚDO PRODUÇÃO
+========================= */
+
+.gantt-content{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:4px;
+
+  width:100%;
+
+}
+
+/* =========================
+   TÍTULO
+========================= */
+
+.gantt-title{
+
+  font-size:14px;
+
+  font-weight:800;
+
+  white-space:nowrap;
+
+}
+
+/* =========================
+   HORÁRIO
+========================= */
+
+.gantt-time{
+
+  font-size:11px;
+
+  opacity:0.95;
+
+}
+
+/* =========================
+   CONTEÚDO SETUP
+========================= */
+
+.gantt-setup-content{
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  width:100%;
+
+  font-size:10px;
+
+  font-weight:800;
+
+  line-height:1.1;
+
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media(max-width:1400px){
+
+  .lines-container{
+    grid-template-columns:1fr;
+  }
+
+}
+
+@media(max-width:900px){
+
+  .container{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+    min-width:100%;
+    border-right:none;
+    border-bottom:1px solid #dbe2ea;
+  }
+
+  .content{
+    padding:18px;
+  }
+
+}
+
+@media(max-width:600px){
+
+  .kpi-container{
+    flex-direction:column;
+  }
+
+  .kpi-box{
+    width:100%;
+  }
+
+  .sequenced-item{
+    width:100%;
+    min-width:100%;
+  }
+
+}

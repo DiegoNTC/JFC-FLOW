@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>JFC FLOW</title>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+  <header class="header">
+
+    <h1>JFC FLOW</h1>
+
+    <p>Sequenciador Industrial</p>
+
+  </header>
+
+  <main class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <h2>SKUs</h2>
+
+      <div class="sku-card" draggable="true">
+        ALFACE AMERICANA
+      </div>
+
+      <div class="sku-card" draggable="true">
+        RÚCULA 140G
+      </div>
+
+      <div class="sku-card" draggable="true">
+        CENOURA RALADA
+      </div>
+
+    </aside>
+
+    <!-- CONTENT -->
+    <section class="content">
+
+      <h2>Linha de Produção</h2>
+
+      <button class="optimize-btn" id="optimizeBtn">
+        Otimizar Sequência
+      </button>
+
+      <button class="optimize-btn" id="balanceBtn">
+        Balancear Linhas
+      </button>
+
+      <div class="lines-container">
+
+        <!-- LINHA 1 -->
+        <div class="line">
+
+          <div class="line-header">
+
+            <div class="line-title">
+              L1
+            </div>
+
+            <div class="kpi-container">
+
+              <div class="kpi-box kpi-time">
+                <div class="kpi-label">Tempo</div>
+                <div class="kpi-value" id="kpi-l1">
+                  0 min
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-clock">
+                <div class="kpi-label">Janela</div>
+                <div class="kpi-value" id="clock-l1">
+                  08:00
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-capacity">
+                <div class="kpi-label">Capacidade</div>
+                <div class="kpi-value" id="capacity-l1">
+                  480
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-status status-normal">
+                <div class="kpi-label">Status</div>
+
+                <div class="kpi-value" id="status-l1">
+                  NORMAL
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-oee">
+                <div class="kpi-label">OEE</div>
+                <div class="kpi-value" id="oee-l1">
+                  0%
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dropzone" id="dropzone-l1">
+            Arraste os SKUs aqui
+          </div>
+
+          <div class="gantt-wrapper">
+
+            <div class="gantt-scroll">
+
+              <div class="gantt-timeline">
+
+                <div class="gantt-scale" id="scale-l1"></div>
+
+                <div class="gantt" id="gantt-l1"></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- LINHA 2 -->
+        <div class="line">
+
+          <div class="line-header">
+
+            <div class="line-title">
+              L2
+            </div>
+
+            <div class="kpi-container">
+
+              <div class="kpi-box kpi-time">
+                <div class="kpi-label">Tempo</div>
+                <div class="kpi-value" id="kpi-l2">
+                  0 min
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-clock">
+                <div class="kpi-label">Janela</div>
+                <div class="kpi-value" id="clock-l2">
+                  08:00
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-capacity">
+                <div class="kpi-label">Capacidade</div>
+                <div class="kpi-value" id="capacity-l2">
+                  480
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-status status-normal">
+                <div class="kpi-label">Status</div>
+                <div class="kpi-value" id="status-l2">
+                  NORMAL
+                </div>
+              </div>
+
+              <div class="kpi-box kpi-oee">
+                <div class="kpi-label">OEE</div>
+                <div class="kpi-value" id="oee-l2">
+                  0%
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="dropzone" id="dropzone-l2">
+            Arraste os SKUs aqui
+          </div>
+
+          <div class="gantt-wrapper">
+
+            <div class="gantt-scroll">
+
+              <div class="gantt-timeline">
+
+                <div class="gantt-scale" id="scale-l2"></div>
+
+                <div class="gantt" id="gantt-l2"></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="./src/main.js"></script>
+
+</body>
+
+</html>
