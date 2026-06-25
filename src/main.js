@@ -27,6 +27,10 @@ import {
   removerItem
 } from "./actions/removerItem.js";
 
+import {
+    configurarImportacaoCSV
+} from "./importers/csvImportHandler.js";
+
 // =========================
 // ELEMENTOS
 // =========================
@@ -181,3 +185,5 @@ configurarDropzone(
   statusL2,
   oeeL2
 );
+
+configurarImportacaoCSV();

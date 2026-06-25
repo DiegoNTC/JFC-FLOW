@@ -73,3 +73,105 @@ O sistema deverá distribuir automaticamente os produtos entre as linhas buscand
 # Alterações
 
 Toda alteração realizada pelo usuário deverá ser registrada no histórico do sistema.
+
+
+# Regras de Negócio - JFC FLOW
+
+## Estrutura Física da Fábrica
+
+### Zona Negra
+
+Responsável pelas operações de corte e preparação inicial dos produtos.
+
+### Zona Branca
+
+Responsável pelos processos de higienização e embalagem.
+
+### Expedição
+
+Responsável pela montagem de caixas, paletização e envio para logística.
+
+---
+
+## Identificação dos Produtos
+
+* O código do produto é a chave principal do sistema.
+* Todas as telas devem exibir:
+
+  * Código
+  * Descrição
+
+Exemplo:
+
+168 - ALFACE AMERICANA 48MM CX 4KG
+
+---
+
+## Base Técnica
+
+A Base Técnica é armazenada em arquivo TXT.
+
+Cada registro possui:
+
+* Código
+* Descrição
+* Linha
+* Tempo de Produção
+* Sequência
+
+A Base Técnica pode ser alterada pelos supervisores.
+
+Todas as alterações devem possuir histórico.
+
+---
+
+## Pedidos
+
+Origem:
+
+CSV diário.
+
+Regra de cálculo:
+
+Se existir pedido:
+
+Demanda Final = Pedido + Prioridade
+
+Se não existir pedido:
+
+Demanda Final = Prévia + Prioridade
+
+---
+
+## Categorias Consideradas
+
+* institucional
+* processados
+* mcdonalds
+
+Outras categorias devem ser ignoradas pelo sistema.
+
+---
+
+## Planejamento
+
+O sistema deve calcular:
+
+* Linha produtiva
+* Tempo unitário
+* Tempo total
+* Capacidade utilizada
+* Sequenciamento
+* Balanceamento
+
+---
+
+## Histórico
+
+Toda alteração da Base Técnica deve gerar histórico contendo:
+
+* Data
+* Usuário
+* Campo alterado
+* Valor anterior
+* Valor novo

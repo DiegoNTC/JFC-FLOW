@@ -46,13 +46,22 @@
 
       <h2>Linha de Produção</h2>
 
-      <button class="optimize-btn" id="optimizeBtn">
+      <input type="file" id="csvInput" accept=".csv" hidden />
+
+      <button id="importCsvBtn">
+        📂 Importar Pedido
+      </button>
+
+      <button id="optimizeBtn">
         Otimizar Sequência
       </button>
 
-      <button class="optimize-btn" id="balanceBtn">
+      <button id="balanceBtn">
         Balancear Linhas
       </button>
+      <div id="pedidoContainer">
+
+      </div>
 
       <div class="lines-container">
 
