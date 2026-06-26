@@ -1,57 +1,45 @@
-import { parseCSV }
-    from "./parseCSV.js";
+import { parseCSV } from "./parseCSV.js";
+import { renderPedidos } from "../render/renderPedidos.js";
 
-import {
-    renderPedidos
-}
-    from "../render/renderPedidos.js";
+export function configurarImportacaoCSV(onImportado = null) {
 
-export function configurarImportacaoCSV() {
+  const input = document.getElementById("csvInput");
 
-    const botao =
-        document.getElementById(
-            "importCsvBtn"
-        );
+  if (!input) {
+    console.error("Input csvInput não encontrado.");
+    return;
+  }
 
-    const input =
-        document.getElementById(
-            "csvInput"
-        );
+  console.log("Importação CSV configurada.");
 
-    botao.addEventListener(
-        "click",
-        () => {
+  input.addEventListener("change", async (event) => {
 
-            input.click();
+    const arquivo = event.target.files[0];
 
-        }
-    );
+    if (!arquivo) {
+      console.warn("Nenhum CSV selecionado.");
+      return;
+    }
 
-    input.addEventListener(
-        "change",
-        async (event) => {
+    console.log("Arquivo CSV selecionado:", arquivo.name);
 
-            const arquivo =
-                event.target.files[0];
+    const conteudo = await arquivo.text();
 
-            if (!arquivo)
-                return;
+    const dados = parseCSV(conteudo);
 
-            const conteudo =
-                await arquivo.text();
+    console.log("CSV IMPORTADO:", dados);
+    console.table(dados.slice(0, 20));
 
-            console.log(
-                "CSV carregado:"
-            );
+    renderPedidos(dados);
 
-            const dados =
-                parseCSV(conteudo);
+    if (typeof onImportado === "function") {
+      onImportado(dados);
+    }
 
-            renderPedidos(
-                dados
-            );
+    alert(`CSV importado com sucesso: ${dados.length} registros.`);
 
-        }
-    );
+    input.value = "";
+
+  });
 
 }

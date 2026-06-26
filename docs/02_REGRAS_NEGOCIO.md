@@ -175,3 +175,4 @@ Toda alteração da Base Técnica deve gerar histórico contendo:
 * Campo alterado
 * Valor anterior
 * Valor novo
+    

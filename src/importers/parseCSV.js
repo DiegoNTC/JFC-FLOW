@@ -1,88 +1,173 @@
+/**
+ * ======================================================
+ * JFC FLOW
+ * Módulo: parseCSV
+ * Versão: 1.2.0
+ *
+ * Responsabilidade:
+ * Ler o CSV de pedidos.
+ *
+ * Regra importante:
+ * O código do produto é texto.
+ * Nunca converter código para Number.
+ * ======================================================
+ */
+
 import {
-    categoriasPermitidas
+  categoriasPermitidas
+} from "../core/categoriasPermitidas.js";
+
+function parseNumero(valor) {
+
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+    return 0;
+  }
+
+  return Number(
+    String(valor)
+      .replace(",", ".")
+      .replace(/[^0-9.-]/g, "")
+  ) || 0;
+
 }
-from "../core/categoriasPermitidas.js";
 
-export function parseCSV(texto) {
+function limparTexto(valor) {
 
-    const linhas = texto
-        .split("\n")
-        .filter(l => l.trim());
+  return String(valor || "")
+    .trim()
+    .replace(/^"|"$/g, "");
 
-    const resultado = [];
+}
 
-    for (let i = 1; i < linhas.length; i++) {
+function normalizarCategoria(categoria) {
 
-        const linha = linhas[i];
+  return limparTexto(categoria)
+    .toLowerCase()
+    .trim();
 
-        const partes = linha.split(",");
+}
 
-        const codigo =
-            partes[partes.length - 1]
-                ?.trim();
+/**
+ * CSV esperado:
+ *
+ * Data,
+ * Produto,
+ * Previa,
+ * Pedidos Prioritarios,
+ * Pedidos,
+ * Producao,
+ * Categoria,
+ * Código
+ *
+ * Observação:
+ * O produto pode conter vírgula no nome.
+ * Por isso lemos as colunas fixas pelo final da linha.
+ */
+export function parseCSV(textoCSV) {
 
-        const categoria =
-            partes[partes.length - 2]
-                ?.trim();
+  const linhas = String(textoCSV || "")
+    .split(/\r?\n/)
+    .filter(linha => linha.trim() !== "");
 
-        const producao =
-            partes[partes.length - 3]
-                ?.trim();
+  const resultado = [];
 
-        const pedidos =
-            partes[partes.length - 4]
-                ?.trim();
+  for (let i = 1; i < linhas.length; i++) {
 
-        const prioridade =
-            partes[partes.length - 5]
-                ?.trim();
+    const linha = linhas[i];
 
-        const previa =
-            partes[partes.length - 6]
-                ?.trim();
+    const partes = linha.split(",");
 
-        // FILTRO DE CATEGORIA
-        if (
-            !categoriasPermitidas.includes(
-                (categoria || "")
-                    .toLowerCase()
-                    .trim()
-            )
-        ) {
-            continue;
-        }
-
-        const data =
-            partes[0]
-                ?.trim();
-
-        const produto = partes
-            .slice(1, partes.length - 6)
-            .join(",");
-
-        resultado.push({
-
-            data,
-
-            produto,
-
-            previa:
-                Number(previa || 0),
-
-            prioridade:
-                Number(prioridade || 0),
-
-            pedidos:
-                Number(pedidos || 0),
-
-            categoria,
-
-            codigo
-
-        });
-
+    if (partes.length < 8) {
+      continue;
     }
 
-    return resultado;
+    /**
+     * Lendo do final para o início.
+     * Isso evita erro quando o nome do produto contém vírgula.
+     */
+    const codigo = limparTexto(
+      partes[partes.length - 1]
+    );
+
+    const categoria = limparTexto(
+      partes[partes.length - 2]
+    );
+
+    const producao = limparTexto(
+      partes[partes.length - 3]
+    );
+
+    const pedidos = limparTexto(
+      partes[partes.length - 4]
+    );
+
+    const prioridade = limparTexto(
+      partes[partes.length - 5]
+    );
+
+    const previa = limparTexto(
+      partes[partes.length - 6]
+    );
+
+    const data = limparTexto(
+      partes[0]
+    );
+
+    const produto = limparTexto(
+      partes
+        .slice(1, partes.length - 6)
+        .join(",")
+    );
+
+    const categoriaNormalizada =
+      normalizarCategoria(categoria);
+
+    /**
+     * Mantém apenas as categorias definidas no projeto.
+     */
+    if (
+      Array.isArray(categoriasPermitidas) &&
+      categoriasPermitidas.length > 0 &&
+      !categoriasPermitidas.includes(categoriaNormalizada)
+    ) {
+      continue;
+    }
+
+    resultado.push({
+
+      data,
+
+      /**
+       * Código oficial do ERP.
+       * Mantido como texto para preservar zeros à esquerda.
+       */
+      codigo,
+
+      produto,
+
+      previa: parseNumero(previa),
+
+      prioridade: parseNumero(prioridade),
+
+      pedidos: parseNumero(pedidos),
+
+      producao: parseNumero(producao),
+
+      categoria,
+
+      demandaFinal:
+        parseNumero(pedidos) > 0
+          ? parseNumero(pedidos) + parseNumero(prioridade)
+          : parseNumero(previa) + parseNumero(prioridade)
+
+    });
+
+  }
+
+  return resultado;
 
 }

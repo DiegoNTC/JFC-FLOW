@@ -1,0 +1,291 @@
+/**
+ * ======================================================
+ * JFC FLOW
+ * Módulo: renderPlanejamentoReal
+ * Versão: 1.2.0
+ *
+ * Responsabilidade:
+ * Exibir o planejamento real já calculado com capacidade.
+ * ======================================================
+ */
+
+function formatarNumero(valor) {
+
+  const numero = Number(valor) || 0;
+
+  return numero.toLocaleString("pt-BR");
+
+}
+
+function formatarTempo(minutos) {
+
+  const total = Math.round(Number(minutos) || 0);
+
+  const sinal = total < 0 ? "-" : "";
+
+  const absoluto = Math.abs(total);
+
+  if (absoluto < 60) {
+    return `${sinal}${absoluto} min`;
+  }
+
+  const horas = Math.floor(absoluto / 60);
+
+  const restoMin = absoluto % 60;
+
+  if (restoMin === 0) {
+    return `${sinal}${horas}h`;
+  }
+
+  return `${sinal}${horas}h ${restoMin}min`;
+
+}
+
+function classeStatus(status) {
+
+  const mapa = {
+
+    OK: "status-ok",
+
+    OCIOSA: "status-ociosa",
+
+    ATENCAO: "status-atencao",
+
+    ESTOURADA: "status-estourada",
+
+    SEM_CARGA: "status-sem-carga"
+
+  };
+
+  return mapa[status] || "";
+
+}
+
+function criarTabelaLinha(linhaPlanejada) {
+
+  const linha = linhaPlanejada.linha;
+
+  const produtos = linhaPlanejada.produtos || [];
+
+  const capacidade = linhaPlanejada.capacidade || {};
+
+  const statusClasse = classeStatus(
+    capacidade.status
+  );
+
+  const linhasProdutos = produtos
+    .map(produto => `
+      <tr>
+        <td>${produto.codigo}</td>
+        <td class="real-produto">${produto.nomeOficial}</td>
+        <td>${produto.zonasTexto || ""}</td>
+        <td>${produto.sequenciaPrincipal || ""}</td>
+        <td>${formatarNumero(produto.demandaFinal)}</td>
+        <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
+        <td>${formatarTempo(produto.setupMin)}</td>
+        <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
+        <td>${produto.statusCalculo}</td>
+      </tr>
+    `)
+    .join("");
+
+  return `
+    <details class="real-line-card">
+
+      <summary>
+        <div class="real-line-summary">
+
+          <strong>${linha}</strong>
+
+          <span>${produtos.length} produtos</span>
+
+          <span>
+            Planejado: ${formatarTempo(capacidade.tempoPlanejadoMin)}
+          </span>
+
+          <span>
+            Capacidade: ${formatarTempo(capacidade.capacidadeMin)}
+          </span>
+
+          <span>
+            Saldo: ${formatarTempo(capacidade.saldoMin)}
+          </span>
+
+          <span>
+            Uso: ${capacidade.utilizacaoPercentual || 0}%
+          </span>
+
+          <span class="real-status-badge ${statusClasse}">
+            ${capacidade.statusTexto || ""}
+          </span>
+
+          <button
+              type="button"
+              class="real-balance-line-btn"
+              data-linha-balancear="${linha}"
+            >
+              🎯 Balancear esta linha
+            </button>
+
+        </div>
+      </summary>
+
+      <div class="real-table-wrapper">
+
+        <table class="real-table">
+
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nome oficial</th>
+              <th>Zonas</th>
+              <th>Seq.</th>
+              <th>Demanda</th>
+              <th>Tempo produção</th>
+              <th>Setup</th>
+              <th>Tempo total</th>
+              <th>Cálculo</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${linhasProdutos}
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </details>
+  `;
+
+}
+
+export function renderPlanejamentoReal(planejamentoComCapacidade) {
+
+  const container =
+    document.getElementById("planejamentoRealContainer");
+
+  if (!container) {
+    console.warn("Container planejamentoRealContainer não encontrado.");
+    return;
+  }
+
+  if (
+    !planejamentoComCapacidade ||
+    !Array.isArray(planejamentoComCapacidade.linhas) ||
+    planejamentoComCapacidade.linhas.length === 0
+  ) {
+
+    container.innerHTML = "";
+
+    return;
+
+  }
+
+  const linhas =
+    planejamentoComCapacidade.linhas;
+
+  const resumo =
+    planejamentoComCapacidade.resumo || {};
+
+  const capacidade =
+    planejamentoComCapacidade.capacidade || {};
+
+  container.innerHTML = `
+    <section class="real-dashboard">
+
+      <div class="real-header">
+
+        <div>
+          <h2>Planejamento Real com Capacidade</h2>
+          <p>
+            Cálculo baseado na demanda final do CSV, tempos técnicos do TXT e capacidade disponível por linha.
+          </p>
+        </div>
+
+        <span class="real-badge">
+          Motor de Planejamento
+        </span>
+
+      </div>
+
+      <div class="real-kpis">
+
+        <div class="real-kpi">
+          <span>Linhas usadas</span>
+          <strong>${formatarNumero(resumo.totalLinhas)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Produtos planejados</span>
+          <strong>${formatarNumero(resumo.totalProdutos)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Demanda total</span>
+          <strong>${formatarNumero(resumo.demandaTotal)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Utilização geral</span>
+          <strong>${capacidade.utilizacaoGeralPercentual || 0}%</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Capacidade total</span>
+          <strong>${formatarTempo(capacidade.capacidadeTotalMin)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Tempo planejado</span>
+          <strong>${formatarTempo(capacidade.tempoPlanejadoTotalMin)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Saldo total</span>
+          <strong>${formatarTempo(capacidade.saldoTotalMin)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Linhas estouradas</span>
+          <strong>${formatarNumero(capacidade.linhasEstouradas)}</strong>
+        </div>
+
+      </div>
+
+      <div class="real-lines-list">
+        ${linhas.map(criarTabelaLinha).join("")}
+      </div>
+
+          </section>
+          container
+        .querySelectorAll("[data-linha-balancear]")
+        .forEach(botao => {
+
+    botao.addEventListener("click", (event) => {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+      const linha =
+        botao.dataset.linhaBalancear;
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "jfc:balancear-linha",
+          {
+            detail: {
+              linha
+            }
+          }
+        )
+      );
+
+    });
+
+  });
+  `;
+
+}
