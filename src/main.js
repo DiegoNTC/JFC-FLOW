@@ -84,6 +84,29 @@ import {
   simularBalanceamento
 } from "./services/simuladorBalanceamento.js";
 
+import {
+  aplicarBalanceamentoSimulado
+} from "./services/aplicadorBalanceamentoSimulado.js";
+
+import {
+  renderPlanejamentoSimulado
+} from "./render/renderPlanejamentoSimulado.js";
+
+import {
+  renderCadastroProduto
+} from "./render/renderCadastroProduto.js";
+
+import {
+  gerarSequenciamentoPlanejamento
+} from "./services/geradorSequenciamentoLinha.js";
+
+import {
+  renderSequenciamentoProducao
+} from "./render/renderSequenciamentoProducao.js";
+
+import {
+  moverBlocoPlanejamento
+} from "./services/movimentadorSequenciamentoService.js";
 
 // =========================
 // ELEMENTOS
@@ -147,13 +170,24 @@ const balanceamentoLinhaBtn =
   document.getElementById("balanceamentoLinhaBtn");
 
 const linhaBalanceamentoSelect =
-  document.getElementById("linhaBalanceamentoSelect");  
+  document.getElementById("linhaBalanceamentoSelect");
 
 const scaleL1 =
   document.getElementById("scale-l1");
 
 const scaleL2 =
   document.getElementById("scale-l2");
+
+
+// =========================
+// ESTADO TEMPORÁRIO DO FLUXO REAL
+// =========================
+
+let ultimoPlanejamentoComCapacidade = null;
+
+let ultimoResultadoSincronizacao = null;
+
+let ultimaPersistencia = null;
 
 
 // =========================
@@ -190,30 +224,217 @@ const renderConfigL2 = {
 // =========================
 // PLANEJAMENTO REAL
 // =========================
+function normalizarCodigoProduto(
+  codigo
+) {
+
+  return String(codigo || "")
+    .trim();
+
+}
+
+function consolidarProdutosCSVDoDia(
+  dadosCSV
+) {
+
+  const mapa =
+    new Map();
+
+  (dadosCSV || []).forEach(item => {
+
+    const codigo =
+      normalizarCodigoProduto(
+        item.codigo
+      );
+
+    if (!codigo) {
+      return;
+    }
+
+    const demanda =
+      Number(
+        item.demandaFinal ??
+        item.pedidos ??
+        item.previa ??
+        0
+      ) || 0;
+
+    if (!mapa.has(codigo)) {
+
+      mapa.set(
+        codigo,
+        {
+          codigo,
+          nomeOficial:
+            item.produto || item.nomeOficial || "",
+          descricaoCSV:
+            item.produto || item.nomeOficial || "",
+          demandaFinal:
+            demanda
+        }
+      );
+
+      return;
+
+    }
+
+    const existente =
+      mapa.get(codigo);
+
+    existente.demandaFinal +=
+      demanda;
+
+    if (
+      !existente.nomeOficial &&
+      item.produto
+    ) {
+
+      existente.nomeOficial =
+        item.produto;
+
+      existente.descricaoCSV =
+        item.produto;
+
+    }
+
+  });
+
+  return Array.from(
+    mapa.values()
+  );
+
+}
+
+function montarProdutosMestreParaPlanejamento(
+  produtosMestre,
+  dadosCSVDoDia
+) {
+
+  const produtosCSVDoDia =
+    consolidarProdutosCSVDoDia(
+      dadosCSVDoDia
+    );
+
+  const mapaMestre =
+    new Map();
+
+  (produtosMestre || []).forEach(produtoMestre => {
+
+    const codigo =
+      normalizarCodigoProduto(
+        produtoMestre.codigo
+      );
+
+    if (codigo) {
+
+      mapaMestre.set(
+        codigo,
+        produtoMestre
+      );
+
+    }
+
+  });
+
+  const produtosPlanejamento =
+    [];
+
+  const produtosSemCadastro =
+    [];
+
+  produtosCSVDoDia.forEach(produtoCSV => {
+
+    const produtoMestre =
+      mapaMestre.get(
+        produtoCSV.codigo
+      );
+
+    if (!produtoMestre) {
+
+      produtosSemCadastro.push(
+        produtoCSV
+      );
+
+      return;
+
+    }
+
+    produtosPlanejamento.push({
+
+      ...produtoMestre,
+
+      codigo:
+        produtoCSV.codigo,
+
+      nomeOficial:
+        produtoCSV.nomeOficial ||
+        produtoMestre.nomeOficial,
+
+      descricao:
+        produtoCSV.nomeOficial ||
+        produtoMestre.descricao,
+
+      descricaoCSV:
+        produtoCSV.descricaoCSV ||
+        produtoMestre.descricaoCSV,
+
+      demandaReferencia:
+        produtoCSV.demandaFinal,
+
+      demandaFinal:
+        produtoCSV.demandaFinal,
+
+      origemPlanejamento: {
+        csvAtual: true,
+        cadastroMestre: true
+      }
+
+    });
+
+  });
+
+  if (produtosSemCadastro.length > 0) {
+
+    console.warn(
+      "PRODUTOS DO CSV SEM CADASTRO MESTRE:",
+      produtosSemCadastro
+    );
+
+  }
+
+  console.log(
+    "PRODUTOS DO CSV DO DIA:",
+    produtosCSVDoDia.length
+  );
+
+  console.log(
+    "PRODUTOS PLANEJADOS APÓS CRUZAR CSV + CADASTRO:",
+    produtosPlanejamento.length
+  );
+
+  return produtosPlanejamento;
+
+}
 
 function calcularPlanejamentoCompleto(
-  produtosMestre
+  produtosMestre,
+  dadosCSVDoDia = []
 ) {
+
+  const produtosParaPlanejamento =
+    montarProdutosMestreParaPlanejamento(
+      produtosMestre || [],
+      dadosCSVDoDia || []
+    );
 
   const planejamentoReal =
     gerarPlanejamentoReal(
-      produtosMestre || []
+      produtosParaPlanejamento
     );
 
   const planejamentoComCapacidade =
     avaliarCapacidadePlanejamento(
       planejamentoReal
-    );
-
-  const sugestoesBalanceamento =
-    sugerirBalanceamento(
-      planejamentoComCapacidade
-    );
-
-  const simulacaoBalanceamento =
-    simularBalanceamento(
-      planejamentoComCapacidade,
-      sugestoesBalanceamento
     );
 
   return {
@@ -222,9 +443,7 @@ function calcularPlanejamentoCompleto(
 
     planejamentoComCapacidade,
 
-    sugestoesBalanceamento,
-
-    simulacaoBalanceamento
+    produtosParaPlanejamento
 
   };
 
@@ -260,25 +479,11 @@ function calcularBalanceamentoCompleto(
 function logarPlanejamento(
   resultadoSincronizacao,
   persistencia,
-  planejamentoComCapacidade,
-  sugestoesBalanceamento,
-  simulacaoBalanceamento
+  planejamentoComCapacidade
 ) {
 
   const linhasPlanejadas =
     planejamentoComCapacidade?.linhas || [];
-
-  const sugestoes =
-    sugestoesBalanceamento?.sugestoes || [];
-
-  const bloqueios =
-    sugestoesBalanceamento?.bloqueios || [];
-
-  const movimentosSelecionados =
-    simulacaoBalanceamento?.movimentosSelecionados || [];
-
-  const linhasDepois =
-    simulacaoBalanceamento?.linhasDepois || [];
 
   console.log(
     "RESULTADO SINCRONIZAÇÃO REAL:",
@@ -310,77 +515,106 @@ function logarPlanejamento(
 
       saldoMin: linha.capacidade?.saldoMin,
 
-      utilizacao: `${linha.capacidade?.utilizacaoPercentual || 0}%`,
+      utilizacao:
+        `${linha.capacidade?.utilizacaoPercentual || 0}%`,
 
-      status: linha.capacidade?.statusTexto
+      status:
+        linha.capacidade?.statusTexto
 
     }))
   );
+
+}
+
+function moverBlocoSequenciamento({
+  linha,
+  blocoId,
+  direcao
+}) {
+
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    console.warn(
+      "Nenhum planejamento disponível para mover bloco."
+    );
+
+    return;
+
+  }
+
+  const resultado =
+    moverBlocoPlanejamento(
+      ultimoPlanejamentoComCapacidade,
+      linha,
+      blocoId,
+      direcao
+    );
+
+  if (!resultado.movido) {
+
+    console.warn(
+      resultado.motivo || "Bloco não foi movido."
+    );
+
+    return;
+
+  }
+
+  ultimoPlanejamentoComCapacidade =
+    resultado.planejamento;
+
+  renderPlanejamentoReal(
+    ultimoPlanejamentoComCapacidade
+  );
+
+  renderSequenciamentoProducao(
+    ultimoPlanejamentoComCapacidade,
+    {
+      onMoverBloco:
+        moverBlocoSequenciamento
+    }
+  );
+
+  renderBalanceamento(null);
+
+  renderPlanejamentoSimulado(null);
 
   console.log(
-    "SUGESTÕES DE BALANCEAMENTO:",
+    "BLOCO MOVIDO E PLANEJAMENTO RECALCULADO:",
+    ultimoPlanejamentoComCapacidade
+  );
+
+}
+
+
+// =========================
+// RENDERIZAÇÃO DO BALANCEAMENTO
+// =========================
+
+function renderizarResultadoBalanceamento(
+  sugestoesBalanceamento,
+  simulacaoBalanceamento
+) {
+
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    alert(
+      "Sincronize o CSV e o TXT antes de visualizar a simulação."
+    );
+
+    return;
+
+  }
+
+  const resultadoSimulado =
+    aplicarBalanceamentoSimulado(
+      ultimoPlanejamentoComCapacidade,
+      simulacaoBalanceamento
+    );
+
+  console.log(
+    "BALANCEAMENTO GERADO:",
     sugestoesBalanceamento
-  );
-
-  console.table(
-    sugestoes.map(sugestao => ({
-
-      codigo: sugestao.codigo,
-
-      produto: sugestao.nomeOficial,
-
-      origem: sugestao.origem?.linha,
-
-      destino: sugestao.destino?.linha,
-
-      tempoOrigemMin:
-        sugestao.impactoEstimado?.tempoProdutoOrigemMin,
-
-      tempoDestinoMin:
-        sugestao.impactoEstimado?.tempoProdutoDestinoMin,
-
-      variacaoMin:
-        sugestao.impactoEstimado?.variacaoTempoMin,
-
-      saldoOrigemDepois:
-        sugestao.impactoEstimado?.saldoOrigemDepois,
-
-      saldoDestinoDepois:
-        sugestao.impactoEstimado?.saldoDestinoDepois,
-
-      linhasPermitidas:
-        sugestao.validacao?.linhasPermitidas?.join(", ")
-
-    }))
-  );
-
-  console.table(
-    bloqueios.slice(0, 30).map(bloqueio => ({
-
-      codigo: bloqueio.codigo,
-
-      produto: bloqueio.nomeOficial,
-
-      origem: bloqueio.origem,
-
-      destino: bloqueio.destino,
-
-      tempoOrigemMin:
-        bloqueio.tempoProdutoOrigemMin,
-
-      tempoDestinoMin:
-        bloqueio.tempoProdutoDestinoMin,
-
-      saldoDestinoMin:
-        bloqueio.saldoDestinoMin,
-
-      linhasPermitidas:
-        bloqueio.linhasPermitidas?.join(", "),
-
-      motivo:
-        bloqueio.motivoTexto
-
-    }))
   );
 
   console.log(
@@ -388,53 +622,18 @@ function logarPlanejamento(
     simulacaoBalanceamento
   );
 
-  console.table(
-    movimentosSelecionados.map(item => ({
-
-      codigo: item.codigo,
-
-      produto: item.nomeOficial,
-
-      origem: item.origem?.linha,
-
-      destino: item.destino?.linha,
-
-      tempoOrigemMin:
-        item.impactoEstimado?.tempoProdutoOrigemMin,
-
-      tempoDestinoMin:
-        item.impactoEstimado?.tempoProdutoDestinoMin,
-
-      saldoOrigemDepois:
-        item.impactoEstimado?.saldoOrigemDepois,
-
-      saldoDestinoDepois:
-        item.impactoEstimado?.saldoDestinoDepois
-
-    }))
+  console.log(
+    "PLANEJAMENTO SIMULADO APLICADO:",
+    resultadoSimulado
   );
 
-  console.table(
-    linhasDepois.map(linha => ({
+  renderBalanceamento(
+    sugestoesBalanceamento,
+    simulacaoBalanceamento
+  );
 
-      linha: linha.linha,
-
-      capacidadeMin: linha.capacidadeMin,
-
-      tempoDepoisMin: linha.tempoPlanejadoMin,
-
-      saldoDepoisMin: linha.saldoMin,
-
-      utilizacaoDepois:
-        `${linha.utilizacaoPercentual || 0}%`,
-
-      statusAntes:
-        linha.statusTextoOriginal,
-
-      statusDepois:
-        linha.statusTexto
-
-    }))
+  renderPlanejamentoSimulado(
+    resultadoSimulado
   );
 
 }
@@ -447,19 +646,37 @@ function logarPlanejamento(
 function renderizarResultadoSincronizacao(
   resultado,
   persistencia,
-  planejamentoComCapacidade,
-  sugestoesBalanceamento,
-  simulacaoBalanceamento
+  planejamentoComCapacidade
 ) {
 
+  const planejamentoSequenciado =
+    gerarSequenciamentoPlanejamento(
+      planejamentoComCapacidade
+    );
+
+  ultimoPlanejamentoComCapacidade =
+    planejamentoSequenciado;
+
   renderPlanejamentoReal(
-    planejamentoComCapacidade
+    planejamentoSequenciado
+  );
+
+  renderSequenciamentoProducao(
+    planejamentoSequenciado,
+    {
+      onMoverBloco:
+        moverBlocoSequenciamento
+    }
   );
 
   renderBalanceamento(
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
+    null
   );
+
+  renderPlanejamentoSimulado(
+    null
+  );
+
   renderSincronizacao(
     resultado,
     persistencia,
@@ -476,25 +693,23 @@ function renderizarResultadoSincronizacao(
 
         const novaPersistencia = {
 
-          produtosMestre: carregarProdutosMestre(),
+          produtosMestre:
+            carregarProdutosMestre(),
 
-          sugestoes: carregarSugestoesVinculo(),
+          sugestoes:
+            carregarSugestoesVinculo(),
 
-          pendencias: carregarPendenciasVinculo()
+          pendencias:
+            carregarPendenciasVinculo()
 
         };
 
         const {
           planejamentoComCapacidade:
-          novoPlanejamentoComCapacidade,
-
-          sugestoesBalanceamento:
-          novasSugestoesBalanceamento,
-
-          simulacaoBalanceamento:
-          novaSimulacaoBalanceamento
+          novoPlanejamentoComCapacidade
         } = calcularPlanejamentoCompleto(
-          novaPersistencia.produtosMestre
+          novaPersistencia.produtosMestre,
+          getDadosCSV()
         );
 
         const novasSugestoes =
@@ -527,12 +742,16 @@ function renderizarResultadoSincronizacao(
 
         };
 
+        ultimoResultadoSincronizacao =
+          novoResultado;
+
+        ultimaPersistencia =
+          novaPersistencia;
+
         renderizarResultadoSincronizacao(
           novoResultado,
           novaPersistencia,
-          novoPlanejamentoComCapacidade,
-          novasSugestoesBalanceamento,
-          novaSimulacaoBalanceamento
+          novoPlanejamentoComCapacidade
         );
 
       }
@@ -592,27 +811,31 @@ function executarSincronizacao() {
     );
 
   const {
-    planejamentoComCapacidade,
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
+    planejamentoComCapacidade
   } = calcularPlanejamentoCompleto(
-    persistencia.produtosMestre
+    persistencia.produtosMestre,
+    dadosCSV
   );
+
+  ultimoPlanejamentoComCapacidade =
+    planejamentoComCapacidade;
+
+  ultimoResultadoSincronizacao =
+    resultadoSincronizacao;
+
+  ultimaPersistencia =
+    persistencia;
 
   logarPlanejamento(
     resultadoSincronizacao,
     persistencia,
-    planejamentoComCapacidade,
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
+    planejamentoComCapacidade
   );
 
   renderizarResultadoSincronizacao(
     resultadoSincronizacao,
     persistencia,
-    planejamentoComCapacidade,
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
+    planejamentoComCapacidade
   );
 
 }
@@ -627,49 +850,246 @@ function recalcularPlanejamentoComCapacidade() {
   const produtosMestre =
     carregarProdutosMestre();
 
+  const dadosCSV =
+    getDadosCSV();
+
   if (
     !produtosMestre ||
-    produtosMestre.length === 0
+    produtosMestre.length === 0 ||
+    !dadosCSV ||
+    dadosCSV.length === 0
   ) {
 
-    renderPlanejamentoReal(null);
+    ultimoPlanejamentoComCapacidade =
+      null;
 
-    renderBalanceamento(null);
+    renderPlanejamentoReal(
+      null
+    );
+
+    renderSequenciamentoProducao(
+      null
+    );
+
+    renderBalanceamento(
+      null
+    );
+
+    renderPlanejamentoSimulado(
+      null
+    );
+
+    console.warn(
+      "Planejamento não recalculado: é necessário ter Cadastro Mestre e CSV importado."
+    );
+
+    return;
+
+  }
+
+  const { planejamentoComCapacidade } =
+    calcularPlanejamentoCompleto(
+      produtosMestre,
+      dadosCSV
+    );
+
+  const planejamentoSequenciado =
+    gerarSequenciamentoPlanejamento(
+      planejamentoComCapacidade
+    );
+
+  ultimoPlanejamentoComCapacidade =
+    planejamentoSequenciado;
+
+  renderPlanejamentoReal(
+    planejamentoSequenciado
+  );
+
+  renderSequenciamentoProducao(
+    planejamentoSequenciado,
+    {
+      onMoverBloco:
+        moverBlocoSequenciamento
+    }
+  );
+
+  renderBalanceamento(
+    null
+  );
+
+  renderPlanejamentoSimulado(
+    null
+  );
+
+  console.log(
+    "PLANEJAMENTO SEQUENCIADO POR FAMÍLIA:",
+    planejamentoSequenciado
+  );
+
+}
+
+
+// =========================
+// BALANCEAMENTO SOB DEMANDA
+// =========================
+
+function executarBalanceamentoGeral() {
+
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    alert(
+      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+    );
 
     return;
 
   }
 
   const {
-    planejamentoComCapacidade,
     sugestoesBalanceamento,
     simulacaoBalanceamento
-  } = calcularPlanejamentoCompleto(
-    produtosMestre
+  } = calcularBalanceamentoCompleto(
+    ultimoPlanejamentoComCapacidade
   );
 
-  renderPlanejamentoReal(
-    planejamentoComCapacidade
-  );
-
-  renderBalanceamento(
+  renderizarResultadoBalanceamento(
     sugestoesBalanceamento,
     simulacaoBalanceamento
   );
 
-  console.log(
-    "PLANEJAMENTO RECALCULADO COM NOVA CAPACIDADE:",
-    planejamentoComCapacidade
-  );
+}
 
-  console.log(
-    "BALANCEAMENTO RECALCULADO:",
-    sugestoesBalanceamento
-  );
+function executarBalanceamentoPorLinha() {
 
-  console.log(
-    "SIMULAÇÃO RECALCULADA:",
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    alert(
+      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+    );
+
+    return;
+
+  }
+
+  const linhaOrigem =
+    linhaBalanceamentoSelect?.value;
+
+  if (!linhaOrigem) {
+
+    alert(
+      "Selecione uma linha para balancear."
+    );
+
+    return;
+
+  }
+
+  const {
+    sugestoesBalanceamento,
     simulacaoBalanceamento
+  } = calcularBalanceamentoCompleto(
+    ultimoPlanejamentoComCapacidade,
+    {
+      linhaOrigem
+    }
+  );
+
+  renderizarResultadoBalanceamento(
+    sugestoesBalanceamento,
+    simulacaoBalanceamento
+  );
+
+}
+
+function executarBalanceamentoLinhaDireta(
+  linhaOrigem
+) {
+
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    alert(
+      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+    );
+
+    return;
+
+  }
+
+  if (!linhaOrigem) {
+
+    alert(
+      "Linha de origem não informada."
+    );
+
+    return;
+
+  }
+
+  if (linhaBalanceamentoSelect) {
+
+    linhaBalanceamentoSelect.value =
+      linhaOrigem;
+
+  }
+
+  const {
+    sugestoesBalanceamento,
+    simulacaoBalanceamento
+  } = calcularBalanceamentoCompleto(
+    ultimoPlanejamentoComCapacidade,
+    {
+      linhaOrigem
+    }
+  );
+
+  renderizarResultadoBalanceamento(
+    sugestoesBalanceamento,
+    simulacaoBalanceamento
+  );
+
+}
+
+function inicializarBalanceamentoReal() {
+
+  if (balanceamentoGeralBtn) {
+
+    balanceamentoGeralBtn.addEventListener(
+      "click",
+      executarBalanceamentoGeral
+    );
+
+  } else {
+
+    console.warn(
+      "Botão balanceamentoGeralBtn não encontrado."
+    );
+
+  }
+
+  if (balanceamentoLinhaBtn) {
+
+    balanceamentoLinhaBtn.addEventListener(
+      "click",
+      executarBalanceamentoPorLinha
+    );
+
+  } else {
+
+    console.warn(
+      "Botão balanceamentoLinhaBtn não encontrado."
+    );
+
+  }
+
+  window.addEventListener(
+    "jfc:balancear-linha",
+    (event) => {
+
+      executarBalanceamentoLinhaDireta(
+        event.detail?.linha
+      );
+
+    }
   );
 
 }
@@ -869,200 +1289,20 @@ function iniciarJFCFlow() {
 
   inicializarDropzones();
 
+ 
   renderEditorCapacidade(
     recalcularPlanejamentoComCapacidade
   );
 
+  renderCadastroProduto({
+    onSalvar: () => {
+
+      recalcularPlanejamentoComCapacidade();
+
+    }
+  });
+
   recalcularPlanejamentoComCapacidade();
-
-}
-
-function executarBalanceamentoGeral() {
-
-  if (!ultimoPlanejamentoComCapacidade) {
-
-    alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
-    );
-
-    return;
-
-  }
-
-  const {
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade
-  );
-
-  console.log(
-    "BALANCEAMENTO GERAL:",
-    sugestoesBalanceamento
-  );
-
-  console.log(
-    "SIMULAÇÃO GERAL:",
-    simulacaoBalanceamento
-  );
-
-  renderBalanceamento(
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  );
-
-}
-function executarBalanceamentoPorLinha() {
-
-  if (!ultimoPlanejamentoComCapacidade) {
-
-    alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
-    );
-
-    return;
-
-  }
-
-  const linhaOrigem =
-    linhaBalanceamentoSelect?.value;
-
-  if (!linhaOrigem) {
-
-    alert(
-      "Selecione uma linha para balancear."
-    );
-
-    return;
-
-  }
-
-  const {
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade,
-    {
-      linhaOrigem
-    }
-  );
-
-  console.log(
-    `BALANCEAMENTO DA LINHA ${linhaOrigem}:`,
-    sugestoesBalanceamento
-  );
-
-  console.log(
-    `SIMULAÇÃO DA LINHA ${linhaOrigem}:`,
-    simulacaoBalanceamento
-  );
-
-  renderBalanceamento(
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  );
-
-}
-
-function inicializarBalanceamentoReal() {
-
-  if (balanceamentoGeralBtn) {
-
-    balanceamentoGeralBtn.addEventListener(
-      "click",
-      executarBalanceamentoGeral
-    );
-
-  } else {
-
-    console.warn(
-      "Botão balanceamentoGeralBtn não encontrado."
-    );
-
-  }
-
-  if (balanceamentoLinhaBtn) {
-
-    balanceamentoLinhaBtn.addEventListener(
-      "click",
-      executarBalanceamentoPorLinha
-    );
-
-  } else {
-
-    console.warn(
-      "Botão balanceamentoLinhaBtn não encontrado."
-    );
-
-  }
-  window.addEventListener(
-  "jfc:balancear-linha",
-  (event) => {
-
-    executarBalanceamentoLinhaDireta(
-      event.detail?.linha
-    );
-
-  }
-);
-
-}
-
-function executarBalanceamentoLinhaDireta(
-  linhaOrigem
-) {
-
-  if (!ultimoPlanejamentoComCapacidade) {
-
-    alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
-    );
-
-    return;
-
-  }
-
-  if (!linhaOrigem) {
-
-    alert(
-      "Linha de origem não informada."
-    );
-
-    return;
-
-  }
-
-  if (linhaBalanceamentoSelect) {
-
-    linhaBalanceamentoSelect.value =
-      linhaOrigem;
-
-  }
-
-  const {
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade,
-    {
-      linhaOrigem
-    }
-  );
-
-  console.log(
-    `BALANCEAMENTO DIRETO DA LINHA ${linhaOrigem}:`,
-    sugestoesBalanceamento
-  );
-
-  console.log(
-    `SIMULAÇÃO DIRETA DA LINHA ${linhaOrigem}:`,
-    simulacaoBalanceamento
-  );
-
-  renderBalanceamento(
-    sugestoesBalanceamento,
-    simulacaoBalanceamento
-  );
 
 }
 

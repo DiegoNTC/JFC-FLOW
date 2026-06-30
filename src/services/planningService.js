@@ -5,7 +5,7 @@
  * ======================================================
  */
 
-import { getByCodigo } from "../repositories/ProductRepository.js";
+import { getByCodigo } from "../repositories/productRepository.js";
 
 export function gerarPlanejamento(pedidos) {
 
@@ -14,7 +14,7 @@ export function gerarPlanejamento(pedidos) {
     pedidos.forEach(pedido => {
 
         const produto =
-            getByCodigo(pedido.codigo);
+            getProdutoPorCodigo(pedido.codigo);
 
         if (!produto) {
 

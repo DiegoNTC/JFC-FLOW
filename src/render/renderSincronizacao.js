@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Módulo: renderSincronizacao
- * Versão: 1.1.0
+ * Versão: 1.1.1
  *
  * Responsabilidade:
  * Exibir o resultado da sincronização CSV + TXT.
@@ -13,276 +13,472 @@
  * ======================================================
  */
 
+function texto(valor) {
+
+  return String(valor ?? "")
+    .trim();
+
+}
+
+function escaparHTML(valor) {
+
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
 function criarLinhaTabela(celulas) {
 
-    return `
-        <tr>
-            ${celulas.map(celula => `<td>${celula ?? ""}</td>`).join("")}
-        </tr>
-    `;
+  return `
+    <tr>
+      ${celulas.map(celula => `<td>${escaparHTML(celula ?? "")}</td>`).join("")}
+    </tr>
+  `;
 
 }
 
 function traduzirTipoVinculo(tipo) {
 
-    const mapa = {
+  const mapa = {
 
-        EXATO: "Nome igual",
+    EXATO: "Nome igual",
 
-        NORMALIZADO: "Nome ajustado",
+    NORMALIZADO: "Nome ajustado",
 
-        NORMALIZADO_FORTE: "Abreviações reconhecidas",
+    NORMALIZADO_FORTE: "Abreviações reconhecidas",
 
-        MANUAL_CONFIRMADO: "Confirmado manualmente",
+    MANUAL_CONFIRMADO: "Confirmado manualmente",
 
-        ALTA_SIMILARIDADE: "Alta semelhança",
+    ALTA_SIMILARIDADE: "Alta semelhança",
 
-        MEDIA_SIMILARIDADE: "Semelhança média"
+    MEDIA_SIMILARIDADE: "Semelhança média",
 
-    };
+    MANUAL: "Manual"
 
-    return mapa[tipo] || tipo || "";
+  };
+
+  return mapa[tipo] || tipo || "";
 
 }
 
 function formatarConfianca(score) {
 
-    if (
-        score === null ||
-        score === undefined ||
-        score === ""
-    ) {
-        return "";
-    }
+  if (
+    score === null ||
+    score === undefined ||
+    score === ""
+  ) {
+    return "";
+  }
 
-    return `${score}%`;
+  return `${score}%`;
 
 }
 
 function criarTabela(titulo, colunas, linhas) {
 
-    if (!linhas || linhas.length === 0) {
-
-        return `
-            <div class="sync-card">
-                <h3>${titulo}</h3>
-                <p>Nenhum registro encontrado.</p>
-            </div>
-        `;
-
-    }
+  if (!linhas || linhas.length === 0) {
 
     return `
-        <div class="sync-card">
-            <h3>${titulo}</h3>
-
-            <div class="sync-table-wrapper">
-                <table class="sync-table">
-                    <thead>
-                        <tr>
-                            ${colunas.map(coluna => `<th>${coluna}</th>`).join("")}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${linhas.join("")}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      <div class="sync-card">
+        <h3>${escaparHTML(titulo)}</h3>
+        <p>Nenhum registro encontrado.</p>
+      </div>
     `;
+
+  }
+
+  return `
+    <div class="sync-card">
+      <h3>${escaparHTML(titulo)}</h3>
+
+      <div class="sync-table-wrapper">
+        <table class="sync-table">
+          <thead>
+            <tr>
+              ${colunas.map(coluna => `<th>${escaparHTML(coluna)}</th>`).join("")}
+            </tr>
+          </thead>
+
+          <tbody>
+            ${linhas.join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 
 }
 
-function criarLinhaSugestao(item, index) {
+function criarLinhaSugestao(
+  item,
+  index
+) {
 
-    return `
-        <tr>
-            <td>${item.codigo}</td>
-            <td>${item.nomeOficial}</td>
-            <td>${item.melhorSugestao?.descricaoTXT || ""}</td>
-            <td>${formatarConfianca(item.melhorSugestao?.score)}</td>
-            <td>${item.melhorSugestao?.rotasTecnicas?.length || 0}</td>
-            <td>${traduzirTipoVinculo(item.melhorSugestao?.tipo)}</td>
-            <td>
-                <button 
-                    class="sync-confirm-btn" 
-                    data-sugestao-index="${index}"
-                >
-                    Confirmar
-                </button>
-            </td>
-        </tr>
-    `;
+  return `
+    <tr>
+      <td>${escaparHTML(item.codigo || "-")}</td>
+
+      <td>${escaparHTML(item.nomeOficial || "-")}</td>
+
+      <td>${escaparHTML(item.melhorSugestao?.descricaoTXT || "-")}</td>
+
+      <td>${escaparHTML(formatarConfianca(item.melhorSugestao?.score))}</td>
+
+      <td>${escaparHTML(item.melhorSugestao?.rotasTecnicas?.length || 0)}</td>
+
+      <td>${escaparHTML(traduzirTipoVinculo(item.melhorSugestao?.tipo))}</td>
+
+      <td>
+        <button
+          type="button"
+          class="sync-confirm-btn"
+          data-sugestao-index="${index}"
+        >
+          Confirmar
+        </button>
+      </td>
+    </tr>
+  `;
+
+}
+
+function criarLinhaPendente(
+  item,
+  index
+) {
+
+  const nome =
+    item.nomeOficial ||
+    item.produto ||
+    item.descricaoCSV ||
+    item.descricao ||
+    "-";
+
+  return `
+    <tr>
+      <td>${escaparHTML(item.codigo || "-")}</td>
+
+      <td>${escaparHTML(nome)}</td>
+
+      <td>${escaparHTML(item.motivo || "-")}</td>
+
+      <td>${escaparHTML(item.sugestoes?.length || 0)}</td>
+
+      <td>
+        <button
+          type="button"
+          class="sync-register-btn"
+          data-cadastrar-pendente="${index}"
+        >
+          Cadastrar item
+        </button>
+      </td>
+    </tr>
+  `;
+
+}
+
+function ativarBotoesConfirmarSugestao(
+  container,
+  sugestoes,
+  opcoes
+) {
+
+  if (
+    !container ||
+    typeof opcoes.onConfirmarSugestao !== "function"
+  ) {
+    return;
+  }
+
+  const botoesConfirmar =
+    container.querySelectorAll(
+      ".sync-confirm-btn"
+    );
+
+  botoesConfirmar.forEach(botao => {
+
+    botao.addEventListener("click", () => {
+
+      const index =
+        Number(
+          botao.dataset.sugestaoIndex
+        );
+
+      const sugestao =
+        sugestoes[index];
+
+      if (!sugestao) {
+
+        console.warn(
+          "Sugestão não encontrada."
+        );
+
+        return;
+
+      }
+
+      opcoes.onConfirmarSugestao(
+        sugestao,
+        index
+      );
+
+    });
+
+  });
+
+}
+
+function ativarBotoesCadastrarPendencia(
+  container,
+  pendentes
+) {
+
+  if (!container) {
+    return;
+  }
+
+  container
+    .querySelectorAll("[data-cadastrar-pendente]")
+    .forEach(botao => {
+
+      botao.addEventListener("click", () => {
+
+        const index =
+          Number(
+            botao.dataset.cadastrarPendente
+          );
+
+        const pendencia =
+          pendentes[index];
+
+        if (!pendencia) {
+
+          console.warn(
+            "Pendência não encontrada para cadastro."
+          );
+
+          return;
+
+        }
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "jfc:cadastrar-produto-pendente",
+            {
+              detail: {
+
+                codigo:
+                  pendencia.codigo,
+
+                nomeOficial:
+                  pendencia.nomeOficial ||
+                  pendencia.produto ||
+                  pendencia.descricaoCSV ||
+                  pendencia.descricao ||
+                  "",
+
+                descricaoCSV:
+                  pendencia.descricaoCSV ||
+                  pendencia.produto ||
+                  pendencia.nomeOficial ||
+                  pendencia.descricao ||
+                  "",
+
+                descricaoTXT:
+                  pendencia.descricaoTXT || "",
+
+                demandaReferencia:
+                  pendencia.demandaReferencia ||
+                  pendencia.demandaFinal ||
+                  0
+
+              }
+            }
+          )
+        );
+
+      });
+
+    });
 
 }
 
 export function renderSincronizacao(
-    resultado,
-    persistencia = null,
-    opcoes = {}
+  resultado,
+  persistencia = null,
+  opcoes = {}
 ) {
 
-    const container = document.getElementById("sincronizacaoContainer");
+  const container =
+    document.getElementById("sincronizacaoContainer");
 
-    if (!container) {
-        console.warn("Container sincronizacaoContainer não encontrado.");
-        return;
-    }
+  if (!container) {
 
-    if (!resultado) {
-        container.innerHTML = "";
-        return;
-    }
+    console.warn(
+      "Container sincronizacaoContainer não encontrado."
+    );
 
-    const stats = resultado.estatisticas || {};
+    return;
 
-    const vinculados = resultado.vinculadosAutomaticamente || [];
+  }
 
-    const sugestoes = resultado.sugestoes || [];
+  if (!resultado) {
 
-    const pendentes = resultado.pendentes || [];
+    container.innerHTML = "";
 
-    const produtosMestre = persistencia?.produtosMestre || [];
+    return;
 
-    const linhasVinculados = vinculados.map(item => criarLinhaTabela([
-        item.codigo,
-        item.nomeOficial,
-        item.descricaoTXT,
-        formatarConfianca(item.scoreVinculo),
-        item.rotasTecnicas?.length || 0,
-        traduzirTipoVinculo(item.vinculoTipo)
+  }
+
+  const stats =
+    resultado.estatisticas || {};
+
+  const vinculados =
+    resultado.vinculadosAutomaticamente || [];
+
+  const sugestoes =
+    resultado.sugestoes || [];
+
+  const pendentes =
+    resultado.pendentes || [];
+
+  const produtosMestre =
+    persistencia?.produtosMestre || [];
+
+  const linhasVinculados =
+    vinculados.map(item => criarLinhaTabela([
+      item.codigo,
+      item.nomeOficial,
+      item.descricaoTXT,
+      formatarConfianca(item.scoreVinculo),
+      item.rotasTecnicas?.length || 0,
+      traduzirTipoVinculo(item.vinculoTipo)
     ]));
 
-    const linhasSugestoes = sugestoes.map((item, index) => criarLinhaSugestao(
-        item,
-        index
+  const linhasSugestoes =
+    sugestoes.map((item, index) => criarLinhaSugestao(
+      item,
+      index
     ));
 
-    const linhasPendentes = pendentes.map(item => criarLinhaTabela([
-        item.codigo,
-        item.nomeOficial,
-        item.motivo,
-        item.sugestoes?.length || 0
+  const linhasPendentes =
+    pendentes.map((item, index) => criarLinhaPendente(
+      item,
+      index
+    ));
+
+  const linhasCadastro =
+    produtosMestre.map(item => criarLinhaTabela([
+      item.codigo,
+      item.nomeOficial,
+      item.descricaoTXT,
+      item.rotasTecnicas?.length || 0,
+      traduzirTipoVinculo(item.vinculoTipo)
     ]));
 
-    const linhasCadastro = produtosMestre.map(item => criarLinhaTabela([
-        item.codigo,
-        item.nomeOficial,
-        item.descricaoTXT,
-        item.rotasTecnicas?.length || 0,
-        traduzirTipoVinculo(item.vinculoTipo)
-    ]));
+  container.innerHTML = `
+    <div class="sync-dashboard">
 
-    container.innerHTML = `
-        <div class="sync-dashboard">
+      <h2>Sincronização CSV + TXT</h2>
 
-            <h2>Sincronização CSV + TXT</h2>
+      <div class="sync-kpis">
 
-            <div class="sync-kpis">
-                <div class="sync-kpi">
-                    <span>Total CSV</span>
-                    <strong>${stats.totalCSV || 0}</strong>
-                </div>
-
-                <div class="sync-kpi">
-                    <span>Total TXT</span>
-                    <strong>${stats.totalTXT || 0}</strong>
-                </div>
-
-                <div class="sync-kpi">
-                    <span>Vinculados</span>
-                    <strong>${stats.vinculadosAutomaticamente || 0}</strong>
-                </div>
-
-                <div class="sync-kpi">
-                    <span>Sugestões</span>
-                    <strong>${stats.sugestoes || 0}</strong>
-                </div>
-
-                <div class="sync-kpi">
-                    <span>Pendências</span>
-                    <strong>${stats.pendentes || 0}</strong>
-                </div>
-            </div>
-
-            ${criarTabela(
-                "Produtos vinculados automaticamente",
-                [
-                    "Código",
-                    "Nome oficial",
-                    "Produto técnico localizado",
-                    "Confiança",
-                    "Etapas técnicas",
-                    "Forma de vínculo"
-                ],
-                linhasVinculados
-            )}
-
-            ${criarTabela(
-                "Sugestões aguardando confirmação",
-                [
-                    "Código",
-                    "Nome oficial",
-                    "Sugestão técnica",
-                    "Confiança",
-                    "Etapas técnicas",
-                    "Forma de vínculo",
-                    "Ação"
-                ],
-                linhasSugestoes
-            )}
-
-            ${criarTabela(
-                "Pendências manuais",
-                [
-                    "Código",
-                    "Nome oficial",
-                    "Motivo",
-                    "Sugestões encontradas"
-                ],
-                linhasPendentes
-            )}
-
-            ${criarTabela(
-                "Cadastro Mestre salvo",
-                [
-                    "Código",
-                    "Nome oficial",
-                    "Produto técnico vinculado",
-                    "Etapas técnicas",
-                    "Forma de vínculo"
-                ],
-                linhasCadastro
-            )}
-
+        <div class="sync-kpi">
+          <span>Total CSV</span>
+          <strong>${stats.totalCSV || 0}</strong>
         </div>
-    `;
 
-    if (typeof opcoes.onConfirmarSugestao === "function") {
+        <div class="sync-kpi">
+          <span>Total TXT</span>
+          <strong>${stats.totalTXT || 0}</strong>
+        </div>
 
-        const botoesConfirmar = container.querySelectorAll(
-            ".sync-confirm-btn"
-        );
+        <div class="sync-kpi">
+          <span>Vinculados</span>
+          <strong>${stats.vinculadosAutomaticamente || 0}</strong>
+        </div>
 
-        botoesConfirmar.forEach(botao => {
+        <div class="sync-kpi">
+          <span>Sugestões</span>
+          <strong>${stats.sugestoes || 0}</strong>
+        </div>
 
-            botao.addEventListener("click", () => {
+        <div class="sync-kpi">
+          <span>Pendências</span>
+          <strong>${stats.pendentes || 0}</strong>
+        </div>
 
-                const index = Number(
-                    botao.dataset.sugestaoIndex
-                );
+      </div>
 
-                const sugestao = sugestoes[index];
+      ${criarTabela(
+        "Produtos vinculados automaticamente",
+        [
+          "Código",
+          "Nome oficial",
+          "Produto técnico localizado",
+          "Confiança",
+          "Etapas técnicas",
+          "Forma de vínculo"
+        ],
+        linhasVinculados
+      )}
 
-                opcoes.onConfirmarSugestao(
-                    sugestao,
-                    index
-                );
+      ${criarTabela(
+        "Sugestões aguardando confirmação",
+        [
+          "Código",
+          "Nome oficial",
+          "Sugestão técnica",
+          "Confiança",
+          "Etapas técnicas",
+          "Forma de vínculo",
+          "Ação"
+        ],
+        linhasSugestoes
+      )}
 
-            });
+      ${criarTabela(
+        "Pendências manuais",
+        [
+          "Código",
+          "Nome oficial",
+          "Motivo",
+          "Sugestões encontradas",
+          "Ação"
+        ],
+        linhasPendentes
+      )}
 
-        });
+      ${criarTabela(
+        "Cadastro Mestre salvo",
+        [
+          "Código",
+          "Nome oficial",
+          "Produto técnico vinculado",
+          "Etapas técnicas",
+          "Forma de vínculo"
+        ],
+        linhasCadastro
+      )}
 
-    }
+    </div>
+  `;
+
+  ativarBotoesConfirmarSugestao(
+    container,
+    sugestoes,
+    opcoes
+  );
+
+  ativarBotoesCadastrarPendencia(
+    container,
+    pendentes
+  );
 
 }

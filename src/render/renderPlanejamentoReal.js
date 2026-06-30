@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Módulo: renderPlanejamentoReal
- * Versão: 1.2.0
+ * Versão: 1.2.1
  *
  * Responsabilidade:
  * Exibir o planejamento real já calculado com capacidade.
@@ -61,33 +61,64 @@ function classeStatus(status) {
 
 }
 
+function textoSeguro(valor) {
+
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+
+    return "-";
+
+  }
+
+  return String(valor);
+
+}
+
 function criarTabelaLinha(linhaPlanejada) {
 
-  const linha = linhaPlanejada.linha;
+  const linha =
+    linhaPlanejada.linha;
 
-  const produtos = linhaPlanejada.produtos || [];
+  const produtos =
+    linhaPlanejada.produtos || [];
 
-  const capacidade = linhaPlanejada.capacidade || {};
+  const capacidade =
+    linhaPlanejada.capacidade || {};
 
-  const statusClasse = classeStatus(
-    capacidade.status
-  );
+  const statusClasse =
+    classeStatus(
+      capacidade.status
+    );
 
-  const linhasProdutos = produtos
-    .map(produto => `
-      <tr>
-        <td>${produto.codigo}</td>
-        <td class="real-produto">${produto.nomeOficial}</td>
-        <td>${produto.zonasTexto || ""}</td>
-        <td>${produto.sequenciaPrincipal || ""}</td>
-        <td>${formatarNumero(produto.demandaFinal)}</td>
-        <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
-        <td>${formatarTempo(produto.setupMin)}</td>
-        <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
-        <td>${produto.statusCalculo}</td>
-      </tr>
-    `)
-    .join("");
+  const linhasProdutos =
+    produtos
+      .map(produto => `
+        <tr>
+          <td>${textoSeguro(produto.codigo)}</td>
+
+          <td class="real-produto">
+            ${textoSeguro(produto.nomeOficial)}
+          </td>
+
+          <td>${textoSeguro(produto.zonasTexto)}</td>
+
+          <td>${textoSeguro(produto.sequenciaPrincipal)}</td>
+
+          <td>${formatarNumero(produto.demandaFinal)}</td>
+
+          <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
+
+          <td>${formatarTempo(produto.setupMin)}</td>
+
+          <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
+
+          <td>${textoSeguro(produto.statusCalculo)}</td>
+        </tr>
+      `)
+      .join("");
 
   return `
     <details class="real-line-card">
@@ -95,9 +126,9 @@ function criarTabelaLinha(linhaPlanejada) {
       <summary>
         <div class="real-line-summary">
 
-          <strong>${linha}</strong>
+          <strong>${textoSeguro(linha)}</strong>
 
-          <span>${produtos.length} produtos</span>
+          <span>${formatarNumero(produtos.length)} produtos</span>
 
           <span>
             Planejado: ${formatarTempo(capacidade.tempoPlanejadoMin)}
@@ -116,16 +147,16 @@ function criarTabelaLinha(linhaPlanejada) {
           </span>
 
           <span class="real-status-badge ${statusClasse}">
-            ${capacidade.statusTexto || ""}
+            ${textoSeguro(capacidade.statusTexto)}
           </span>
 
           <button
-              type="button"
-              class="real-balance-line-btn"
-              data-linha-balancear="${linha}"
-            >
-              🎯 Balancear esta linha
-            </button>
+            type="button"
+            class="real-balance-line-btn"
+            data-linha-balancear="${textoSeguro(linha)}"
+          >
+            🎯 Balancear esta linha
+          </button>
 
         </div>
       </summary>
@@ -161,14 +192,69 @@ function criarTabelaLinha(linhaPlanejada) {
 
 }
 
-export function renderPlanejamentoReal(planejamentoComCapacidade) {
+function ativarBotoesBalanceamentoPorLinha(
+  container
+) {
+
+  if (!container) {
+    return;
+  }
+
+  container
+    .querySelectorAll("[data-linha-balancear]")
+    .forEach(botao => {
+
+      botao.addEventListener("click", (event) => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        const linha =
+          botao.dataset.linhaBalancear;
+
+        if (!linha) {
+
+          console.warn(
+            "Linha não encontrada no botão de balanceamento."
+          );
+
+          return;
+
+        }
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "jfc:balancear-linha",
+            {
+              detail: {
+                linha
+              }
+            }
+          )
+        );
+
+      });
+
+    });
+
+}
+
+export function renderPlanejamentoReal(
+  planejamentoComCapacidade
+) {
 
   const container =
     document.getElementById("planejamentoRealContainer");
 
   if (!container) {
-    console.warn("Container planejamentoRealContainer não encontrado.");
+
+    console.warn(
+      "Container planejamentoRealContainer não encontrado."
+    );
+
     return;
+
   }
 
   if (
@@ -199,8 +285,10 @@ export function renderPlanejamentoReal(planejamentoComCapacidade) {
 
         <div>
           <h2>Planejamento Real com Capacidade</h2>
+
           <p>
-            Cálculo baseado na demanda final do CSV, tempos técnicos do TXT e capacidade disponível por linha.
+            Cálculo baseado na demanda final do CSV, tempos técnicos do TXT
+            e capacidade disponível por linha.
           </p>
         </div>
 
@@ -258,34 +346,11 @@ export function renderPlanejamentoReal(planejamentoComCapacidade) {
         ${linhas.map(criarTabelaLinha).join("")}
       </div>
 
-          </section>
-          container
-        .querySelectorAll("[data-linha-balancear]")
-        .forEach(botao => {
-
-    botao.addEventListener("click", (event) => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-      const linha =
-        botao.dataset.linhaBalancear;
-
-      window.dispatchEvent(
-        new CustomEvent(
-          "jfc:balancear-linha",
-          {
-            detail: {
-              linha
-            }
-          }
-        )
-      );
-
-    });
-
-  });
+    </section>
   `;
+
+  ativarBotoesBalanceamentoPorLinha(
+    container
+  );
 
 }
