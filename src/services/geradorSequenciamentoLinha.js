@@ -2,438 +2,587 @@
  * ======================================================
  * JFC FLOW
  * Módulo: geradorSequenciamentoLinha
- * Versão: 1.0.0
+ * Versão: 1.0.2
  *
  * Responsabilidade:
- * Gerar sequência de produção por linha usando família/setup.
+ * Gerar o sequenciamento por família, respeitando:
+ * 1) ordem manual editada pelo PCP;
+ * 2) ordem real de entrada vinda do TXT;
+ * 3) ordem da família como fallback;
+ * 4) nome da família;
+ * 5) nome do produto.
  *
- * Regra:
- * - Primeiro produto da linha não tem setup.
- * - Produto da mesma família do anterior não tem setup.
- * - Quando muda a família, aplica setup de troca do produto atual.
+ * Regra principal:
+ * A numeração do TXT:
+ * 1. Produto A
+ * 2. Produto B
+ * 3. Produto C
+ *
+ * é a ordem real de entrada na linha e deve ser respeitada.
+ *
+ * Regra de setup:
+ * - Primeiro produto da linha: setup 0.
+ * - Mesma família do produto anterior: setup 0.
+ * - Mudança de família: aplica o setup da família/produto atual.
  * ======================================================
  */
 
 import {
-  inferirFamiliaSetup
-} from "./familiaSetupService.js";
+  aplicarFamiliaCadastradaAoProduto
+} from "./familiaCadastroService.js";
 
 function texto(valor) {
 
-  return String(valor ?? "")
-    .trim();
+  return String(valor ?? "").trim();
 
 }
 
-function numero(valor) {
+function numero(valor, padrao = 0) {
 
-  return Number(
-    String(valor ?? "")
-      .replace(",", ".")
-  ) || 0;
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+
+    return padrao;
+
+  }
+
+  const textoValor =
+    String(valor)
+      .trim();
+
+  let textoNormalizado =
+    textoValor;
+
+  if (
+    textoValor.includes(",")
+  ) {
+
+    textoNormalizado =
+      textoValor
+        .replace(/\./g, "")
+        .replace(",", ".");
+
+  }
+
+  const convertido =
+    Number(
+      textoNormalizado
+        .replace(/[^0-9.-]/g, "")
+    );
+
+  return Number.isFinite(convertido)
+    ? convertido
+    : padrao;
 
 }
 
-function arredondar(
-  valor,
-  casas = 2
-) {
+function normalizarNumeroOrdem(valor) {
 
-  const fator =
-    10 ** casas;
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
 
-  return Math.round(numero(valor) * fator) / fator;
+    return null;
+
+  }
+
+  const convertido =
+    numero(
+      valor,
+      null
+    );
+
+  return Number.isFinite(convertido)
+    ? convertido
+    : null;
+
+}
+
+function obterPrimeiraRota(produto = {}) {
+
+  if (
+    Array.isArray(produto.rotasTecnicas) &&
+    produto.rotasTecnicas.length > 0
+  ) {
+
+    return produto.rotasTecnicas[0] || {};
+
+  }
+
+  if (
+    Array.isArray(produto.rotasTecnicasProduto) &&
+    produto.rotasTecnicasProduto.length > 0
+  ) {
+
+    return produto.rotasTecnicasProduto[0] || {};
+
+  }
+
+  if (
+    Array.isArray(produto.rotasOriginais) &&
+    produto.rotasOriginais.length > 0
+  ) {
+
+    return produto.rotasOriginais[0] || {};
+
+  }
+
+  if (
+    Array.isArray(produto.rotas) &&
+    produto.rotas.length > 0
+  ) {
+
+    return produto.rotas[0] || {};
+
+  }
+
+  return produto.rotaTecnica || produto.rota || {};
+
+}
+
+/**
+ * Ordem real do TXT.
+ *
+ * Prioridade:
+ * - ordemLinhaTXT
+ * - ordemTXT
+ * - sequenciaTXT
+ * - sequenciaPrincipal
+ * - sequencia
+ * - rota.*
+ */
+export function obterOrdemTXT(produto = {}) {
+
+  const rota =
+    obterPrimeiraRota(produto);
+
+  return normalizarNumeroOrdem(
+    produto.ordemLinhaTXT ??
+    produto.ordemTXT ??
+    produto.ordemTxt ??
+    produto.sequenciaTXT ??
+    produto.sequenciaTxt ??
+    produto.sequenciaPrincipal ??
+    produto.sequencia ??
+    produto.ordemBaseTXT ??
+    produto.ordemBaseTxt ??
+    produto.ordemRoteiro ??
+    produto.sequenciaRoteiro ??
+    produto.sequenciaProducao ??
+    produto.ordemProducaoTXT ??
+    rota.ordemLinhaTXT ??
+    rota.ordemTXT ??
+    rota.ordemTxt ??
+    rota.sequenciaTXT ??
+    rota.sequenciaTxt ??
+    rota.sequenciaPrincipal ??
+    rota.sequencia ??
+    rota.ordemBaseTXT ??
+    rota.ordemBaseTxt ??
+    rota.ordemRoteiro ??
+    rota.sequenciaRoteiro ??
+    rota.sequenciaProducao ??
+    rota.ordemProducaoTXT
+  );
+
+}
+
+export function obterOrdemManual(produto = {}) {
+
+  return normalizarNumeroOrdem(
+    produto.ordemSequenciamentoManual ??
+    produto.ordemManual ??
+    produto.ordemPlanejadaManual ??
+    produto.ordemEditada ??
+    produto.ordemUsuario
+  );
+
+}
+
+function obterOrdemFamilia(produto = {}) {
+
+  return normalizarNumeroOrdem(
+    produto.ordemFamiliaTXT ??
+    produto.ordemFamilia ??
+    produto.familiaOrdemTXT ??
+    produto.familiaSequenciaTXT
+  );
+
+}
+
+function obterNomeProduto(produto = {}) {
+
+  return texto(
+    produto.nomeOficial ??
+    produto.nomeProduto ??
+    produto.produtoVenda ??
+    produto.produto ??
+    produto.descricaoCSV ??
+    produto.descricaoTXT ??
+    produto.descricao ??
+    produto.nome
+  );
+
+}
+
+function obterCodigoProduto(produto = {}) {
+
+  return texto(
+    produto.codigo ??
+    produto.codigoProduto ??
+    produto.codProduto ??
+    produto.cod
+  );
 
 }
 
 function normalizarFamilia(valor) {
 
-  return texto(valor)
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-}
-
-function obterNomeProduto(produto) {
-
-  return (
-    produto?.nomeOficial ||
-    produto?.descricaoCSV ||
-    produto?.descricao ||
-    produto?.produto ||
-    produto?.descricaoTXT ||
-    ""
-  );
-
-}
-
-function obterCodigoProduto(produto) {
-
-  return texto(
-    produto?.codigo ||
-    produto?.codigoProduto ||
-    produto?.codProduto ||
-    produto?.id ||
-    ""
-  );
-
-}
-
-function obterFamiliaProduto(produto) {
-
   const familia =
-    produto?.familiaSetup ||
-    produto?.classeSetup ||
-    produto?.familia ||
-    produto?.grupoSetup ||
-    "";
+    texto(valor)
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
-  if (texto(familia)) {
-    return normalizarFamilia(familia);
-  }
+  return familia || "SEM FAMÍLIA";
+
+}
+
+function obterFamiliaSetup(produto = {}) {
+
+  const rota =
+    obterPrimeiraRota(produto);
 
   return normalizarFamilia(
-    inferirFamiliaSetup(produto)
+    produto.familiaSetup ??
+    produto.classeSetup ??
+    produto.familia ??
+    produto.categoria ??
+    produto.grupoSetup ??
+    produto.categoriaSetup ??
+    rota.familiaSetup ??
+    rota.classeSetup ??
+    rota.familia ??
+    rota.categoria ??
+    rota.grupoSetup ??
+    rota.categoriaSetup ??
+    obterNomeProduto(produto).split(" ")[0]
   );
 
 }
 
-function obterLinhaProduto(produto, linhaPadrao = "") {
+function obterSetupBaseMin(produto = {}) {
 
-  return texto(
-    produto?.linhaPlanejada ||
-    produto?.linhaPrincipal ||
-    produto?.linha ||
-    produto?.linhaDestino ||
-    linhaPadrao
-  );
-
-}
-
-function obterSequenciaProduto(
-  produto,
-  index
-) {
-
-  const sequencia =
-    produto?.ordemPlanejada ??
-    produto?.ordemProducao ??
-    produto?.sequenciaTXT ??
-    produto?.sequenciaPrincipal ??
-    produto?.sequencia ??
-    produto?.ordem ??
-    index + 1;
-
-  return numero(sequencia);
-
-}
-
-function obterSetupBaseProduto(produto) {
+  const rota =
+    obterPrimeiraRota(produto);
 
   return numero(
-    produto?.setupTrocaMin ??
-    produto?.setupBaseMin ??
-    produto?.setupMin ??
-    produto?.setup ??
+    produto.setupTrocaMin ??
+    produto.setupBaseMin ??
+    produto.setupMin ??
+    produto.setup ??
+    rota.setupTrocaMin ??
+    rota.setupBaseMin ??
+    rota.setupMin ??
+    rota.setup,
     0
   );
 
 }
 
-function obterTempoProducaoProduto(produto) {
+function obterKgPlanejado(produto = {}) {
 
-  const tempoProducao =
-    produto?.tempoProducaoPlanejadoMin ??
-    produto?.tempoProducaoMin ??
-    produto?.tempoMin ??
-    produto?.tempoPlanejadoMin;
+  return numero(
+    produto.kgPlanejado ??
+    produto.demandaKg ??
+    produto.demandaTotalKg ??
+    produto.kgTotal ??
+    produto.kgDia ??
+    produto.pesoLiquido ??
+    produto.pesoBruto ??
+    produto.demandaFinal ??
+    produto.demandaReferencia ??
+    produto.demanda,
+    0
+  );
 
-  if (tempoProducao !== undefined && tempoProducao !== null) {
-    return numero(tempoProducao);
+}
+
+function obterTempoProducaoMin(produto = {}) {
+
+  const rota =
+    obterPrimeiraRota(produto);
+
+  const tempoInformado =
+    numero(
+      produto.tempoProducaoPlanejadoMin ??
+      produto.tempoPlanejadoMin ??
+      produto.tempoProducaoMin ??
+      produto.tempoMin ??
+      produto.tempo ??
+      rota.tempoProducaoPlanejadoMin ??
+      rota.tempoPlanejadoMin ??
+      rota.tempoProducaoMin ??
+      rota.prodMin ??
+      rota.tempoMin ??
+      rota.tempo,
+      null
+    );
+
+  if (tempoInformado !== null) {
+
+    return tempoInformado;
+
   }
 
-  /**
-   * Fallback:
-   * Se o produto antigo só tiver tempo total, usa esse tempo.
-   * Depois, quando o projeto estiver 100% padronizado,
-   * o ideal é sempre usar tempoProducaoPlanejadoMin.
-   */
-  return numero(
-    produto?.tempoTotalPlanejadoMin ??
-    produto?.tempoTotalMin ??
-    0
-  );
+  const kgPlanejado =
+    obterKgPlanejado(produto);
+
+  const produtividadeKgHora =
+    numero(
+      produto.produtividadeKgHora ??
+      produto.kgHora ??
+      rota.produtividadeKgHora ??
+      rota.kgHora,
+      0
+    );
+
+  if (
+    kgPlanejado > 0 &&
+    produtividadeKgHora > 0
+  ) {
+
+    return Math.ceil(
+      (kgPlanejado / produtividadeKgHora) * 60
+    );
+
+  }
+
+  return 0;
 
 }
 
-function obterKgPlanejadoProduto(produto) {
+/**
+ * Comparador oficial do Sequenciamento por Família.
+ *
+ * Ordem:
+ * 1. Ordem manual
+ * 2. Ordem real do TXT
+ * 3. Ordem da família
+ * 4. Nome da família
+ * 5. Nome do produto
+ */
+function compararProdutosSequenciamento(produtoA, produtoB) {
 
-  return numero(
-    produto?.kgPlanejado ??
-    produto?.pesoPlanejadoKg ??
-    produto?.demandaKg ??
-    produto?.kgDia ??
-    produto?.pesoLiquido ??
-    produto?.pesoBruto ??
-    0
-  );
+  const ordemManualA =
+    obterOrdemManual(produtoA);
 
-}
+  const ordemManualB =
+    obterOrdemManual(produtoB);
 
-function ordenarProdutosPorSequencia(
-  produtos
-) {
+  if (
+    ordemManualA !== null ||
+    ordemManualB !== null
+  ) {
 
-  return produtos
-    .map((produto, index) => ({
-      produto,
-      indexOriginal: index,
-      sequencia: obterSequenciaProduto(
-        produto,
-        index
-      )
-    }))
-    .sort((a, b) => {
+    const diferencaManual =
+      (ordemManualA ?? 999999) -
+      (ordemManualB ?? 999999);
 
-      if (a.sequencia !== b.sequencia) {
-        return a.sequencia - b.sequencia;
+    if (diferencaManual !== 0) {
+      return diferencaManual;
+    }
+
+  }
+
+  const ordemTXTA =
+    obterOrdemTXT(produtoA);
+
+  const ordemTXTB =
+    obterOrdemTXT(produtoB);
+
+  if (
+    ordemTXTA !== null ||
+    ordemTXTB !== null
+  ) {
+
+    const diferencaTXT =
+      (ordemTXTA ?? 999999) -
+      (ordemTXTB ?? 999999);
+
+    if (diferencaTXT !== 0) {
+      return diferencaTXT;
+    }
+
+  }
+
+  const ordemFamiliaA =
+    obterOrdemFamilia(produtoA);
+
+  const ordemFamiliaB =
+    obterOrdemFamilia(produtoB);
+
+  if (
+    ordemFamiliaA !== null ||
+    ordemFamiliaB !== null
+  ) {
+
+    const diferencaFamilia =
+      (ordemFamiliaA ?? 999999) -
+      (ordemFamiliaB ?? 999999);
+
+    if (diferencaFamilia !== 0) {
+      return diferencaFamilia;
+    }
+
+  }
+
+  const familiaA =
+    obterFamiliaSetup(produtoA);
+
+  const familiaB =
+    obterFamiliaSetup(produtoB);
+
+  const diferencaNomeFamilia =
+    familiaA.localeCompare(
+      familiaB,
+      "pt-BR",
+      {
+        numeric: true,
+        sensitivity: "base"
       }
-
-      return a.indexOriginal - b.indexOriginal;
-
-    })
-    .map(item => item.produto);
-
-}
-
-function recalcularProdutosDaLinha(
-  produtos,
-  linha
-) {
-
-  const produtosOrdenados =
-    ordenarProdutosPorSequencia(
-      produtos
     );
 
-  let familiaAnterior =
-    null;
+  if (diferencaNomeFamilia !== 0) {
+    return diferencaNomeFamilia;
+  }
 
-  return produtosOrdenados.map((produto, index) => {
-
-    const familiaAtual =
-      obterFamiliaProduto(produto);
-
-    const setupBaseMin =
-      obterSetupBaseProduto(produto);
-
-    let setupAplicadoMin =
-      0;
-
-    if (
-      index > 0 &&
-      familiaAnterior &&
-      familiaAtual !== familiaAnterior
-    ) {
-
-      setupAplicadoMin =
-        setupBaseMin;
-
-    }
-
-    const tempoProducaoPlanejadoMin =
-      obterTempoProducaoProduto(produto);
-
-    const tempoTotalPlanejadoMin =
-      tempoProducaoPlanejadoMin +
-      setupAplicadoMin;
-
-    const produtoRecalculado = {
-
-      ...produto,
-
-      codigo:
-        obterCodigoProduto(produto),
-
-      nomeOficial:
-        obterNomeProduto(produto),
-
-      linhaPlanejada:
-        obterLinhaProduto(produto, linha),
-
-      ordemProducao:
-        index + 1,
-
-      ordemPlanejada:
-        index + 1,
-
-      familiaSetup:
-        familiaAtual,
-
-      classeSetup:
-        familiaAtual,
-
-      setupBaseMin:
-        arredondar(setupBaseMin),
-
-      setupAplicadoMin:
-        arredondar(setupAplicadoMin),
-
-      tempoProducaoPlanejadoMin:
-        arredondar(tempoProducaoPlanejadoMin),
-
-      tempoTotalPlanejadoMin:
-        arredondar(tempoTotalPlanejadoMin),
-
-      kgPlanejado:
-        arredondar(
-          obterKgPlanejadoProduto(produto)
-        )
-
-    };
-
-    familiaAnterior =
-      familiaAtual;
-
-    return produtoRecalculado;
-
-  });
-
-}
-
-function agruparProdutosEmBlocos(
-  produtos
-) {
-
-  const blocos =
-    [];
-
-  produtos.forEach(produto => {
-
-    const familia =
-      produto.familiaSetup ||
-      produto.classeSetup ||
-      "SEM_FAMILIA";
-
-    const ultimoBloco =
-      blocos[blocos.length - 1];
-
-    const deveCriarNovoBloco =
-      !ultimoBloco ||
-      ultimoBloco.familiaSetup !== familia;
-
-    if (deveCriarNovoBloco) {
-
-      blocos.push({
-
-        id:
-          `${familia}-${blocos.length + 1}`,
-
-        ordem:
-          blocos.length + 1,
-
-        familiaSetup:
-          familia,
-
-        classeSetup:
-          familia,
-
-        produtos:
-          [],
-
-        quantidadeProdutos:
-          0,
-
-        kgTotal:
-          0,
-
-        tempoProducaoMin:
-          0,
-
-        setupEntradaMin:
-          produto.setupAplicadoMin || 0,
-
-        tempoTotalMin:
-          0
-
-      });
-
-    }
-
-    const blocoAtual =
-      blocos[blocos.length - 1];
-
-    blocoAtual.produtos.push(
-      produto
+  return obterNomeProduto(produtoA)
+    .localeCompare(
+      obterNomeProduto(produtoB),
+      "pt-BR",
+      {
+        numeric: true,
+        sensitivity: "base"
+      }
     );
 
-    blocoAtual.quantidadeProdutos =
-      blocoAtual.produtos.length;
+}
 
-    blocoAtual.kgTotal =
-      arredondar(
-        blocoAtual.kgTotal +
-        numero(produto.kgPlanejado)
-      );
+function criarSlug(valor) {
 
-    blocoAtual.tempoProducaoMin =
-      arredondar(
-        blocoAtual.tempoProducaoMin +
-        numero(produto.tempoProducaoPlanejadoMin)
-      );
-
-    blocoAtual.tempoTotalMin =
-      arredondar(
-        blocoAtual.tempoTotalMin +
-        numero(produto.tempoTotalPlanejadoMin)
-      );
-
-  });
-
-  return blocos;
+  return texto(valor)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "familia";
 
 }
 
-function calcularResumoLinha(
-  produtos,
-  blocos
+function obterNomeLinha(linhaPlanejada = {}) {
+
+  return texto(
+    linhaPlanejada.linha ??
+    linhaPlanejada.nomeLinha ??
+    linhaPlanejada.nome ??
+    linhaPlanejada.id
+  );
+
+}
+
+function criarProdutoSequenciado(
+  produto,
+  indice,
+  familiaAnterior
 ) {
 
-  const tempoProducaoMin =
-    produtos.reduce((total, produto) => {
+  const familiaSetup =
+    obterFamiliaSetup(produto);
 
-      return total + numero(
-        produto.tempoProducaoPlanejadoMin
-      );
-
-    }, 0);
+  const setupBaseMin =
+    obterSetupBaseMin(produto);
 
   const setupAplicadoMin =
-    produtos.reduce((total, produto) => {
+    indice === 0 || familiaSetup === familiaAnterior
+      ? 0
+      : setupBaseMin;
 
-      return total + numero(
-        produto.setupAplicadoMin
-      );
+  const tempoProducaoPlanejadoMin =
+    obterTempoProducaoMin(produto);
 
-    }, 0);
+  const tempoTotalPlanejadoMin =
+    tempoProducaoPlanejadoMin + setupAplicadoMin;
 
-  const tempoTotalMin =
-    tempoProducaoMin + setupAplicadoMin;
+  const ordemTXT =
+    obterOrdemTXT(produto);
 
-  const kgTotal =
-    produtos.reduce((total, produto) => {
-
-      return total + numero(
-        produto.kgPlanejado
-      );
-
-    }, 0);
+  const ordemSequenciamentoManual =
+    obterOrdemManual(produto);
 
   return {
+    ...produto,
 
+    ordemProducao:
+      indice + 1,
+
+    ordemPlanejada:
+      indice + 1,
+
+    ordemTXT:
+      ordemTXT ?? produto.ordemTXT ?? null,
+
+    sequenciaTXT:
+      ordemTXT ?? produto.sequenciaTXT ?? null,
+
+    ordemLinhaTXT:
+      ordemTXT ?? produto.ordemLinhaTXT ?? null,
+
+    ordemSequenciamentoManual,
+
+    familiaSetup,
+
+    classeSetup:
+      familiaSetup,
+
+    setupBaseMin,
+
+    setupAplicadoMin,
+
+    tempoProducaoPlanejadoMin,
+
+    tempoTotalPlanejadoMin,
+
+    kgPlanejado:
+      obterKgPlanejado(produto),
+
+    codigo:
+      obterCodigoProduto(produto) || produto.codigo,
+
+    nomeOficial:
+      obterNomeProduto(produto) || produto.nomeOficial
+  };
+
+}
+
+function somarProdutos(produtos, campo) {
+
+  return produtos.reduce((total, produto) => {
+
+    return total + numero(produto[campo], 0);
+
+  }, 0);
+
+}
+
+function criarResumoSequenciamento(produtos, blocos) {
+
+  return {
     totalProdutos:
       produtos.length,
 
@@ -441,57 +590,110 @@ function calcularResumoLinha(
       blocos.length,
 
     kgTotal:
-      arredondar(kgTotal),
+      somarProdutos(produtos, "kgPlanejado"),
 
     tempoProducaoMin:
-      arredondar(tempoProducaoMin),
+      somarProdutos(produtos, "tempoProducaoPlanejadoMin"),
 
     setupAplicadoMin:
-      arredondar(setupAplicadoMin),
+      somarProdutos(produtos, "setupAplicadoMin"),
 
     tempoTotalMin:
-      arredondar(tempoTotalMin)
-
+      somarProdutos(produtos, "tempoTotalPlanejadoMin")
   };
 
 }
 
-function obterProdutosDaLinha(
-  linhaPlanejada
+function criarBlocosFamilia(
+  produtosSequenciados,
+  nomeLinha
 ) {
 
-  if (Array.isArray(linhaPlanejada?.produtos)) {
-    return linhaPlanejada.produtos;
-  }
+  const blocos = [];
 
-  if (Array.isArray(linhaPlanejada?.itens)) {
-    return linhaPlanejada.itens;
-  }
+  produtosSequenciados.forEach((produto) => {
 
-  if (Array.isArray(linhaPlanejada?.skus)) {
-    return linhaPlanejada.skus;
-  }
+    const ultimoBloco =
+      blocos[blocos.length - 1];
 
-  if (Array.isArray(linhaPlanejada?.pedidos)) {
-    return linhaPlanejada.pedidos;
-  }
+    if (
+      ultimoBloco &&
+      ultimoBloco.familiaSetup === produto.familiaSetup
+    ) {
 
-  return [];
+      ultimoBloco.produtos.push(produto);
+      return;
 
-}
+    }
 
-function obterNomeLinha(
-  linhaPlanejada,
-  fallback = ""
-) {
+    const ordemBloco =
+      blocos.length + 1;
 
-  return texto(
-    linhaPlanejada?.linha ||
-    linhaPlanejada?.nomeLinha ||
-    linhaPlanejada?.id ||
-    linhaPlanejada?.codigo ||
-    fallback
-  );
+    const blocoId =
+      `${nomeLinha || "LINHA"}-${ordemBloco}-${criarSlug(produto.familiaSetup)}`;
+
+    blocos.push({
+      id:
+        blocoId,
+
+      blocoId,
+
+      linha:
+        nomeLinha,
+
+      ordemBloco,
+
+      familiaSetup:
+        produto.familiaSetup,
+
+      classeSetup:
+        produto.classeSetup,
+
+      produtos: [
+        produto
+      ]
+    });
+
+  });
+
+  return blocos.map((bloco) => {
+
+    const ordensTXT =
+      bloco.produtos
+        .map(obterOrdemTXT)
+        .filter(valor => valor !== null)
+        .sort((a, b) => a - b);
+
+    return {
+      ...bloco,
+
+      totalProdutos:
+        bloco.produtos.length,
+
+      kgTotal:
+        somarProdutos(bloco.produtos, "kgPlanejado"),
+
+      tempoProducaoMin:
+        somarProdutos(bloco.produtos, "tempoProducaoPlanejadoMin"),
+
+      setupAplicadoMin:
+        somarProdutos(bloco.produtos, "setupAplicadoMin"),
+
+      tempoTotalMin:
+        somarProdutos(bloco.produtos, "tempoTotalPlanejadoMin"),
+
+      ordemTXTInicial:
+        ordensTXT.length > 0
+          ? ordensTXT[0]
+          : null,
+
+      ordemTXTFinal:
+        ordensTXT.length > 0
+          ? ordensTXT[ordensTXT.length - 1]
+          : null
+    };
+
+  });
 
 }
 
@@ -500,110 +702,82 @@ export function gerarSequenciamentoLinha(
   opcoes = {}
 ) {
 
-  const linha =
-    obterNomeLinha(
-      linhaPlanejada,
-      opcoes.linha || ""
-    );
+  if (!linhaPlanejada) {
+    return linhaPlanejada;
+  }
 
-  const produtosOriginais =
-    obterProdutosDaLinha(
+  const nomeLinha =
+    obterNomeLinha(
       linhaPlanejada
     );
 
-  const produtos =
-    recalcularProdutosDaLinha(
-      produtosOriginais,
-      linha
-    );
+  const produtosOriginais =
+    Array.isArray(linhaPlanejada.produtos)
+      ? linhaPlanejada.produtos
+      : Array.isArray(linhaPlanejada.itens)
+        ? linhaPlanejada.itens
+        : [];
+
+  const comparador =
+    opcoes.comparador ||
+    compararProdutosSequenciamento;
+
+  const produtosOrdenados =
+    produtosOriginais
+      .map(produto => {
+
+        return aplicarFamiliaCadastradaAoProduto(
+          produto
+        );
+
+      })
+      .sort(
+        comparador
+      );
+
+  let familiaAnterior =
+    null;
+
+  const produtosSequenciados =
+    produtosOrdenados.map((produto, indice) => {
+
+      const produtoSequenciado =
+        criarProdutoSequenciado(
+          produto,
+          indice,
+          familiaAnterior
+        );
+
+      familiaAnterior =
+        produtoSequenciado.familiaSetup;
+
+      return produtoSequenciado;
+
+    });
 
   const blocos =
-    agruparProdutosEmBlocos(
-      produtos
-    );
-
-  const resumo =
-    calcularResumoLinha(
-      produtos,
-      blocos
+    criarBlocosFamilia(
+      produtosSequenciados,
+      nomeLinha
     );
 
   return {
-
     ...linhaPlanejada,
 
-    linha,
+    linha:
+      nomeLinha || linhaPlanejada.linha,
 
-    produtos,
+    produtos:
+      produtosSequenciados,
 
     blocos,
 
     resumoSequenciamento:
-      resumo,
-
-    tempoProducaoMin:
-      resumo.tempoProducaoMin,
-
-    setupAplicadoMin:
-      resumo.setupAplicadoMin,
-
-    tempoTotalPlanejadoMin:
-      resumo.tempoTotalMin,
-
-    totalBlocos:
-      resumo.totalBlocos
-
+      criarResumoSequenciamento(
+        produtosSequenciados,
+        blocos
+      )
   };
-
-}
-
-function obterLinhasDoPlanejamento(
-  planejamento
-) {
-
-  if (!planejamento) {
-    return [];
-  }
-
-  if (Array.isArray(planejamento)) {
-    return planejamento;
-  }
-
-  if (Array.isArray(planejamento.linhas)) {
-    return planejamento.linhas;
-  }
-
-  if (
-    planejamento.linhas &&
-    typeof planejamento.linhas === "object"
-  ) {
-    return Object.values(
-      planejamento.linhas
-    );
-  }
-
-  if (Array.isArray(planejamento.linhasPlanejadas)) {
-    return planejamento.linhasPlanejadas;
-  }
-
-  if (Array.isArray(planejamento.linhasComCapacidade)) {
-    return planejamento.linhasComCapacidade;
-  }
-
-  if (Array.isArray(planejamento.planejamentoPorLinha)) {
-    return planejamento.planejamentoPorLinha;
-  }
-
-  if (
-    planejamento.planejamentoPorLinha &&
-    typeof planejamento.planejamentoPorLinha === "object"
-  ) {
-    return Object.values(
-      planejamento.planejamentoPorLinha
-    );
-  }
-
-  return [];
 
 }
 
@@ -612,117 +786,82 @@ export function gerarSequenciamentoPlanejamento(
   opcoes = {}
 ) {
 
+  if (!planejamento) {
+    return planejamento;
+  }
+
   const linhasOriginais =
-    obterLinhasDoPlanejamento(
-      planejamento
-    );
+    planejamento.linhas ||
+    [];
 
   const linhasSequenciadas =
-    linhasOriginais.map((linha, index) => {
+    linhasOriginais.map(linha => {
 
       return gerarSequenciamentoLinha(
         linha,
-        {
-          ...opcoes,
-          linha:
-            linha?.linha ||
-            linha?.nomeLinha ||
-            `L${index + 1}`
-        }
+        opcoes
       );
 
     });
 
-  const resumoGeral =
-    linhasSequenciadas.reduce((total, linha) => {
+  const resumoSequenciamento =
+    linhasSequenciadas.reduce((resumo, linha) => {
 
-      const resumo =
+      const resumoLinha =
         linha.resumoSequenciamento || {};
 
-      return {
+      resumo.totalLinhas += 1;
 
-        totalLinhas:
-          total.totalLinhas + 1,
+      resumo.totalProdutos +=
+        numero(resumoLinha.totalProdutos, 0);
 
-        totalProdutos:
-          total.totalProdutos + numero(
-            resumo.totalProdutos
-          ),
+      resumo.totalBlocos +=
+        numero(resumoLinha.totalBlocos, 0);
 
-        totalBlocos:
-          total.totalBlocos + numero(
-            resumo.totalBlocos
-          ),
+      resumo.kgTotal +=
+        numero(resumoLinha.kgTotal, 0);
 
-        kgTotal:
-          total.kgTotal + numero(
-            resumo.kgTotal
-          ),
+      resumo.tempoProducaoMin +=
+        numero(resumoLinha.tempoProducaoMin, 0);
 
-        tempoProducaoMin:
-          total.tempoProducaoMin + numero(
-            resumo.tempoProducaoMin
-          ),
+      resumo.setupAplicadoMin +=
+        numero(resumoLinha.setupAplicadoMin, 0);
 
-        setupAplicadoMin:
-          total.setupAplicadoMin + numero(
-            resumo.setupAplicadoMin
-          ),
+      resumo.tempoTotalMin +=
+        numero(resumoLinha.tempoTotalMin, 0);
 
-        tempoTotalMin:
-          total.tempoTotalMin + numero(
-            resumo.tempoTotalMin
-          )
-
-      };
+      return resumo;
 
     }, {
-      totalLinhas: 0,
-      totalProdutos: 0,
-      totalBlocos: 0,
-      kgTotal: 0,
-      tempoProducaoMin: 0,
-      setupAplicadoMin: 0,
-      tempoTotalMin: 0
+      totalLinhas:
+        0,
+
+      totalProdutos:
+        0,
+
+      totalBlocos:
+        0,
+
+      kgTotal:
+        0,
+
+      tempoProducaoMin:
+        0,
+
+      setupAplicadoMin:
+        0,
+
+      tempoTotalMin:
+        0
     });
 
-  const resumoFinal = {
-
-    totalLinhas:
-      resumoGeral.totalLinhas,
-
-    totalProdutos:
-      resumoGeral.totalProdutos,
-
-    totalBlocos:
-      resumoGeral.totalBlocos,
-
-    kgTotal:
-      arredondar(resumoGeral.kgTotal),
-
-    tempoProducaoMin:
-      arredondar(resumoGeral.tempoProducaoMin),
-
-    setupAplicadoMin:
-      arredondar(resumoGeral.setupAplicadoMin),
-
-    tempoTotalMin:
-      arredondar(resumoGeral.tempoTotalMin)
-
-  };
-
   return {
-
     ...planejamento,
 
     linhas:
       linhasSequenciadas,
 
-    linhasSequenciadas,
-
-    resumoSequenciamento:
-      resumoFinal
-
+    resumoSequenciamento
   };
 
 }

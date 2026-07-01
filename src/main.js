@@ -108,6 +108,14 @@ import {
   moverBlocoPlanejamento
 } from "./services/movimentadorSequenciamentoService.js";
 
+import {
+  renderFamiliasSetup
+} from "./render/renderFamiliasSetup.js";
+
+import {
+  renderPlanoFinalDia
+} from "./render/renderPlanoFinalDia.js";
+
 // =========================
 // ELEMENTOS
 // =========================
@@ -575,6 +583,10 @@ function moverBlocoSequenciamento({
     }
   );
 
+  renderPlanoFinalDia(
+    ultimoPlanejamentoComCapacidade
+  );
+
   renderBalanceamento(null);
 
   renderPlanejamentoSimulado(null);
@@ -667,6 +679,10 @@ function renderizarResultadoSincronizacao(
       onMoverBloco:
         moverBlocoSequenciamento
     }
+  );
+
+  renderPlanoFinalDia(
+    planejamentoSequenciado
   );
 
   renderBalanceamento(
@@ -850,6 +866,14 @@ function recalcularPlanejamentoComCapacidade() {
   const produtosMestre =
     carregarProdutosMestre();
 
+  renderFamiliasSetup({
+    onSalvar: () => {
+
+      recalcularPlanejamentoComCapacidade();
+
+    }
+  });
+
   const dadosCSV =
     getDadosCSV();
 
@@ -868,6 +892,10 @@ function recalcularPlanejamentoComCapacidade() {
     );
 
     renderSequenciamentoProducao(
+      null
+    );
+
+    renderPlanoFinalDia(
       null
     );
 
@@ -911,6 +939,10 @@ function recalcularPlanejamentoComCapacidade() {
       onMoverBloco:
         moverBlocoSequenciamento
     }
+  );
+
+  renderPlanoFinalDia(
+    planejamentoSequenciado
   );
 
   renderBalanceamento(
@@ -1289,7 +1321,7 @@ function iniciarJFCFlow() {
 
   inicializarDropzones();
 
- 
+
   renderEditorCapacidade(
     recalcularPlanejamentoComCapacidade
   );

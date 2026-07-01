@@ -2,10 +2,23 @@
  * ======================================================
  * JFC FLOW
  * Módulo: txtImporter
- * Versão: 1.0.0
+ * Versão: 1.0.1
  *
  * Responsabilidade:
  * Ler o TXT oficial da fábrica e converter em produtos técnicos.
+ *
+ * Regra importante:
+ * A numeração do TXT:
+ * 1. Produto A
+ * 2. Produto B
+ * 3. Produto C
+ *
+ * representa a ordem real de entrada do produto na linha.
+ * Essa ordem será salva como:
+ * - sequencia
+ * - sequenciaTXT
+ * - ordemTXT
+ * - ordemLinhaTXT
  * ======================================================
  */
 
@@ -45,14 +58,21 @@ function parseTempoParaMinutos(valor) {
   let total = 0;
 
   const horas = texto.match(/(\d+(?:\.\d+)?)h/);
+
   const minutos = texto.match(/(\d+(?:\.\d+)?)min/);
 
   if (horas) {
-    total += Number(horas[1]) * 60;
+
+    total +=
+      Number(horas[1]) * 60;
+
   }
 
   if (minutos) {
-    total += Number(minutos[1]);
+
+    total +=
+      Number(minutos[1]);
+
   }
 
   if (
@@ -60,10 +80,15 @@ function parseTempoParaMinutos(valor) {
     !minutos &&
     /^\d+(?:\.\d+)?$/.test(texto)
   ) {
-    total = Number(texto);
+
+    total =
+      Number(texto);
+
   }
 
-  return Math.round(total);
+  return Math.round(
+    total
+  );
 
 }
 
@@ -104,9 +129,11 @@ function normalizarDescricao(texto) {
 
 function extrairTransferencia(descricaoBruta) {
 
-  const texto = String(descricaoBruta || "").trim();
+  const texto =
+    String(descricaoBruta || "").trim();
 
-  const match = texto.match(/\s*\[([^\]]+)\]\s*$/);
+  const match =
+    texto.match(/\s*\[([^\]]+)\]\s*$/);
 
   if (!match) {
 
@@ -117,11 +144,13 @@ function extrairTransferencia(descricaoBruta) {
 
   }
 
-  const transferenciaRaw = match[1].trim();
+  const transferenciaRaw =
+    match[1].trim();
 
-  const descricaoLimpa = texto
-    .replace(/\s*\[[^\]]+\]\s*$/, "")
-    .trim();
+  const descricaoLimpa =
+    texto
+      .replace(/\s*\[[^\]]+\]\s*$/, "")
+      .trim();
 
   return {
     descricaoLimpa,
@@ -132,12 +161,41 @@ function extrairTransferencia(descricaoBruta) {
 
 }
 
+function extrairSequenciaENomeProdutoTXT(
+  linha
+) {
+
+  const texto =
+    String(linha || "").trim();
+
+  const match =
+    texto.match(/^(\d+)\.\s*(.+)$/);
+
+  if (!match) {
+
+    return {
+      sequenciaTXT: null,
+      nomeProdutoTXT: texto
+    };
+
+  }
+
+  return {
+    sequenciaTXT:
+      Number(match[1]),
+
+    nomeProdutoTXT:
+      match[2].trim()
+  };
+
+}
+
 function criarIdTecnico(produto) {
 
   return [
     produto.linha,
     produto.zona,
-    produto.sequencia,
+    produto.ordemLinhaTXT,
     produto.descricaoNormalizada
   ].join("|");
 
@@ -145,8 +203,9 @@ function criarIdTecnico(produto) {
 
 export function importarTXT(conteudoTXT) {
 
-  const linhasArquivo = String(conteudoTXT || "")
-    .split(/\r?\n/);
+  const linhasArquivo =
+    String(conteudoTXT || "")
+      .split(/\r?\n/);
 
   const produtosTecnicos = [];
 
@@ -154,17 +213,21 @@ export function importarTXT(conteudoTXT) {
 
   const linhasNaoInterpretadas = [];
 
-  const linhasNaoVazias = linhasArquivo
-    .map(linha => linha.trim())
-    .filter(Boolean);
+  const linhasNaoVazias =
+    linhasArquivo
+      .map(linha => linha.trim())
+      .filter(Boolean);
 
   const meta = {
 
-    titulo: linhasNaoVazias[0] || "",
+    titulo:
+      linhasNaoVazias[0] || "",
 
-    referencia: linhasNaoVazias[1] || "",
+    referencia:
+      linhasNaoVazias[1] || "",
 
-    totalLinhasArquivo: linhasArquivo.length
+    totalLinhasArquivo:
+      linhasArquivo.length
 
   };
 
@@ -176,11 +239,17 @@ export function importarTXT(conteudoTXT) {
 
   let produtoPendente = null;
 
-  for (let i = 0; i < linhasArquivo.length; i++) {
+  for (
+    let i = 0;
+    i < linhasArquivo.length;
+    i++
+  ) {
 
-    const raw = linhasArquivo[i];
+    const raw =
+      linhasArquivo[i];
 
-    const linha = raw.trim();
+    const linha =
+      raw.trim();
 
     if (!linha) {
       continue;
@@ -201,27 +270,37 @@ export function importarTXT(conteudoTXT) {
      * Exemplo:
      * ▶ LINHA 2 — 1.5k u/dia | 15.7t kg/dia
      */
-    const matchLinha = linha.match(
-      /^▶\s+(?:LINHA\s+)?(.+?)\s+—\s+(.+)$/i
-    );
+    const matchLinha =
+      linha.match(
+        /^▶\s+(?:LINHA\s+)?(.+?)\s+—\s+(.+)$/i
+      );
 
     if (matchLinha) {
 
-      linhaOriginalAtual = matchLinha[1].trim();
+      linhaOriginalAtual =
+        matchLinha[1].trim();
 
-      linhaAtual = normalizarLinha(linhaOriginalAtual);
+      linhaAtual =
+        normalizarLinha(
+          linhaOriginalAtual
+        );
 
-      zonaAtual = null;
+      zonaAtual =
+        null;
 
-      produtoPendente = null;
+      produtoPendente =
+        null;
 
       linhasResumo.push({
 
-        linha: linhaAtual,
+        linha:
+          linhaAtual,
 
-        linhaOriginal: linhaOriginalAtual,
+        linhaOriginal:
+          linhaOriginalAtual,
 
-        resumo: matchLinha[2].trim(),
+        resumo:
+          matchLinha[2].trim(),
 
         raw
 
@@ -235,13 +314,16 @@ export function importarTXT(conteudoTXT) {
      * Exemplo:
      * [Zona Negra]
      */
-    const matchZona = linha.match(/^\[(.+?)\]$/);
+    const matchZona =
+      linha.match(/^\[(.+?)\]$/);
 
     if (matchZona) {
 
-      zonaAtual = matchZona[1].trim();
+      zonaAtual =
+        matchZona[1].trim();
 
-      produtoPendente = null;
+      produtoPendente =
+        null;
 
       continue;
 
@@ -249,9 +331,12 @@ export function importarTXT(conteudoTXT) {
 
     /**
      * Exemplo:
-     * 1. TIRAS DE ALFACE AMERICANA JFC
+     * 1. CEBOLA BRANCA TIRAS MC CX 4KG 4PCT 1KG
+     *
+     * O número antes do ponto é a ordem real de entrada na linha.
      */
-    const matchProduto = linha.match(/^(\d+)\.\s+(.+)$/);
+    const matchProduto =
+      linha.match(/^(\d+)\.\s+(.+)$/);
 
     if (
       matchProduto &&
@@ -259,38 +344,69 @@ export function importarTXT(conteudoTXT) {
       zonaAtual
     ) {
 
-      const sequencia = Number(matchProduto[1]);
+      const dadosProdutoTXT =
+        extrairSequenciaENomeProdutoTXT(
+          linha
+        );
 
-      const descricaoBruta = matchProduto[2].trim();
+      const sequenciaTXT =
+        dadosProdutoTXT.sequenciaTXT;
+
+      const descricaoBruta =
+        dadosProdutoTXT.nomeProdutoTXT;
 
       const {
         descricaoLimpa,
         transferencia
-      } = extrairTransferencia(descricaoBruta);
+      } =
+        extrairTransferencia(
+          descricaoBruta
+        );
 
       produtoPendente = {
 
-        linhaArquivo: i + 1,
+        linhaArquivo:
+          i + 1,
 
-        linha: linhaAtual,
+        linha:
+          linhaAtual,
 
-        linhaOriginal: linhaOriginalAtual,
+        linhaOriginal:
+          linhaOriginalAtual,
 
-        zona: zonaAtual,
+        zona:
+          zonaAtual,
 
-        sequencia,
+        sequencia:
+          sequenciaTXT,
 
-        codigo: null,
+        sequenciaTXT:
+          sequenciaTXT,
 
-        descricaoTXT: descricaoLimpa,
+        ordemTXT:
+          sequenciaTXT,
 
-        descricaoTXTBruta: descricaoBruta,
+        ordemLinhaTXT:
+          sequenciaTXT,
 
-        descricaoNormalizada: normalizarDescricao(descricaoLimpa),
+        codigo:
+          null,
+
+        descricaoTXT:
+          descricaoLimpa,
+
+        descricaoTXTBruta:
+          descricaoBruta,
+
+        descricaoNormalizada:
+          normalizarDescricao(
+            descricaoLimpa
+          ),
 
         transferencia,
 
-        rawProduto: raw
+        rawProduto:
+          raw
 
       };
 
@@ -302,58 +418,88 @@ export function importarTXT(conteudoTXT) {
      * Exemplo:
      * 1284u/dia | 14565.9kg/dia | 2160kg/h | Setup:0min | Prod:6h45min | Acum:6h45min
      */
-    const matchDetalhe = linha.match(
-      /^([\d.,]+)u\/dia\s*\|\s*([\d.,]+)kg\/dia\s*\|\s*([\d.,]+)kg\/h\s*\|\s*Setup:([^|]+)\|\s*Prod:([^|]+)\|\s*Acum:(.+)$/i
-    );
+    const matchDetalhe =
+      linha.match(
+        /^([\d.,]+)u\/dia\s*\|\s*([\d.,]+)kg\/dia\s*\|\s*([\d.,]+)kg\/h\s*\|\s*Setup:([^|]+)\|\s*Prod:([^|]+)\|\s*Acum:(.+)$/i
+      );
 
     if (
       matchDetalhe &&
       produtoPendente
     ) {
 
-      const setupTexto = matchDetalhe[4].trim();
+      const setupTexto =
+        matchDetalhe[4].trim();
 
-      const prodTexto = matchDetalhe[5].trim();
+      const prodTexto =
+        matchDetalhe[5].trim();
 
-      const acumTexto = matchDetalhe[6].trim();
+      const acumTexto =
+        matchDetalhe[6].trim();
 
       const produtoTecnico = {
 
         ...produtoPendente,
 
-        unidadeDia: parseNumero(matchDetalhe[1]),
+        unidadeDia:
+          parseNumero(
+            matchDetalhe[1]
+          ),
 
-        kgDia: parseNumero(matchDetalhe[2]),
+        kgDia:
+          parseNumero(
+            matchDetalhe[2]
+          ),
 
-        produtividadeKgHora: parseNumero(matchDetalhe[3]),
+        produtividadeKgHora:
+          parseNumero(
+            matchDetalhe[3]
+          ),
 
         setupTexto,
 
-        setupMin: parseTempoParaMinutos(setupTexto),
+        setupMin:
+          parseTempoParaMinutos(
+            setupTexto
+          ),
 
         prodTexto,
 
-        tempoProducaoMin: parseTempoParaMinutos(prodTexto),
+        tempoProducaoMin:
+          parseTempoParaMinutos(
+            prodTexto
+          ),
 
         acumTexto,
 
-        acumuladoMin: parseTempoParaMinutos(acumTexto),
+        acumuladoMin:
+          parseTempoParaMinutos(
+            acumTexto
+          ),
 
-        ativo: true,
+        ativo:
+          true,
 
         origem: {
           txt: true
         },
 
-        rawDetalhe: raw
+        rawDetalhe:
+          raw
 
       };
 
-      produtoTecnico.idTecnico = criarIdTecnico(produtoTecnico);
+      produtoTecnico.idTecnico =
+        criarIdTecnico(
+          produtoTecnico
+        );
 
-      produtosTecnicos.push(produtoTecnico);
+      produtosTecnicos.push(
+        produtoTecnico
+      );
 
-      produtoPendente = null;
+      produtoPendente =
+        null;
 
       continue;
 
@@ -361,9 +507,11 @@ export function importarTXT(conteudoTXT) {
 
     linhasNaoInterpretadas.push({
 
-      numero: i + 1,
+      numero:
+        i + 1,
 
-      conteudo: raw
+      conteudo:
+        raw
 
     });
 
@@ -381,11 +529,14 @@ export function importarTXT(conteudoTXT) {
 
     estatisticas: {
 
-      totalProdutosTecnicos: produtosTecnicos.length,
+      totalProdutosTecnicos:
+        produtosTecnicos.length,
 
-      totalLinhasProducao: linhasResumo.length,
+      totalLinhasProducao:
+        linhasResumo.length,
 
-      totalLinhasNaoInterpretadas: linhasNaoInterpretadas.length
+      totalLinhasNaoInterpretadas:
+        linhasNaoInterpretadas.length
 
     }
 

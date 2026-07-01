@@ -2,58 +2,63 @@
  * ======================================================
  * JFC FLOW
  * Módulo: renderSequenciamentoProducao
- * Versão: 1.0.1
  *
  * Responsabilidade:
- * Exibir sequência de produção por linha,
- * agrupada por família/classe de setup.
- *
- * Também dispara evento para mover blocos.
+ * Renderizar o Sequenciamento por Família.
+ * - Linhas começam minimizadas.
+ * - Linha aberta permanece aberta após mover bloco.
+ * - Exibe Ordem TXT para conferência.
  * ======================================================
  */
 
-function numero(valor) {
+function texto(valor) {
 
-  return Number(
-    String(valor ?? "")
-      .replace(",", ".")
-  ) || 0;
+  return String(valor ?? "").trim();
 
 }
 
-function formatarNumero(
-  valor,
-  casas = 0
-) {
+function numero(valor) {
 
-  return numero(valor)
-    .toLocaleString(
-      "pt-BR",
-      {
-        minimumFractionDigits: casas,
-        maximumFractionDigits: casas
-      }
-    );
+  const convertido =
+    Number(valor);
+
+  return Number.isFinite(convertido)
+    ? convertido
+    : 0;
 
 }
 
 function escaparHTML(valor) {
 
-  return String(valor ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return texto(valor)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+function formatarNumero(valor, casas = 0) {
+
+  return numero(valor).toLocaleString(
+    "pt-BR",
+    {
+      minimumFractionDigits: casas,
+      maximumFractionDigits: casas
+    }
+  );
 
 }
 
 function formatarTempo(minutos) {
 
   const total =
-    Math.round(
-      numero(minutos)
-    );
+    Math.round(numero(minutos));
+
+  if (total <= 0) {
+    return "0 min";
+  }
 
   const horas =
     Math.floor(total / 60);
@@ -61,231 +66,242 @@ function formatarTempo(minutos) {
   const mins =
     total % 60;
 
-  if (horas <= 0) {
-    return `${mins} min`;
+  if (horas > 0 && mins > 0) {
+    return `${horas}h ${mins}min`;
   }
 
-  return `${horas}h ${String(mins).padStart(2, "0")}min`;
+  if (horas > 0) {
+    return `${horas}h`;
+  }
+
+  return `${mins} min`;
 
 }
 
-function obterLinhasSequenciadas(
-  planejamento
-) {
+function obterNomeLinha(linha = {}) {
 
-  if (!planejamento) {
-    return [];
-  }
-
-  if (Array.isArray(planejamento.linhasSequenciadas)) {
-    return planejamento.linhasSequenciadas;
-  }
-
-  if (Array.isArray(planejamento.linhas)) {
-    return planejamento.linhas;
-  }
-
-  if (
-    planejamento.linhas &&
-    typeof planejamento.linhas === "object"
-  ) {
-    return Object.values(
-      planejamento.linhas
-    );
-  }
-
-  if (Array.isArray(planejamento.planejamentoPorLinha)) {
-    return planejamento.planejamentoPorLinha;
-  }
-
-  if (
-    planejamento.planejamentoPorLinha &&
-    typeof planejamento.planejamentoPorLinha === "object"
-  ) {
-    return Object.values(
-      planejamento.planejamentoPorLinha
-    );
-  }
-
-  return [];
-
-}
-
-function obterNomeLinha(
-  linha
-) {
-
-  return (
-    linha?.linha ||
-    linha?.nomeLinha ||
-    linha?.id ||
-    linha?.codigo ||
-    ""
+  return texto(
+    linha.linha ??
+    linha.nomeLinha ??
+    linha.nome ??
+    linha.id
   );
 
 }
 
-function renderProdutoBloco(
-  produto
-) {
+function obterCodigoProduto(produto = {}) {
+
+  return texto(
+    produto.codigo ??
+    produto.codigoProduto ??
+    produto.codProduto ??
+    "-"
+  );
+
+}
+
+function obterNomeProduto(produto = {}) {
+
+  return texto(
+    produto.nomeOficial ??
+    produto.nomeProduto ??
+    produto.produtoVenda ??
+    produto.produto ??
+    produto.descricaoCSV ??
+    produto.descricaoTXT ??
+    produto.nome ??
+    "-"
+  );
+
+}
+
+function obterOrdemTXT(produto = {}) {
+
+  return produto.ordemTXT ??
+    produto.ordemTxt ??
+    produto.sequenciaTXT ??
+    produto.sequenciaTxt ??
+    produto.sequencia ??
+    "-";
+
+}
+
+function obterLinhasAbertas(container) {
+
+  return new Set(
+    Array.from(
+      container?.querySelectorAll(".seq-linha-card[open]") || []
+    )
+      .map(elemento => elemento.dataset.linhaSequenciamento)
+      .filter(Boolean)
+  );
+
+}
+
+function renderResumoGeral(resumo = {}) {
+
+  return `
+    <div class="sequenciamento-resumo">
+      <span>
+        <small>Linhas</small>
+        <strong>${formatarNumero(resumo.totalLinhas || 0)}</strong>
+      </span>
+
+      <span>
+        <small>Produtos</small>
+        <strong>${formatarNumero(resumo.totalProdutos || 0)}</strong>
+      </span>
+
+      <span>
+        <small>Famílias</small>
+        <strong>${formatarNumero(resumo.totalBlocos || 0)}</strong>
+      </span>
+
+      <span>
+        <small>Kg total</small>
+        <strong>${formatarNumero(resumo.kgTotal || 0, 2)}</strong>
+      </span>
+
+      <span>
+        <small>Setup</small>
+        <strong>${formatarTempo(resumo.setupAplicadoMin || 0)}</strong>
+      </span>
+
+      <span>
+        <small>Tempo total</small>
+        <strong>${formatarTempo(resumo.tempoTotalMin || 0)}</strong>
+      </span>
+    </div>
+  `;
+
+}
+
+function renderProduto(produto) {
 
   return `
     <tr>
-      <td>${escaparHTML(produto.ordemProducao || produto.ordemPlanejada || "-")}</td>
-
-      <td>${escaparHTML(produto.codigo || "-")}</td>
-
-      <td class="seq-produto-nome">
-        ${escaparHTML(produto.nomeOficial || produto.descricao || "-")}
-      </td>
-
-      <td>${formatarNumero(produto.kgPlanejado, 2)} kg</td>
-
-      <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
-
-      <td>${formatarTempo(produto.setupAplicadoMin)}</td>
-
-      <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
+      <td>${formatarNumero(produto.ordemProducao || produto.ordemPlanejada || 0)}</td>
+      <td>${escaparHTML(obterOrdemTXT(produto))}</td>
+      <td>${escaparHTML(obterCodigoProduto(produto))}</td>
+      <td class="seq-produto-nome">${escaparHTML(obterNomeProduto(produto))}</td>
+      <td>${formatarNumero(produto.kgPlanejado || produto.kgTotal || produto.demandaKg || 0, 2)}</td>
+      <td>${formatarTempo(produto.tempoProducaoPlanejadoMin || produto.tempoPlanejadoMin || 0)}</td>
+      <td>${formatarTempo(produto.setupAplicadoMin || 0)}</td>
+      <td>${formatarTempo(produto.tempoTotalPlanejadoMin || 0)}</td>
     </tr>
   `;
 
 }
 
-function renderBloco(
-  bloco,
-  linha
-) {
+function renderTabelaProdutos(produtos = []) {
 
-  const produtos =
-    bloco.produtos || [];
+  return `
+    <div class="seq-produtos-wrapper">
+      <table class="seq-produtos-table">
+        <thead>
+          <tr>
+            <th>Ordem atual</th>
+            <th>Ordem TXT</th>
+            <th>Código</th>
+            <th>Produto</th>
+            <th>Kg</th>
+            <th>Produção</th>
+            <th>Setup</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${produtos.map(renderProduto).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+}
+
+function renderBloco(bloco, linha) {
+
+  const linhaNome =
+    obterNomeLinha(linha);
+
+  const blocoId =
+    bloco.id || bloco.blocoId;
 
   const setupClasse =
-    numero(bloco.setupEntradaMin) > 0
+    numero(bloco.setupAplicadoMin) > 0
       ? "seq-setup-com"
       : "seq-setup-zero";
 
-  const nomeLinha =
-    obterNomeLinha(
-      linha
-    );
+  const faixaTXT =
+    bloco.ordemTXTInicial && bloco.ordemTXTFinal
+      ? bloco.ordemTXTInicial === bloco.ordemTXTFinal
+        ? bloco.ordemTXTInicial
+        : `${bloco.ordemTXTInicial} - ${bloco.ordemTXTFinal}`
+      : "-";
 
   return `
     <details class="seq-bloco" open>
-
       <summary class="seq-bloco-header">
-
         <div class="seq-bloco-title">
-
-          <span class="seq-bloco-ordem">
-            ${escaparHTML(bloco.ordem || "-")}
-          </span>
+          <span class="seq-bloco-ordem">${formatarNumero(bloco.ordemBloco || 0)}</span>
 
           <div>
-            <h4>${escaparHTML(bloco.familiaSetup || bloco.classeSetup || "SEM FAMÍLIA")}</h4>
-
-            <p>
-              ${formatarNumero(bloco.quantidadeProdutos || produtos.length)} produtos
-            </p>
+            <h4>${escaparHTML(bloco.familiaSetup || "SEM FAMÍLIA")}</h4>
+            <p>${formatarNumero(bloco.totalProdutos || bloco.produtos?.length || 0)} produtos | Ordem TXT: ${escaparHTML(faixaTXT)}</p>
           </div>
-
         </div>
 
         <div class="seq-bloco-actions">
+          <button
+            type="button"
+            class="seq-move-btn"
+            data-mover-bloco="${escaparHTML(blocoId)}"
+            data-linha="${escaparHTML(linhaNome)}"
+            data-direcao="up"
+            title="Subir família"
+          >↑</button>
 
           <button
             type="button"
             class="seq-move-btn"
-            data-mover-bloco="${escaparHTML(bloco.id)}"
-            data-linha="${escaparHTML(nomeLinha)}"
-            data-direcao="cima"
-            title="Mover bloco para cima"
-          >
-            ↑
-          </button>
-
-          <button
-            type="button"
-            class="seq-move-btn"
-            data-mover-bloco="${escaparHTML(bloco.id)}"
-            data-linha="${escaparHTML(nomeLinha)}"
-            data-direcao="baixo"
-            title="Mover bloco para baixo"
-          >
-            ↓
-          </button>
-
+            data-mover-bloco="${escaparHTML(blocoId)}"
+            data-linha="${escaparHTML(linhaNome)}"
+            data-direcao="down"
+            title="Descer família"
+          >↓</button>
         </div>
 
         <div class="seq-bloco-kpis">
-
           <span>
             <small>Kg</small>
-            <strong>${formatarNumero(bloco.kgTotal, 2)}</strong>
+            <strong>${formatarNumero(bloco.kgTotal || 0, 2)}</strong>
           </span>
 
           <span>
             <small>Produção</small>
-            <strong>${formatarTempo(bloco.tempoProducaoMin)}</strong>
+            <strong>${formatarTempo(bloco.tempoProducaoMin || 0)}</strong>
           </span>
 
           <span class="${setupClasse}">
-            <small>Setup entrada</small>
-            <strong>${formatarTempo(bloco.setupEntradaMin)}</strong>
+            <small>Setup</small>
+            <strong>${formatarTempo(bloco.setupAplicadoMin || 0)}</strong>
           </span>
 
           <span>
             <small>Total</small>
-            <strong>${formatarTempo(bloco.tempoTotalMin)}</strong>
+            <strong>${formatarTempo(bloco.tempoTotalMin || 0)}</strong>
           </span>
-
         </div>
-
       </summary>
 
-      <div class="seq-produtos-wrapper">
-
-        <table class="seq-produtos-table">
-
-          <thead>
-            <tr>
-              <th>Ordem</th>
-              <th>Código</th>
-              <th>Produto</th>
-              <th>Kg</th>
-              <th>Produção</th>
-              <th>Setup</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            ${produtos.map(renderProdutoBloco).join("")}
-          </tbody>
-
-        </table>
-
-      </div>
-
+      ${renderTabelaProdutos(bloco.produtos || [])}
     </details>
   `;
 
 }
 
-function renderLinha(
-  linha,
-  linhasAbertas = new Set()
-) {
-
-  const nomeLinha =
-    obterNomeLinha(linha) || "Linha";
-
-  const linhaAberta =
-    linhasAbertas.has(nomeLinha);
-
-  const atributoOpen =
-    linhaAberta
-      ? "open"
-      : "";
+function renderLinha(linha, linhasAbertas = new Set()) {
 
   const resumo =
     linha.resumoSequenciamento || {};
@@ -297,32 +313,34 @@ function renderLinha(
     return "";
   }
 
+  const nomeLinha =
+    obterNomeLinha(linha) || "Linha";
+
+  const atributoOpen =
+    linhasAbertas.has(nomeLinha)
+      ? "open"
+      : "";
+
   return `
     <details
       class="seq-linha-card"
       data-linha-sequenciamento="${escaparHTML(nomeLinha)}"
       ${atributoOpen}
     >
-
       <summary class="seq-linha-header">
-
         <div class="seq-linha-info">
           <h3>${escaparHTML(nomeLinha)}</h3>
-
-          <p>
-            Clique para minimizar ou expandir esta linha.
-          </p>
+          <p>Clique para expandir ou minimizar esta linha.</p>
         </div>
 
         <div class="seq-linha-kpis">
-
           <span>
             <small>Produtos</small>
             <strong>${formatarNumero(resumo.totalProdutos || 0)}</strong>
           </span>
 
           <span>
-            <small>Blocos</small>
+            <small>Famílias</small>
             <strong>${formatarNumero(resumo.totalBlocos || blocos.length)}</strong>
           </span>
 
@@ -345,36 +363,31 @@ function renderLinha(
             <small>Total</small>
             <strong>${formatarTempo(resumo.tempoTotalMin || 0)}</strong>
           </span>
-
         </div>
-
       </summary>
 
       <div class="seq-linha-conteudo">
-
         <div class="seq-blocos-lista">
           ${blocos.map(bloco => renderBloco(bloco, linha)).join("")}
         </div>
-
       </div>
-
     </details>
   `;
 
 }
 
-function ativarBotoesMoverBloco(
-  container,
-  opcoes
-) {
-
-  if (!container) {
-    return;
-  }
+function ativarBotoesMoverBloco(container, opcoes) {
 
   container
     .querySelectorAll("[data-mover-bloco]")
     .forEach(botao => {
+
+      botao.addEventListener("mousedown", (event) => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+      });
 
       botao.addEventListener("click", (event) => {
 
@@ -413,16 +426,6 @@ export function renderSequenciamentoProducao(
 
   const container =
     document.getElementById("sequenciamentoContainer");
-  const linhasAbertas =
-    new Set(
-      Array.from(
-        container?.querySelectorAll(".seq-linha-card[open]") || []
-      ).map(elemento => {
-
-        return elemento.dataset.linhaSequenciamento;
-
-      }).filter(Boolean)
-    );
 
   if (!container) {
 
@@ -434,101 +437,51 @@ export function renderSequenciamentoProducao(
 
   }
 
+  const linhasAbertas =
+    obterLinhasAbertas(container);
+
   if (!planejamento) {
 
     container.innerHTML = "";
-
     return;
 
   }
 
   const linhas =
-    obterLinhasSequenciadas(
-      planejamento
-    ).filter(linha => {
+    planejamento.linhas || [];
 
-      return Array.isArray(linha.blocos) &&
-        linha.blocos.length > 0;
+  const linhasComBlocos =
+    linhas.filter(linha => {
+
+      return (linha.blocos || []).length > 0;
 
     });
 
-  if (linhas.length === 0) {
+  if (linhasComBlocos.length === 0) {
 
-    container.innerHTML = `
-      <section class="sequenciamento-card">
-        <h2>Sequenciamento por Família</h2>
-
-        <p class="sequenciamento-empty">
-          Nenhuma sequência gerada ainda.
-        </p>
-      </section>
-    `;
-
+    container.innerHTML = "";
     return;
 
   }
 
-  const resumoGeral =
-    planejamento.resumoSequenciamento || {};
-
   container.innerHTML = `
     <section class="sequenciamento-card">
-
       <div class="sequenciamento-header">
-
         <div>
           <h2>Sequenciamento por Família</h2>
-
           <p>
-            Ordem de produção calculada por linha, considerando família de setup.
-            Primeiro item não conta setup; setup entra somente na troca de família.
+            A ordem inicial considera a sequência do TXT. Depois, o PCP pode ajustar movendo famílias com as setas.
           </p>
         </div>
 
-        <span class="sequenciamento-badge">
-          ${formatarNumero(linhas.length)} linhas
-        </span>
-
+        <span class="sequenciamento-badge">Famílias + Ordem TXT</span>
       </div>
 
-      <div class="sequenciamento-resumo">
-
-        <span>
-          <small>Total de produtos</small>
-          <strong>${formatarNumero(resumoGeral.totalProdutos || 0)}</strong>
-        </span>
-
-        <span>
-          <small>Total de blocos</small>
-          <strong>${formatarNumero(resumoGeral.totalBlocos || 0)}</strong>
-        </span>
-
-        <span>
-          <small>Kg total</small>
-          <strong>${formatarNumero(resumoGeral.kgTotal || 0, 2)}</strong>
-        </span>
-
-        <span>
-          <small>Tempo produção</small>
-          <strong>${formatarTempo(resumoGeral.tempoProducaoMin || 0)}</strong>
-        </span>
-
-        <span>
-          <small>Setup aplicado</small>
-          <strong>${formatarTempo(resumoGeral.setupAplicadoMin || 0)}</strong>
-        </span>
-
-        <span>
-          <small>Tempo total</small>
-          <strong>${formatarTempo(resumoGeral.tempoTotalMin || 0)}</strong>
-        </span>
-
-      </div>
+      ${renderResumoGeral(planejamento.resumoSequenciamento || {})}
 
       <div class="seq-linhas-lista">
-        ${linhas.map(linha => renderLinha(linha, linhasAbertas)).join("")}
+        ${linhasComBlocos.map(linha => renderLinha(linha, linhasAbertas)).join("")}
       </div>
-
     </section>
   `;
 

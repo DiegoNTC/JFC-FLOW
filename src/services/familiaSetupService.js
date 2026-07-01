@@ -128,64 +128,249 @@ function obterNomeBaseProduto(produtoOuNome) {
 
 }
 
+const MAPA_TERMOS_FAMILIA = {
+  ALF: "ALFACE",
+  ALFACE: "ALFACE",
+  AMERIC: "AMERICANA",
+  AMERICANA: "AMERICANA",
+  CRESPA: "CRESPA",
+  ROXA: "ROXA",
+  LISA: "LISA",
+  ROMANA: "ROMANA",
+  MIMOSA: "MIMOSA",
+  BAT: "BATATA",
+  BATATA: "BATATA",
+  CEB: "CEBOLA",
+  CEBOLA: "CEBOLA",
+  CEN: "CENOURA",
+  CENOURA: "CENOURA",
+  BROC: "BROCOLIS",
+  BROCOLIS: "BROCOLIS",
+  BRÓCOLIS: "BROCOLIS",
+  AGRIAO: "AGRIAO",
+  AGRIÃO: "AGRIAO",
+  RUCULA: "RUCULA",
+  RÚCULA: "RUCULA",
+  TOM: "TOMATE",
+  TOMATE: "TOMATE",
+  PIMENTAO: "PIMENTAO",
+  PIMENTÃO: "PIMENTAO"
+};
+
+const PALAVRAS_IGNORADAS_FAMILIA = new Set([
+  "SALADA",
+  "MIX",
+  "UN",
+  "UND",
+  "UNID",
+  "UNIDADE",
+  "CX",
+  "CAIXA",
+  "PCT",
+  "PC",
+  "POTE",
+  "BANDEJA",
+  "BDJ",
+  "KG",
+  "G",
+  "GR",
+  "ML",
+  "LT",
+  "L",
+  "NS",
+  "N",
+  "PREZUNIC",
+  "PREZUNIC",
+  "PREZ",
+  "CLIENTE",
+  "IN",
+  "NATURA",
+  "SEM",
+  "COM",
+  "CASCA",
+  "DESCASCADA",
+  "DESCASCADO",
+  "LAVADA",
+  "LAVADO",
+  "HIGIENIZADA",
+  "HIGIENIZADO",
+  "PICADAO",
+  "PICADÃO",
+  "FAT",
+  "FATIADA",
+  "FATIADO",
+  "4PCT",
+  "5PCTS",
+  "12X",
+  "10X",
+  "20X"
+]);
+
+const QUALIFICADORES_RELEVANTES_FAMILIA = new Set([
+  "ROXA",
+  "ROXO",
+  "VERDE",
+  "VERMELHA",
+  "VERMELHO",
+  "AMARELA",
+  "AMARELO",
+  "TRICOLOR",
+  "CRESPA",
+  "LISA",
+  "AMERICANA",
+  "ROMANA",
+  "MIMOSA",
+  "FRISEE",
+  "BABY",
+  "MINI",
+  "GRAPE",
+  "CEREJA",
+  "ITALIANO",
+  "JAPONES",
+  "JAPONESA",
+  "MACARRAO",
+  "MACARRÃO",
+  "FRANCESA",
+  "MANTEIGA",
+  "PALITO",
+  "CUBO",
+  "RALADA",
+  "RALADO",
+  "PICADA",
+  "PICADO",
+  "RODELA",
+  "FLORETE"
+]);
+
+function normalizarTextoFamilia(
+  valor
+) {
+
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/\d+[,.]?\d*\s*(KG|G|GR|ML|L|UN|UND|PCT|PCTS|CX)/g, " ")
+    .replace(/\d+\s*X\s*\d*/g, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+}
+
+function traduzirTokenFamilia(
+  token
+) {
+
+  return MAPA_TERMOS_FAMILIA[token] || token;
+
+}
+
+function tokenEhIgnoradoFamilia(
+  token
+) {
+
+  if (!token) {
+    return true;
+  }
+
+  if (/^\d+$/.test(token)) {
+    return true;
+  }
+
+  if (PALAVRAS_IGNORADAS_FAMILIA.has(token)) {
+    return true;
+  }
+
+  return false;
+
+}
+
+function obterTextoProdutoParaFamilia(
+  produtoOuNome
+) {
+
+  if (
+    produtoOuNome &&
+    typeof produtoOuNome === "object"
+  ) {
+
+    return (
+      produtoOuNome.nomeOficial ??
+      produtoOuNome.descricaoCSV ??
+      produtoOuNome.nome ??
+      produtoOuNome.produto ??
+      produtoOuNome.descricaoTXT ??
+      ""
+    );
+
+  }
+
+  return produtoOuNome;
+
+}
+
 export function inferirFamiliaSetup(
   produtoOuNome
 ) {
 
-  const nomeOriginal =
-    obterNomeBaseProduto(
-      produtoOuNome
+  const texto =
+    normalizarTextoFamilia(
+      obterTextoProdutoParaFamilia(
+        produtoOuNome
+      )
     );
 
-  let nome =
-    normalizarTexto(
-      nomeOriginal
-    );
+  const tokens =
+    texto
+      .split(" ")
+      .map(traduzirTokenFamilia)
+      .filter(token => {
 
-  nome =
-    removerPesosMedidas(
-      nome
-    );
-
-  if (!nome) {
-    return "SEM_FAMILIA";
-  }
-
-  const termosOrdenados =
-    TERMOS_COMPOSTOS
-      .slice()
-      .sort((a, b) => b.length - a.length);
-
-  for (const termo of termosOrdenados) {
-
-    if (nome.includes(termo)) {
-      return termo;
-    }
-
-  }
-
-  const palavras =
-    nome
-      .split(/\s+/)
-      .filter(palavra => {
-
-        if (!palavra) {
-          return false;
-        }
-
-        if (PALAVRAS_IGNORADAS.includes(palavra)) {
-          return false;
-        }
-
-        if (/^\d/.test(palavra)) {
-          return false;
-        }
-
-        return true;
+        return !tokenEhIgnoradoFamilia(
+          token
+        );
 
       });
 
-  return palavras[0] || "SEM_FAMILIA";
+  const tokensUnicos = [];
+
+  tokens.forEach(token => {
+
+    if (!tokensUnicos.includes(token)) {
+      tokensUnicos.push(token);
+    }
+
+  });
+
+  if (tokensUnicos.length === 0) {
+    return "SEM FAMILIA";
+  }
+
+  const familia = [];
+
+  familia.push(
+    tokensUnicos[0]
+  );
+
+  if (tokensUnicos[1]) {
+    familia.push(
+      tokensUnicos[1]
+    );
+  }
+
+  if (
+    tokensUnicos[2] &&
+    QUALIFICADORES_RELEVANTES_FAMILIA.has(tokensUnicos[2])
+  ) {
+
+    familia.push(
+      tokensUnicos[2]
+    );
+
+  }
+
+  return familia.join(" ");
 
 }
 

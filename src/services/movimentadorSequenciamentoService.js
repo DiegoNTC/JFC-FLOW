@@ -2,11 +2,9 @@
  * ======================================================
  * JFC FLOW
  * Módulo: movimentadorSequenciamentoService
- * Versão: 1.0.0
  *
  * Responsabilidade:
- * Mover blocos de família dentro de uma linha
- * e recalcular o sequenciamento.
+ * Mover blocos/famílias dentro de uma linha e gerar ordem manual.
  * ======================================================
  */
 
@@ -16,131 +14,57 @@ import {
 
 function texto(valor) {
 
-  return String(valor ?? "")
-    .trim();
+  return String(valor ?? "").trim();
+
+}
+
+function normalizarDirecao(direcao) {
+
+  const valor =
+    texto(direcao)
+      .toLowerCase();
+
+  if (["up", "cima", "subir", "acima", "-1"].includes(valor)) {
+    return -1;
+  }
+
+  if (["down", "baixo", "descer", "abaixo", "1"].includes(valor)) {
+    return 1;
+  }
+
+  return 0;
+
+}
+
+function obterIdBloco(bloco) {
+
+  return texto(
+    bloco?.id ??
+    bloco?.blocoId
+  );
+
+}
+
+function obterNomeLinha(linha) {
+
+  return texto(
+    linha?.linha ??
+    linha?.nomeLinha ??
+    linha?.nome ??
+    linha?.id
+  );
 
 }
 
 function clonar(objeto) {
 
+  if (typeof structuredClone === "function") {
+    return structuredClone(objeto);
+  }
+
   return JSON.parse(
     JSON.stringify(objeto)
   );
-
-}
-
-function obterLinhasSequenciadas(
-  planejamento
-) {
-
-  if (Array.isArray(planejamento?.linhasSequenciadas)) {
-    return planejamento.linhasSequenciadas;
-  }
-
-  if (Array.isArray(planejamento?.linhas)) {
-    return planejamento.linhas;
-  }
-
-  if (
-    planejamento?.linhas &&
-    typeof planejamento.linhas === "object"
-  ) {
-    return Object.values(
-      planejamento.linhas
-    );
-  }
-
-  return [];
-
-}
-
-function obterNomeLinha(
-  linha
-) {
-
-  return texto(
-    linha?.linha ||
-    linha?.nomeLinha ||
-    linha?.id ||
-    linha?.codigo ||
-    ""
-  );
-
-}
-
-function trocarPosicao(
-  lista,
-  origem,
-  destino
-) {
-
-  const novaLista =
-    lista.slice();
-
-  const item =
-    novaLista[origem];
-
-  novaLista.splice(
-    origem,
-    1
-  );
-
-  novaLista.splice(
-    destino,
-    0,
-    item
-  );
-
-  return novaLista;
-
-}
-
-function reordenarProdutosPorBlocos(
-  blocos
-) {
-
-  const produtos =
-    [];
-
-  blocos.forEach(bloco => {
-
-    const produtosBloco =
-      Array.isArray(bloco.produtos)
-        ? bloco.produtos
-        : [];
-
-    produtosBloco.forEach(produto => {
-
-      produtos.push({
-        ...produto
-      });
-
-    });
-
-  });
-
-  return produtos.map((produto, index) => {
-
-    return {
-      ...produto,
-
-      ordemManual:
-        true,
-
-      ordemPlanejada:
-        index + 1,
-
-      ordemProducao:
-        index + 1,
-
-      sequenciaManual:
-        index + 1,
-
-      sequenciaTXT:
-        index + 1
-    };
-
-  });
 
 }
 
@@ -154,132 +78,124 @@ export function moverBlocoPlanejamento(
   if (!planejamento) {
 
     return {
-      planejamento,
       movido: false,
-      motivo: "Planejamento não informado."
+      motivo: "Nenhum planejamento informado.",
+      planejamento
     };
 
   }
 
-  const copia =
-    clonar(
+  const deslocamento =
+    normalizarDirecao(direcao);
+
+  if (deslocamento === 0) {
+
+    return {
+      movido: false,
+      motivo: "Direção inválida para movimentação.",
       planejamento
-    );
+    };
+
+  }
+
+  const planejamentoClone =
+    clonar(planejamento);
 
   const linhas =
-    obterLinhasSequenciadas(
-      copia
-    );
-
-  const linhaIndex =
-    linhas.findIndex(linha => {
-
-      return obterNomeLinha(linha) === texto(linhaAlvo);
-
-    });
-
-  if (linhaIndex < 0) {
-
-    return {
-      planejamento,
-      movido: false,
-      motivo: "Linha não encontrada."
-    };
-
-  }
+    planejamentoClone.linhas || [];
 
   const linha =
-    linhas[linhaIndex];
+    linhas.find(item => {
 
-  const blocos =
-    Array.isArray(linha.blocos)
-      ? linha.blocos
-      : [];
-
-  const blocoIndex =
-    blocos.findIndex(bloco => {
-
-      return texto(bloco.id) === texto(blocoId);
+      return obterNomeLinha(item) === texto(linhaAlvo);
 
     });
 
-  if (blocoIndex < 0) {
+  if (!linha) {
 
     return {
-      planejamento,
       movido: false,
-      motivo: "Bloco não encontrado."
+      motivo: `Linha ${linhaAlvo} não encontrada.`,
+      planejamento
     };
 
   }
 
-  const destino =
-    direcao === "cima"
-      ? blocoIndex - 1
-      : blocoIndex + 1;
+  const blocos =
+    [...(linha.blocos || [])];
+
+  const indiceAtual =
+    blocos.findIndex(bloco => {
+
+      return obterIdBloco(bloco) === texto(blocoId);
+
+    });
+
+  if (indiceAtual < 0) {
+
+    return {
+      movido: false,
+      motivo: "Bloco não encontrado para movimentação.",
+      planejamento
+    };
+
+  }
+
+  const novoIndice =
+    indiceAtual + deslocamento;
 
   if (
-    destino < 0 ||
-    destino >= blocos.length
+    novoIndice < 0 ||
+    novoIndice >= blocos.length
   ) {
 
     return {
-      planejamento,
       movido: false,
-      motivo: "Bloco já está no limite da linha."
+      motivo: "O bloco já está no limite da linha.",
+      planejamento
     };
 
   }
 
-  const blocosReordenados =
-    trocarPosicao(
-      blocos,
-      blocoIndex,
-      destino
-    );
+  const temporario =
+    blocos[indiceAtual];
+
+  blocos[indiceAtual] =
+    blocos[novoIndice];
+
+  blocos[novoIndice] =
+    temporario;
 
   const produtosReordenados =
-    reordenarProdutosPorBlocos(
-      blocosReordenados
-    );
+    blocos.flatMap(bloco => {
 
-  linhas[linhaIndex] = {
-    ...linha,
+      return bloco.produtos || [];
 
-    produtos:
-      produtosReordenados,
+    }).map((produto, index) => {
 
-    ordemManualAtiva:
-      true,
+      return {
+        ...produto,
 
-    atualizadoPorMovimento:
-      true
-  };
+        ordemSequenciamentoManual:
+          index + 1,
 
-  copia.linhas =
-    linhas;
+        ordemManual:
+          index + 1
+      };
 
-  copia.linhasSequenciadas =
-    linhas;
+    });
 
-  const planejamentoRecalculado =
+  linha.produtos =
+    produtosReordenados;
+
+  const planejamentoSequenciado =
     gerarSequenciamentoPlanejamento(
-      copia
+      planejamentoClone
     );
 
   return {
-    planejamento:
-      planejamentoRecalculado,
-
-    movido:
-      true,
-
-    linha:
-      linhaAlvo,
-
-    blocoId,
-
-    direcao
+    movido: true,
+    planejamento: planejamentoSequenciado
   };
 
 }

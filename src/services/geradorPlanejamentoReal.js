@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Módulo: geradorPlanejamentoReal
- * Versão: 1.0.0
+ * Versão: 1.0.1
  *
  * Responsabilidade:
  * Gerar o planejamento real com base no Cadastro Mestre.
@@ -18,13 +18,73 @@
  *
  * Regra:
  * Nome oficial e demanda vêm do CSV.
- * Tempo, setup, linha e zona vêm do TXT.
+ * Tempo, setup, linha, zona e ordem vêm do TXT.
+ *
+ * Regra importante:
+ * A numeração do TXT:
+ * 1. Produto A
+ * 2. Produto B
+ * 3. Produto C
+ *
+ * representa a ordem real de entrada do produto na linha.
+ * Essa ordem deve ser preservada como:
+ * - sequenciaTXT
+ * - ordemTXT
+ * - ordemLinhaTXT
+ * - sequenciaPrincipal
  * ======================================================
  */
 
 function numero(valor) {
 
   return Number(valor) || 0;
+
+}
+
+function obterOrdemTXTRota(
+  rota
+) {
+
+  return numero(
+    rota?.ordemLinhaTXT ??
+    rota?.ordemTXT ??
+    rota?.sequenciaTXT ??
+    rota?.sequencia ??
+    0
+  );
+
+}
+
+function obterMenorSequenciaValida(
+  sequencias = []
+) {
+
+  const validas =
+    sequencias
+      .map(numero)
+      .filter(valor => valor > 0);
+
+  if (validas.length === 0) {
+    return 0;
+  }
+
+  return Math.min(
+    ...validas
+  );
+
+}
+
+function obterOrdemProdutoPlanejado(
+  produto
+) {
+
+  return numero(
+    produto?.ordemLinhaTXT ??
+    produto?.ordemTXT ??
+    produto?.sequenciaTXT ??
+    produto?.sequenciaPrincipal ??
+    0
+  );
 
 }
 
@@ -67,6 +127,7 @@ function extrairLinhasPermitidas(produtoMestre) {
   );
 
 }
+
 function agruparRotasPorLinha(rotas) {
 
   const mapa = new Map();
@@ -102,21 +163,23 @@ function calcularTempoBaseDaLinha(rotas) {
 
     maiorTempoMin = Math.max(
       maiorTempoMin,
-      Number(rota.tempoProducaoMin) || 0
+      numero(rota.tempoProducaoMin)
     );
 
     maiorSetupMin = Math.max(
       maiorSetupMin,
-      Number(rota.setupMin) || 0
+      numero(rota.setupMin)
     );
 
     maiorProdutividade = Math.max(
       maiorProdutividade,
-      Number(rota.produtividadeKgHora) || 0
+      numero(rota.produtividadeKgHora)
     );
 
     const sequencia =
-      Number(rota.sequencia) || 0;
+      obterOrdemTXTRota(
+        rota
+      );
 
     if (sequencia > 0) {
       menorSequencia = Math.min(
@@ -180,7 +243,7 @@ function selecionarLinhaPrincipal(produtoMestre) {
 
   /**
    * Regra inicial:
-   * 1. Menor sequência técnica.
+   * 1. Menor sequência técnica do TXT.
    * 2. Maior produtividade.
    * 3. Menor tempo base.
    */
@@ -218,17 +281,39 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       ? tempoBaseTXTMin / unidadeBaseTXT
       : 0;
 
+  const ordemTXT =
+    obterOrdemTXTRota(
+      rota
+    );
+
   return {
 
-    codigo: produtoMestre.codigo,
+    codigo:
+      produtoMestre.codigo,
 
-    nomeOficial: produtoMestre.nomeOficial,
+    nomeOficial:
+      produtoMestre.nomeOficial,
 
-    descricaoCSV: produtoMestre.descricaoCSV,
+    descricaoCSV:
+      produtoMestre.descricaoCSV,
 
-    descricaoTXT: produtoMestre.descricaoTXT,
+    descricaoTXT:
+      produtoMestre.descricaoTXT,
 
-    linha: rota.linha || "Sem linha",
+    linha:
+      rota.linha || "Sem linha",
+
+    /**
+     * Ordem real vinda do TXT.
+     */
+    sequenciaTXT:
+      ordemTXT,
+
+    ordemTXT:
+      ordemTXT,
+
+    ordemLinhaTXT:
+      ordemTXT,
 
     linhasPermitidas:
       extrairLinhasPermitidas(produtoMestre),
@@ -241,7 +326,7 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     ]),
 
     sequencias: [
-      numero(rota.sequencia)
+      ordemTXT
     ],
 
     demandaFinal,
@@ -252,11 +337,20 @@ function criarProdutoPlanejado(produtoMestre, rota) {
 
     tempoUnitarioMin,
 
-    setupMin: numero(rota.setupMin),
+    setupMin:
+      numero(rota.setupMin),
 
-    produtividadeKgHora: numero(rota.produtividadeKgHora),
+    setupTrocaMin:
+      numero(rota.setupMin),
 
-    etapasTecnicas: 1,
+    setupBaseMin:
+      numero(rota.setupMin),
+
+    produtividadeKgHora:
+      numero(rota.produtividadeKgHora),
+
+    etapasTecnicas:
+      1,
 
     rotasOriginais: [
       rota
@@ -272,9 +366,28 @@ function mesclarRota(produtoPlanejado, rota) {
     rota.zona || ""
   );
 
+  const ordemTXT =
+    obterOrdemTXTRota(
+      rota
+    );
+
   produtoPlanejado.sequencias.push(
-    numero(rota.sequencia)
+    ordemTXT
   );
+
+  const menorOrdemAtual =
+    obterMenorSequenciaValida(
+      produtoPlanejado.sequencias
+    );
+
+  produtoPlanejado.sequenciaTXT =
+    menorOrdemAtual;
+
+  produtoPlanejado.ordemTXT =
+    menorOrdemAtual;
+
+  produtoPlanejado.ordemLinhaTXT =
+    menorOrdemAtual;
 
   produtoPlanejado.etapasTecnicas += 1;
 
@@ -313,6 +426,16 @@ function mesclarRota(produtoPlanejado, rota) {
     numero(rota.setupMin)
   );
 
+  produtoPlanejado.setupTrocaMin = Math.max(
+    numero(produtoPlanejado.setupTrocaMin),
+    numero(rota.setupMin)
+  );
+
+  produtoPlanejado.setupBaseMin = Math.max(
+    numero(produtoPlanejado.setupBaseMin),
+    numero(rota.setupMin)
+  );
+
   produtoPlanejado.produtividadeKgHora = Math.max(
     produtoPlanejado.produtividadeKgHora,
     numero(rota.produtividadeKgHora)
@@ -326,13 +449,10 @@ function mesclarRota(produtoPlanejado, rota) {
 
 function finalizarProdutoPlanejado(produto) {
 
-  const sequenciasValidas =
-    produto.sequencias.filter(seq => seq > 0);
-
   const sequenciaPrincipal =
-    sequenciasValidas.length > 0
-      ? Math.min(...sequenciasValidas)
-      : 0;
+    obterMenorSequenciaValida(
+      produto.sequencias
+    );
 
   let tempoProducaoPlanejadoMin = 0;
 
@@ -355,16 +475,45 @@ function finalizarProdutoPlanejado(produto) {
     tempoProducaoPlanejadoMin =
       produto.tempoBaseTXTMin;
 
-    statusCalculo = "USANDO_TEMPO_TECNICO_TXT";
+    statusCalculo =
+      "USANDO_TEMPO_TECNICO_TXT";
 
   }
 
+  const setupFinalMin =
+    numero(
+      produto.setupMin ??
+      produto.setupBaseMin ??
+      produto.setupTrocaMin
+    );
+
   const tempoTotalPlanejadoMin =
-    tempoProducaoPlanejadoMin + produto.setupMin;
+    tempoProducaoPlanejadoMin + setupFinalMin;
 
   return {
 
     ...produto,
+
+    /**
+     * Ordem real vinda do TXT preservada no produto planejado.
+     */
+    sequenciaTXT:
+      sequenciaPrincipal,
+
+    ordemTXT:
+      sequenciaPrincipal,
+
+    ordemLinhaTXT:
+      sequenciaPrincipal,
+
+    setupMin:
+      setupFinalMin,
+
+    setupTrocaMin:
+      numero(produto.setupTrocaMin ?? setupFinalMin),
+
+    setupBaseMin:
+      numero(produto.setupBaseMin ?? setupFinalMin),
 
     zonasTexto: Array.from(produto.zonas)
       .filter(Boolean)
@@ -385,6 +534,33 @@ function finalizarProdutoPlanejado(produto) {
       produto.linhasAlternativas || []
 
   };
+
+}
+
+function ordenarProdutosPlanejados(
+  produtoA,
+  produtoB
+) {
+
+  const ordemA =
+    obterOrdemProdutoPlanejado(
+      produtoA
+    );
+
+  const ordemB =
+    obterOrdemProdutoPlanejado(
+      produtoB
+    );
+
+  if (ordemA !== ordemB) {
+    return ordemA - ordemB;
+  }
+
+  return String(produtoA.nomeOficial || "")
+    .localeCompare(
+      String(produtoB.nomeOficial || ""),
+      "pt-BR"
+    );
 
 }
 
@@ -465,13 +641,10 @@ function agruparProdutosPorLinha(produtosMestre) {
   const linhas = Array.from(mapaLinhas.entries())
     .map(([linha, mapaProdutos]) => {
 
-      const produtos = Array.from(mapaProdutos.values())
-        .map(finalizarProdutoPlanejado)
-        .sort((a, b) => {
-
-          return a.sequenciaPrincipal - b.sequenciaPrincipal;
-
-        });
+      const produtos =
+        Array.from(mapaProdutos.values())
+          .map(finalizarProdutoPlanejado)
+          .sort(ordenarProdutosPlanejados);
 
       const tempoTotalLinhaMin =
         produtos.reduce((soma, produto) => {
@@ -502,13 +675,17 @@ function agruparProdutosPorLinha(produtosMestre) {
 
         resumo: {
 
-          totalProdutos: produtos.length,
+          totalProdutos:
+            produtos.length,
 
-          demandaTotal: demandaTotalLinha,
+          demandaTotal:
+            demandaTotalLinha,
 
-          tempoTotalMin: tempoTotalLinhaMin,
+          tempoTotalMin:
+            tempoTotalLinhaMin,
 
-          setupTotalMin: setupTotalLinhaMin
+          setupTotalMin:
+            setupTotalLinhaMin
 
         }
 
@@ -543,15 +720,20 @@ function calcularResumoGeral(linhas) {
 
   }, {
 
-    totalLinhas: 0,
+    totalLinhas:
+      0,
 
-    totalProdutos: 0,
+    totalProdutos:
+      0,
 
-    demandaTotal: 0,
+    demandaTotal:
+      0,
 
-    tempoTotalMin: 0,
+    tempoTotalMin:
+      0,
 
-    setupTotalMin: 0
+    setupTotalMin:
+      0
 
   });
 
@@ -576,7 +758,8 @@ export function gerarPlanejamentoReal(produtosMestre) {
 
     resumo,
 
-    criadoEm: new Date().toISOString()
+    criadoEm:
+      new Date().toISOString()
 
   };
 
