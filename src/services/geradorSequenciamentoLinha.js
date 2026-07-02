@@ -2,15 +2,16 @@
  * ======================================================
  * JFC FLOW
  * Módulo: geradorSequenciamentoLinha
- * Versão: 1.0.2
+ * Versão: 1.1.0
  *
  * Responsabilidade:
  * Gerar o sequenciamento por família, respeitando:
  * 1) ordem manual editada pelo PCP;
- * 2) ordem real de entrada vinda do TXT;
- * 3) ordem da família como fallback;
- * 4) nome da família;
- * 5) nome do produto.
+ * 2) ordem preservada do planejamento anterior;
+ * 3) ordem real de entrada vinda do TXT;
+ * 4) ordem da família como fallback;
+ * 5) nome da família;
+ * 6) nome do produto.
  *
  * Regra principal:
  * A numeração do TXT:
@@ -18,7 +19,16 @@
  * 2. Produto B
  * 3. Produto C
  *
- * é a ordem real de entrada na linha e deve ser respeitada.
+ * é a ordem real inicial de entrada na linha.
+ *
+ * Porém, depois que o PCP mover produtos manualmente,
+ * essa ordem manual deve ser preservada em novas atualizações
+ * de pedido/volume.
+ *
+ * Regra de atualização diária:
+ * - Produto que já existia: mantém posição anterior.
+ * - Produto novo: entra depois dos existentes, respeitando TXT/família.
+ * - Produto que saiu do CSV: não aparece no planejamento do dia.
  *
  * Regra de setup:
  * - Primeiro produto da linha: setup 0.
@@ -56,9 +66,7 @@ function numero(valor, padrao = 0) {
   let textoNormalizado =
     textoValor;
 
-  if (
-    textoValor.includes(",")
-  ) {
+  if (textoValor.includes(",")) {
 
     textoNormalizado =
       textoValor
@@ -100,6 +108,17 @@ function normalizarNumeroOrdem(valor) {
   return Number.isFinite(convertido)
     ? convertido
     : null;
+
+}
+
+function normalizarChaveComparacao(valor) {
+
+  return texto(valor)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 }
 
@@ -147,14 +166,6 @@ function obterPrimeiraRota(produto = {}) {
 
 /**
  * Ordem real do TXT.
- *
- * Prioridade:
- * - ordemLinhaTXT
- * - ordemTXT
- * - sequenciaTXT
- * - sequenciaPrincipal
- * - sequencia
- * - rota.*
  */
 export function obterOrdemTXT(produto = {}) {
 
@@ -241,15 +252,204 @@ function obterCodigoProduto(produto = {}) {
 
 }
 
+function criarChavesProduto(produto = {}) {
+
+  const codigo =
+    normalizarChaveComparacao(
+      obterCodigoProduto(produto)
+    );
+
+  const nome =
+    normalizarChaveComparacao(
+      obterNomeProduto(produto)
+    );
+
+  const chaves = [];
+
+  if (codigo) {
+    chaves.push(
+      `CODIGO:${codigo}`
+    );
+  }
+
+  if (nome) {
+    chaves.push(
+      `NOME:${nome}`
+    );
+  }
+
+  return chaves;
+
+}
+
 function normalizarFamilia(valor) {
 
-  const familia =
+  let familia =
     texto(valor)
       .toUpperCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  return familia || "SEM FAMÍLIA";
+  if (!familia) {
+    return "SEM FAMÍLIA";
+  }
+
+  /**
+   * ======================================================
+   * DICIONÁRIO DE EQUIVALÊNCIA DE FAMÍLIAS
+   *
+   * Objetivo:
+   * Corrigir variações de escrita, abreviações e erros comuns
+   * para juntar produtos operacionais iguais no mesmo bloco.
+   *
+   * Exemplo:
+   * RUCULA, RUCULA FOLHAS, RUCULA NT -> RUCULA
+   * RADICHIO, RADICCHIO -> RADICCHIO
+   * ======================================================
+   */
+
+  familia = familia
+    .replace(/\bHIG\b/g, "")
+    .replace(/\bHIGIENIZADA\b/g, "")
+    .replace(/\bHIGIENIZADO\b/g, "")
+    .replace(/\bFOLHAS\b/g, "")
+    .replace(/\bFOLHA\b/g, "")
+    .replace(/\bNT\b/g, "")
+    .replace(/\bNS\b/g, "")
+    .replace(/\bQA\b/g, "")
+    .replace(/\bSALADS\b/g, "")
+    .replace(/\bSALAD\b/g, "")
+    .replace(/\bSALADA\b/g, "")
+    .replace(/\bIN NATURA\b/g, "")
+    .replace(/\bNATURA\b/g, "")
+    .replace(/\bMERCADO\b/g, "")
+    .replace(/\bCARREFOUR\b/g, "")
+    .replace(/\bPOTE\b/g, "")
+    .replace(/\bPC\b/g, "")
+    .replace(/\bPCT\b/g, "")
+    .replace(/\bUN\b/g, "")
+    .replace(/\bKG\b/g, "")
+    .replace(/\bG\b/g, "")
+    .replace(/\bGR\b/g, "")
+    .replace(/\bGRAMAS\b/g, "")
+    .replace(/\b\d+[,.]?\d*\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const regrasEquivalencia = [
+
+    {
+      destino: "RUCULA",
+      termos: [
+        "RUCULA",
+        "RUCULA FOLHA",
+        "RUCULA FOLHAS",
+        "RUCULA NT",
+        "RUCULA NS"
+      ]
+    },
+
+    {
+      destino: "RADICCHIO",
+      termos: [
+        "RADICCHIO",
+        "RADICHIO",
+        "RADICCHIO FOLHA",
+        "RADICHIO FOLHA",
+        "RADICCHIO HIG",
+        "RADICHIO HIG"
+      ]
+    },
+
+    {
+      destino: "ALFACE AMERICANA",
+      termos: [
+        "ALFACE AMERICANA",
+        "ALF AMERICANA",
+        "AMERICANA"
+      ]
+    },
+
+    {
+      destino: "ALFACE CRESPA",
+      termos: [
+        "ALFACE CRESPA",
+        "ALF CRESPA",
+        "CRESPA"
+      ]
+    },
+
+    {
+      destino: "ALFACE CRESPA ROXA",
+      termos: [
+        "ALFACE CRESPA ROXA",
+        "ALF CRESPA ROXA",
+        "CRESPA ROXA"
+      ]
+    },
+
+    {
+      destino: "CEBOLA PICADA",
+      termos: [
+        "CEBOLA PICADA",
+        "CEBOLA PICAD",
+        "CEBOLA PIC"
+      ]
+    },
+
+    {
+      destino: "CEBOLA RODELA",
+      termos: [
+        "CEBOLA RODELA",
+        "CEBOLA ROD",
+        "CEBOLA EM RODELA"
+      ]
+    },
+
+    {
+      destino: "REPOLHO",
+      termos: [
+        "REPOLHO",
+        "REPOLHO MISTO"
+      ]
+    }
+
+  ];
+
+  const familiaLimpa =
+    familia
+      .replace(/\s+/g, " ")
+      .trim();
+
+  for (const regra of regrasEquivalencia) {
+
+    const encontrou =
+      regra.termos.some(termo => {
+
+        const termoNormalizado =
+          termo
+            .toUpperCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+
+        return (
+          familiaLimpa === termoNormalizado ||
+          familiaLimpa.includes(termoNormalizado) ||
+          termoNormalizado.includes(familiaLimpa)
+        );
+
+      });
+
+    if (encontrou) {
+      return regra.destino;
+    }
+
+  }
+
+  return familiaLimpa || "SEM FAMÍLIA";
 
 }
 
@@ -367,15 +567,243 @@ function obterTempoProducaoMin(produto = {}) {
 
 }
 
+function obterNomeLinha(linhaPlanejada = {}) {
+
+  const linha =
+    linhaPlanejada || {};
+
+  return texto(
+    linha.linha ??
+    linha.nomeLinha ??
+    linha.nome ??
+    linha.id
+  );
+
+}
+
+function obterProdutosLinha(linhaPlanejada = {}) {
+
+  const linha =
+    linhaPlanejada || {};
+
+  return Array.isArray(linha.produtos)
+    ? linha.produtos
+    : Array.isArray(linha.itens)
+      ? linha.itens
+      : [];
+
+}
+
+function obterOrdemPreservadaDoProdutoAnterior(
+  produtoAnterior
+) {
+
+  /**
+   * Só preserva ordem realmente manual.
+   *
+   * Não usamos ordemProducao nem ordemPlanejada aqui,
+   * porque esses campos podem ter sido gerados automaticamente
+   * pela ordem do TXT ou por uma sequência antiga.
+   *
+   * Se usarmos ordemProducao aqui, o sistema deixa de respeitar
+   * o TXT nas próximas sincronizações.
+   */
+  return normalizarNumeroOrdem(
+    produtoAnterior.ordemSequenciamentoManual ??
+    produtoAnterior.ordemManual ??
+    produtoAnterior.ordemPlanejadaManual ??
+    produtoAnterior.ordemEditada ??
+    produtoAnterior.ordemUsuario
+  );
+
+}
+
+function criarMapaSequenciaLinhaAnterior(
+  linhaAnterior
+) {
+
+  const mapa =
+    new Map();
+
+  if (!linhaAnterior) {
+    return mapa;
+  }
+
+  const produtosAnteriores =
+    obterProdutosLinha(
+      linhaAnterior
+    );
+
+  const nomeLinhaAnterior =
+    obterNomeLinha(
+      linhaAnterior
+    );
+
+  produtosAnteriores.forEach((produtoAnterior, indice) => {
+
+    const ordemPreservada =
+      obterOrdemPreservadaDoProdutoAnterior(
+        produtoAnterior
+      );
+
+    if (ordemPreservada === null) {
+      return;
+    }
+
+    const registro = {
+      produtoAnterior,
+      ordemPreservada,
+      indiceAnterior:
+        indice,
+      linhaAnterior:
+        nomeLinhaAnterior
+    };
+
+    criarChavesProduto(produtoAnterior)
+      .forEach(chave => {
+
+        if (!mapa.has(chave)) {
+          mapa.set(
+            chave,
+            registro
+          );
+        }
+
+      });
+
+  });
+
+  return mapa;
+
+}
+
+function criarMapaLinhasAnteriores(
+  planejamentoAnterior
+) {
+
+  const mapa =
+    new Map();
+
+  const linhas =
+    Array.isArray(planejamentoAnterior?.linhas)
+      ? planejamentoAnterior.linhas
+      : [];
+
+  linhas.forEach(linha => {
+
+    const nomeLinha =
+      obterNomeLinha(
+        linha
+      );
+
+    if (!nomeLinha) {
+      return;
+    }
+
+    mapa.set(
+      nomeLinha,
+      linha
+    );
+
+  });
+
+  return mapa;
+
+}
+
+function localizarProdutoNaSequenciaAnterior(
+  produto,
+  mapaSequenciaAnterior
+) {
+
+  if (!mapaSequenciaAnterior) {
+    return null;
+  }
+
+  const chaves =
+    criarChavesProduto(
+      produto
+    );
+
+  for (const chave of chaves) {
+
+    if (mapaSequenciaAnterior.has(chave)) {
+      return mapaSequenciaAnterior.get(chave);
+    }
+
+  }
+
+  return null;
+
+}
+
+function aplicarOrdemPreservada(
+  produto,
+  mapaSequenciaAnterior,
+  opcoes = {}
+) {
+
+  if (opcoes.preservarSequenciaAnterior === false) {
+    return produto;
+  }
+
+  const ordemManualAtual =
+    obterOrdemManual(
+      produto
+    );
+
+  if (ordemManualAtual !== null) {
+    return produto;
+  }
+
+  const registroAnterior =
+    localizarProdutoNaSequenciaAnterior(
+      produto,
+      mapaSequenciaAnterior
+    );
+
+  if (!registroAnterior) {
+    return produto;
+  }
+
+  return {
+    ...produto,
+
+    ordemSequenciamentoManual:
+      registroAnterior.ordemPreservada,
+
+    ordemManualPreservada:
+      true,
+
+    origemOrdemManual:
+      "PLANEJAMENTO_ANTERIOR",
+
+    linhaSequenciamentoAnterior:
+      registroAnterior.linhaAnterior,
+
+    indiceSequenciamentoAnterior:
+      registroAnterior.indiceAnterior,
+
+    produtoSequenciamentoAnterior:
+      registroAnterior.produtoAnterior
+  };
+
+}
+
 /**
  * Comparador oficial do Sequenciamento por Família.
  *
  * Ordem:
  * 1. Ordem manual
- * 2. Ordem real do TXT
- * 3. Ordem da família
- * 4. Nome da família
- * 5. Nome do produto
+ * 2. Ordem preservada do planejamento anterior
+ * 3. Ordem real do TXT
+ * 4. Ordem da família
+ * 5. Nome da família
+ * 6. Nome do produto
+ *
+ * Observação:
+ * A ordem preservada entra no mesmo campo de ordem manual:
+ * ordemSequenciamentoManual.
  */
 function compararProdutosSequenciamento(produtoA, produtoB) {
 
@@ -400,6 +828,36 @@ function compararProdutosSequenciamento(produtoA, produtoB) {
 
   }
 
+  /**
+   * No sequenciamento por família, a família precisa vir antes
+   * da ordem individual do produto.
+   *
+   * Se ordenar primeiro por TXT, produtos da mesma família podem
+   * ficar separados e o bloco não fecha corretamente.
+   */
+  const familiaA =
+    obterFamiliaSetup(produtoA);
+
+  const familiaB =
+    obterFamiliaSetup(produtoB);
+
+  const diferencaNomeFamilia =
+    familiaA.localeCompare(
+      familiaB,
+      "pt-BR",
+      {
+        numeric: true,
+        sensitivity: "base"
+      }
+    );
+
+  if (diferencaNomeFamilia !== 0) {
+    return diferencaNomeFamilia;
+  }
+
+  /**
+   * Dentro da mesma família, aí sim respeita a ordem do TXT.
+   */
   const ordemTXTA =
     obterOrdemTXT(produtoA);
 
@@ -442,26 +900,6 @@ function compararProdutosSequenciamento(produtoA, produtoB) {
 
   }
 
-  const familiaA =
-    obterFamiliaSetup(produtoA);
-
-  const familiaB =
-    obterFamiliaSetup(produtoB);
-
-  const diferencaNomeFamilia =
-    familiaA.localeCompare(
-      familiaB,
-      "pt-BR",
-      {
-        numeric: true,
-        sensitivity: "base"
-      }
-    );
-
-  if (diferencaNomeFamilia !== 0) {
-    return diferencaNomeFamilia;
-  }
-
   return obterNomeProduto(produtoA)
     .localeCompare(
       obterNomeProduto(produtoB),
@@ -482,17 +920,6 @@ function criarSlug(valor) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "") || "familia";
-
-}
-
-function obterNomeLinha(linhaPlanejada = {}) {
-
-  return texto(
-    linhaPlanejada.linha ??
-    linhaPlanejada.nomeLinha ??
-    linhaPlanejada.nome ??
-    linhaPlanejada.id
-  );
 
 }
 
@@ -565,7 +992,13 @@ function criarProdutoSequenciado(
       obterCodigoProduto(produto) || produto.codigo,
 
     nomeOficial:
-      obterNomeProduto(produto) || produto.nomeOficial
+      obterNomeProduto(produto) || produto.nomeOficial,
+
+    sequenciamentoPreservado:
+      Boolean(
+        produto.ordemManualPreservada ||
+        produto.sequenciamentoPreservado
+      )
   };
 
 }
@@ -599,7 +1032,10 @@ function criarResumoSequenciamento(produtos, blocos) {
       somarProdutos(produtos, "setupAplicadoMin"),
 
     tempoTotalMin:
-      somarProdutos(produtos, "tempoTotalPlanejadoMin")
+      somarProdutos(produtos, "tempoTotalPlanejadoMin"),
+
+    produtosComSequenciaPreservada:
+      produtos.filter(produto => produto.sequenciamentoPreservado).length
   };
 
 }
@@ -609,91 +1045,144 @@ function criarBlocosFamilia(
   nomeLinha
 ) {
 
-  const blocos = [];
+  const mapaBlocos =
+    new Map();
 
   produtosSequenciados.forEach((produto) => {
 
-    const ultimoBloco =
-      blocos[blocos.length - 1];
+    const familia =
+      produto.familiaSetup ||
+      obterFamiliaSetup(produto);
 
-    if (
-      ultimoBloco &&
-      ultimoBloco.familiaSetup === produto.familiaSetup
-    ) {
+    const chaveBloco =
+      [
+        nomeLinha || "SEM_LINHA",
+        familia
+      ].join("|");
 
-      ultimoBloco.produtos.push(produto);
-      return;
+    if (!mapaBlocos.has(chaveBloco)) {
+
+      const ordemBloco =
+        mapaBlocos.size + 1;
+
+      const blocoId =
+        `${nomeLinha || "LINHA"}-${ordemBloco}-${criarSlug(familia)}`;
+
+      mapaBlocos.set(
+        chaveBloco,
+        {
+          id:
+            blocoId,
+
+          blocoId,
+
+          linha:
+            nomeLinha,
+
+          ordemBloco,
+
+          familiaSetup:
+            familia,
+
+          classeSetup:
+            familia,
+
+          produtos:
+            []
+        }
+      );
 
     }
 
-    const ordemBloco =
-      blocos.length + 1;
+    mapaBlocos
+      .get(chaveBloco)
+      .produtos
+      .push(produto);
 
-    const blocoId =
-      `${nomeLinha || "LINHA"}-${ordemBloco}-${criarSlug(produto.familiaSetup)}`;
+  });
 
-    blocos.push({
-      id:
-        blocoId,
+  return Array.from(mapaBlocos.values())
+    .map((bloco, indice) => {
 
-      blocoId,
+      const produtosOrdenados =
+        bloco.produtos
+          .sort((produtoA, produtoB) => {
 
-      linha:
-        nomeLinha,
+            const ordemTXTA =
+              obterOrdemTXT(produtoA);
 
-      ordemBloco,
+            const ordemTXTB =
+              obterOrdemTXT(produtoB);
 
-      familiaSetup:
-        produto.familiaSetup,
+            if (
+              ordemTXTA !== null ||
+              ordemTXTB !== null
+            ) {
 
-      classeSetup:
-        produto.classeSetup,
+              const diferencaTXT =
+                (ordemTXTA ?? 999999) -
+                (ordemTXTB ?? 999999);
 
-      produtos: [
-        produto
-      ]
+              if (diferencaTXT !== 0) {
+                return diferencaTXT;
+              }
+
+            }
+
+            return obterNomeProduto(produtoA)
+              .localeCompare(
+                obterNomeProduto(produtoB),
+                "pt-BR",
+                {
+                  numeric: true,
+                  sensitivity: "base"
+                }
+              );
+
+          });
+
+      const ordensTXT =
+        produtosOrdenados
+          .map(obterOrdemTXT)
+          .filter(valor => valor !== null)
+          .sort((a, b) => a - b);
+
+      return {
+        ...bloco,
+
+        ordemBloco:
+          indice + 1,
+
+        produtos:
+          produtosOrdenados,
+
+        totalProdutos:
+          produtosOrdenados.length,
+
+        kgTotal:
+          somarProdutos(produtosOrdenados, "kgPlanejado"),
+
+        tempoProducaoMin:
+          somarProdutos(produtosOrdenados, "tempoProducaoPlanejadoMin"),
+
+        setupAplicadoMin:
+          somarProdutos(produtosOrdenados, "setupAplicadoMin"),
+
+        tempoTotalMin:
+          somarProdutos(produtosOrdenados, "tempoTotalPlanejadoMin"),
+
+        ordemTXTInicial:
+          ordensTXT.length > 0
+            ? ordensTXT[0]
+            : null,
+
+        ordemTXTFinal:
+          ordensTXT.length > 0
+            ? ordensTXT[ordensTXT.length - 1]
+            : null
+      };
+
     });
-
-  });
-
-  return blocos.map((bloco) => {
-
-    const ordensTXT =
-      bloco.produtos
-        .map(obterOrdemTXT)
-        .filter(valor => valor !== null)
-        .sort((a, b) => a - b);
-
-    return {
-      ...bloco,
-
-      totalProdutos:
-        bloco.produtos.length,
-
-      kgTotal:
-        somarProdutos(bloco.produtos, "kgPlanejado"),
-
-      tempoProducaoMin:
-        somarProdutos(bloco.produtos, "tempoProducaoPlanejadoMin"),
-
-      setupAplicadoMin:
-        somarProdutos(bloco.produtos, "setupAplicadoMin"),
-
-      tempoTotalMin:
-        somarProdutos(bloco.produtos, "tempoTotalPlanejadoMin"),
-
-      ordemTXTInicial:
-        ordensTXT.length > 0
-          ? ordensTXT[0]
-          : null,
-
-      ordemTXTFinal:
-        ordensTXT.length > 0
-          ? ordensTXT[ordensTXT.length - 1]
-          : null
-    };
-
-  });
 
 }
 
@@ -712,23 +1201,47 @@ export function gerarSequenciamentoLinha(
     );
 
   const produtosOriginais =
-    Array.isArray(linhaPlanejada.produtos)
-      ? linhaPlanejada.produtos
-      : Array.isArray(linhaPlanejada.itens)
-        ? linhaPlanejada.itens
-        : [];
+    obterProdutosLinha(
+      linhaPlanejada
+    );
+
+  const linhaAnterior =
+    opcoes.linhaAnterior ||
+    opcoes.mapaLinhasAnteriores?.get(nomeLinha) ||
+    null;
+
+  const mapaSequenciaAnterior =
+    criarMapaSequenciaLinhaAnterior(
+      linhaAnterior
+    );
 
   const comparador =
     opcoes.comparador ||
     compararProdutosSequenciamento;
 
+  let produtosComSequenciaPreservada = 0;
+
   const produtosOrdenados =
     produtosOriginais
       .map(produto => {
 
-        return aplicarFamiliaCadastradaAoProduto(
-          produto
-        );
+        const produtoComFamilia =
+          aplicarFamiliaCadastradaAoProduto(
+            produto
+          );
+
+        const produtoComOrdemPreservada =
+          aplicarOrdemPreservada(
+            produtoComFamilia,
+            mapaSequenciaAnterior,
+            opcoes
+          );
+
+        if (produtoComOrdemPreservada.ordemManualPreservada) {
+          produtosComSequenciaPreservada += 1;
+        }
+
+        return produtoComOrdemPreservada;
 
       })
       .sort(
@@ -776,7 +1289,17 @@ export function gerarSequenciamentoLinha(
       criarResumoSequenciamento(
         produtosSequenciados,
         blocos
-      )
+      ),
+
+    preservacaoSequencia: {
+      ativa:
+        opcoes.preservarSequenciaAnterior !== false,
+
+      linhaAnteriorEncontrada:
+        Boolean(linhaAnterior),
+
+      produtosComSequenciaPreservada
+    }
   };
 
 }
@@ -790,6 +1313,16 @@ export function gerarSequenciamentoPlanejamento(
     return planejamento;
   }
 
+  const planejamentoAnterior =
+    opcoes.planejamentoAnterior ||
+    opcoes.sequenciamentoAnterior ||
+    null;
+
+  const mapaLinhasAnteriores =
+    criarMapaLinhasAnteriores(
+      planejamentoAnterior
+    );
+
   const linhasOriginais =
     planejamento.linhas ||
     [];
@@ -799,7 +1332,14 @@ export function gerarSequenciamentoPlanejamento(
 
       return gerarSequenciamentoLinha(
         linha,
-        opcoes
+        {
+          ...opcoes,
+          mapaLinhasAnteriores,
+          linhaAnterior:
+            mapaLinhasAnteriores.get(
+              obterNomeLinha(linha)
+            )
+        }
       );
 
     });
@@ -830,6 +1370,9 @@ export function gerarSequenciamentoPlanejamento(
       resumo.tempoTotalMin +=
         numero(resumoLinha.tempoTotalMin, 0);
 
+      resumo.produtosComSequenciaPreservada +=
+        numero(resumoLinha.produtosComSequenciaPreservada, 0);
+
       return resumo;
 
     }, {
@@ -852,6 +1395,9 @@ export function gerarSequenciamentoPlanejamento(
         0,
 
       tempoTotalMin:
+        0,
+
+      produtosComSequenciaPreservada:
         0
     });
 
@@ -861,7 +1407,21 @@ export function gerarSequenciamentoPlanejamento(
     linhas:
       linhasSequenciadas,
 
-    resumoSequenciamento
+    resumoSequenciamento,
+
+    preservacaoSequencia: {
+      ativa:
+        opcoes.preservarSequenciaAnterior !== false,
+
+      planejamentoAnteriorInformado:
+        Boolean(planejamentoAnterior),
+
+      totalLinhasAnteriores:
+        mapaLinhasAnteriores.size,
+
+      produtosComSequenciaPreservada:
+        resumoSequenciamento.produtosComSequenciaPreservada
+    }
   };
 
 }

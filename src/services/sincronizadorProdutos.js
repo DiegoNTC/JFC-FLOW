@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Módulo: sincronizadorProdutos
- * Versão: 1.1.1
+ * Versão: 1.1.2
  *
  * Regra principal:
  * O nome oficial do produto SEMPRE vem do CSV.
@@ -15,19 +15,25 @@
  * TXT:
  * - Linha
  * - Zona
- * - Ordem de entrada na linha
+ * - Ordem de entrada
  * - Setup
  * - Tempo
  * - Produtividade
+ * - Rota operacional real
  *
  * O TXT nunca altera o nome oficial do produto.
  *
- * Regra importante:
- * A sequência do TXT precisa ser preservada em todas as rotas técnicas:
- * - sequencia
- * - sequenciaTXT
- * - ordemTXT
- * - ordemLinhaTXT
+ * Regra operacional extraída do sequenciador real:
+ * Um produto pode cortar em uma linha e embalar em outra:
+ *
+ * [N:L1→B/C:L6]
+ *
+ * Isso precisa chegar no Cadastro Mestre como:
+ * - srcLinha
+ * - dstLinha
+ * - linhaOrigemNegra
+ * - linhaDestinoBrancaCinza
+ * - rotaCruzada
  * ======================================================
  */
 
@@ -76,9 +82,62 @@ function parseNumero(valor) {
 
 }
 
-function normalizarOrdemTXT(
-  rota
-) {
+function texto(valor) {
+
+  return String(valor ?? "")
+    .trim();
+
+}
+
+function normalizarLinha(linha) {
+
+  const valor =
+    texto(linha)
+      .toUpperCase();
+
+  if (
+    valor === "LT" ||
+    valor.includes("TOMATE")
+  ) {
+    return "TOMATE";
+  }
+
+  const numeroLinha =
+    valor.match(/(\d+)/);
+
+  if (numeroLinha) {
+    return `L${numeroLinha[1]}`;
+  }
+
+  return valor;
+
+}
+
+function normalizarZonaOperacional(zona) {
+
+  const valor =
+    texto(zona)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase();
+
+  if (valor.includes("NEGRA")) {
+    return "NEGRA";
+  }
+
+  if (valor.includes("BRANCA")) {
+    return "BRANCA";
+  }
+
+  if (valor.includes("CINZA")) {
+    return "CINZA";
+  }
+
+  return valor || "SEM_ZONA";
+
+}
+
+function normalizarOrdemTXT(rota) {
 
   return parseNumero(
     rota?.ordemLinhaTXT ??
@@ -118,29 +177,32 @@ function pegarDescricaoCSV(item) {
 
 function calcularDemandaFinal(item) {
 
-  const previa = parseNumero(
-    item?.previa ??
-    item?.Previa ??
-    item?.PREVIA ??
-    0
-  );
+  const previa =
+    parseNumero(
+      item?.previa ??
+      item?.Previa ??
+      item?.PREVIA ??
+      0
+    );
 
-  const pedidos = parseNumero(
-    item?.pedidos ??
-    item?.Pedidos ??
-    item?.PEDIDOS ??
-    0
-  );
+  const pedidos =
+    parseNumero(
+      item?.pedidos ??
+      item?.Pedidos ??
+      item?.PEDIDOS ??
+      0
+    );
 
-  const prioridade = parseNumero(
-    item?.prioridade ??
-    item?.Prioridade ??
-    item?.["Pedidos Prioritarios"] ??
-    item?.["Pedidos Prioritários"] ??
-    item?.prioritario ??
-    item?.prioritarios ??
-    0
-  );
+  const prioridade =
+    parseNumero(
+      item?.prioridade ??
+      item?.Prioridade ??
+      item?.["Pedidos Prioritarios"] ??
+      item?.["Pedidos Prioritários"] ??
+      item?.prioritario ??
+      item?.prioritarios ??
+      0
+    );
 
   /**
    * Regra definida:
@@ -298,7 +360,8 @@ function agruparProdutosTXTPorDescricao(produtosTecnicos) {
 
     }
 
-    mapa.get(chave)
+    mapa
+      .get(chave)
       .rotasTecnicas
       .push(produtoTXT);
 
@@ -332,8 +395,7 @@ function buscarGrupoTXTVinculado(
   const chaveTXTExistente =
     existente.descricaoNormalizadaTXT ||
     criarChaveTexto(
-      existente.descricaoTXT ||
-      ""
+      existente.descricaoTXT || ""
     );
 
   if (!chaveTXTExistente) {
@@ -348,6 +410,91 @@ function buscarGrupoTXTVinculado(
 
 }
 
+function montarTransferenciaNormalizada(
+  rota
+) {
+
+  const linhaBase =
+    normalizarLinha(
+      rota?.linha ||
+      rota?.linhaPrincipal ||
+      ""
+    );
+
+  const transferencia =
+    rota?.transferencia || {};
+
+  const srcLinha =
+    normalizarLinha(
+      rota?.srcLinha ??
+      rota?.linhaOrigemNegra ??
+      rota?.linhaOrigem ??
+      transferencia?.srcLinha ??
+      transferencia?.linhaOrigemNegra ??
+      transferencia?.linhaOrigem ??
+      linhaBase
+    );
+
+  const dstLinha =
+    normalizarLinha(
+      rota?.dstLinha ??
+      rota?.linhaDestinoBrancaCinza ??
+      rota?.linhaDestino ??
+      transferencia?.dstLinha ??
+      transferencia?.linhaDestinoBrancaCinza ??
+      transferencia?.linhaDestino ??
+      linhaBase
+    );
+
+  const rotaCruzada =
+    srcLinha &&
+    dstLinha &&
+    srcLinha !== dstLinha;
+
+  return {
+    raw:
+      transferencia?.raw ??
+      rota?.transferenciaRaw ??
+      null,
+
+    valido:
+      Boolean(
+        rota?.transferenciaValida ??
+        transferencia?.valido ??
+        false
+      ),
+
+    srcLinha,
+
+    dstLinha,
+
+    linhaOrigemNegra:
+      srcLinha,
+
+    linhaDestinoBrancaCinza:
+      dstLinha,
+
+    linhaOrigem:
+      srcLinha,
+
+    linhaDestino:
+      dstLinha,
+
+    rotaCruzada,
+
+    zonaOrigem:
+      rota?.zonaOrigem ??
+      transferencia?.zonaOrigem ??
+      "NEGRA",
+
+    zonaDestino:
+      rota?.zonaDestino ??
+      transferencia?.zonaDestino ??
+      "BRANCA_CINZA"
+  };
+
+}
+
 function prepararRotaTecnica(
   produtoCSV,
   grupoTXT,
@@ -357,6 +504,17 @@ function prepararRotaTecnica(
   const ordemTXT =
     normalizarOrdemTXT(
       rota
+    );
+
+  const transferencia =
+    montarTransferenciaNormalizada(
+      rota
+    );
+
+  const zonaOperacional =
+    normalizarZonaOperacional(
+      rota?.zonaOperacional ??
+      rota?.zona
     );
 
   return {
@@ -390,7 +548,6 @@ function prepararRotaTecnica(
 
     /**
      * Campos oficiais da ordem técnica vinda do TXT.
-     * A numeração 1., 2., 3. do TXT precisa chegar até o planejamento.
      */
     sequencia:
       ordemTXT,
@@ -402,7 +559,55 @@ function prepararRotaTecnica(
       ordemTXT,
 
     ordemLinhaTXT:
-      ordemTXT
+      ordemTXT,
+
+    /**
+     * Campos operacionais extraídos do sequenciador real.
+     */
+    zonaOperacional,
+
+    transferencia,
+
+    transferenciaValida:
+      transferencia.valido,
+
+    srcLinha:
+      transferencia.srcLinha,
+
+    dstLinha:
+      transferencia.dstLinha,
+
+    linhaOrigemNegra:
+      transferencia.linhaOrigemNegra,
+
+    linhaDestinoBrancaCinza:
+      transferencia.linhaDestinoBrancaCinza,
+
+    linhaOrigem:
+      transferencia.linhaOrigem,
+
+    linhaDestino:
+      transferencia.linhaDestino,
+
+    rotaCruzada:
+      transferencia.rotaCruzada,
+
+    zonaOrigem:
+      transferencia.zonaOrigem,
+
+    zonaDestino:
+      transferencia.zonaDestino,
+
+    /**
+     * Campo preparado para a futura timeline.
+     * O sequenciador real usa lead time entre Negra e Branca.
+     */
+    leadTimeMin:
+      parseNumero(
+        rota?.leadTimeMin ??
+        rota?.leadTime ??
+        10
+      )
 
   };
 
@@ -434,49 +639,31 @@ function normalizarRotasTecnicasExistentes(
   return (existente?.rotasTecnicas || [])
     .map(rota => {
 
-      const ordemTXT =
-        normalizarOrdemTXT(
-          rota
-        );
+      const grupoFake = {
+        descricaoTXT:
+          existente.descricaoTXT ||
+          rota.descricaoTXT,
 
-      return {
-
-        ...rota,
-
-        codigo:
-          produtoCSV.codigo,
-
-        nomeOficial:
-          produtoCSV.nomeOficial ||
-          existente.nomeOficial,
-
-        descricao:
-          produtoCSV.nomeOficial ||
-          existente.nomeOficial,
-
-        descricaoCSV:
-          produtoCSV.descricaoCSV ||
-          existente.descricaoCSV,
-
-        sequencia:
-          ordemTXT,
-
-        sequenciaTXT:
-          ordemTXT,
-
-        ordemTXT:
-          ordemTXT,
-
-        ordemLinhaTXT:
-          ordemTXT
-
+        descricaoNormalizadaTXT:
+          existente.descricaoNormalizadaTXT ||
+          rota.descricaoNormalizada
       };
+
+      return prepararRotaTecnica(
+        produtoCSV,
+        grupoFake,
+        rota
+      );
 
     });
 
 }
 
-function criarProdutoMestre(produtoCSV, grupoTXT, comparacao) {
+function criarProdutoMestre(
+  produtoCSV,
+  grupoTXT,
+  comparacao
+) {
 
   const rotasTecnicas =
     prepararRotasTecnicas(
@@ -523,6 +710,27 @@ function criarProdutoMestre(produtoCSV, grupoTXT, comparacao) {
 
     rotasTecnicas,
 
+    /**
+     * Espelho rápido da primeira rota.
+     */
+    zonaOperacional:
+      rotasTecnicas[0]?.zonaOperacional || "",
+
+    srcLinha:
+      rotasTecnicas[0]?.srcLinha || "",
+
+    dstLinha:
+      rotasTecnicas[0]?.dstLinha || "",
+
+    linhaOrigemNegra:
+      rotasTecnicas[0]?.linhaOrigemNegra || "",
+
+    linhaDestinoBrancaCinza:
+      rotasTecnicas[0]?.linhaDestinoBrancaCinza || "",
+
+    rotaCruzada:
+      rotasTecnicas.some(rota => rota.rotaCruzada),
+
     vinculoConfirmado:
       true,
 
@@ -550,7 +758,11 @@ function criarProdutoMestre(produtoCSV, grupoTXT, comparacao) {
 
 }
 
-function criarPendencia(produtoCSV, motivo, sugestoes = []) {
+function criarPendencia(
+  produtoCSV,
+  motivo,
+  sugestoes = []
+) {
 
   return {
 
@@ -580,7 +792,10 @@ function criarPendencia(produtoCSV, motivo, sugestoes = []) {
 
 }
 
-function montarSugestoes(produtoCSV, gruposTXT) {
+function montarSugestoes(
+  produtoCSV,
+  gruposTXT
+) {
 
   return listarSugestoesCorrespondencia(
     produtoCSV,
@@ -611,7 +826,12 @@ function montarSugestoes(produtoCSV, gruposTXT) {
       item.status,
 
     rotasTecnicas:
-      item.produtoTXT?.rotasTecnicas || []
+      item.produtoTXT
+        ? prepararRotasTecnicas(
+            produtoCSV,
+            item.produtoTXT
+          )
+        : []
 
   }));
 
@@ -749,6 +969,36 @@ export function sincronizarProdutos(
 
         rotasTecnicas,
 
+        zonaOperacional:
+          rotasTecnicas[0]?.zonaOperacional ||
+          existente.zonaOperacional ||
+          "",
+
+        srcLinha:
+          rotasTecnicas[0]?.srcLinha ||
+          existente.srcLinha ||
+          "",
+
+        dstLinha:
+          rotasTecnicas[0]?.dstLinha ||
+          existente.dstLinha ||
+          "",
+
+        linhaOrigemNegra:
+          rotasTecnicas[0]?.linhaOrigemNegra ||
+          existente.linhaOrigemNegra ||
+          "",
+
+        linhaDestinoBrancaCinza:
+          rotasTecnicas[0]?.linhaDestinoBrancaCinza ||
+          existente.linhaDestinoBrancaCinza ||
+          "",
+
+        rotaCruzada:
+          rotasTecnicas.some(rota => rota.rotaCruzada) ||
+          existente.rotaCruzada ||
+          false,
+
         origemCSVAtualizada:
           true,
 
@@ -802,6 +1052,12 @@ export function sincronizarProdutos(
       melhor.score >= 80
     ) {
 
+      const rotasMelhorSugestao =
+        prepararRotasTecnicas(
+          produtoCSV,
+          melhor.produtoTXT
+        );
+
       sugestoes.push({
 
         codigo:
@@ -843,10 +1099,7 @@ export function sincronizarProdutos(
             melhor.status,
 
           rotasTecnicas:
-            prepararRotasTecnicas(
-              produtoCSV,
-              melhor.produtoTXT
-            )
+            rotasMelhorSugestao
 
         },
 

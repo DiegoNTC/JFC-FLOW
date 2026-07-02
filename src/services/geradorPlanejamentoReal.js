@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Módulo: geradorPlanejamentoReal
- * Versão: 1.0.1
+ * Versão: 1.0.2
  *
  * Responsabilidade:
  * Gerar o planejamento real com base no Cadastro Mestre.
@@ -18,32 +18,104 @@
  *
  * Regra:
  * Nome oficial e demanda vêm do CSV.
- * Tempo, setup, linha, zona e ordem vêm do TXT.
+ * Tempo, setup, linha, zona, ordem e rota operacional vêm do TXT.
  *
- * Regra importante:
- * A numeração do TXT:
- * 1. Produto A
- * 2. Produto B
- * 3. Produto C
+ * Regras importantes:
  *
- * representa a ordem real de entrada do produto na linha.
- * Essa ordem deve ser preservada como:
- * - sequenciaTXT
- * - ordemTXT
- * - ordemLinhaTXT
- * - sequenciaPrincipal
+ * 1. A numeração do TXT:
+ *    1. Produto A
+ *    2. Produto B
+ *    3. Produto C
+ *
+ *    representa a ordem real de entrada do produto na linha.
+ *
+ * 2. A rota operacional real:
+ *    [N:L5→B/C:L6]
+ *
+ *    representa:
+ *    - srcLinha: linha da Zona Negra
+ *    - dstLinha: linha da Zona Branca/Cinza
+ *    - rotaCruzada: true quando origem e destino são diferentes
+ *
+ * Esses campos precisam chegar no Planejamento Real para depois
+ * montar Plano Final por Zona e Timeline de Turno.
  * ======================================================
  */
 
 function numero(valor) {
 
-  return Number(valor) || 0;
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+    return 0;
+  }
+
+  return Number(
+    String(valor)
+      .replace(",", ".")
+      .replace(/[^0-9.-]/g, "")
+  ) || 0;
 
 }
 
-function obterOrdemTXTRota(
-  rota
-) {
+function texto(valor) {
+
+  return String(valor ?? "")
+    .trim();
+
+}
+
+function normalizarLinha(linha) {
+
+  const valor =
+    texto(linha)
+      .toUpperCase();
+
+  if (
+    valor === "LT" ||
+    valor.includes("TOMATE")
+  ) {
+    return "TOMATE";
+  }
+
+  const numeroLinha =
+    valor.match(/(\d+)/);
+
+  if (numeroLinha) {
+    return `L${numeroLinha[1]}`;
+  }
+
+  return valor || "Sem linha";
+
+}
+
+function normalizarZonaOperacional(zona) {
+
+  const valor =
+    texto(zona)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase();
+
+  if (valor.includes("NEGRA")) {
+    return "NEGRA";
+  }
+
+  if (valor.includes("BRANCA")) {
+    return "BRANCA";
+  }
+
+  if (valor.includes("CINZA")) {
+    return "CINZA";
+  }
+
+  return valor || "SEM_ZONA";
+
+}
+
+function obterOrdemTXTRota(rota) {
 
   return numero(
     rota?.ordemLinhaTXT ??
@@ -55,9 +127,7 @@ function obterOrdemTXTRota(
 
 }
 
-function obterMenorSequenciaValida(
-  sequencias = []
-) {
+function obterMenorSequenciaValida(sequencias = []) {
 
   const validas =
     sequencias
@@ -74,9 +144,7 @@ function obterMenorSequenciaValida(
 
 }
 
-function obterOrdemProdutoPlanejado(
-  produto
-) {
+function obterOrdemProdutoPlanejado(produto) {
 
   return numero(
     produto?.ordemLinhaTXT ??
@@ -85,6 +153,90 @@ function obterOrdemProdutoPlanejado(
     produto?.sequenciaPrincipal ??
     0
   );
+
+}
+
+function obterTransferenciaRota(rota = {}) {
+
+  const transferencia =
+    rota.transferencia || {};
+
+  const linhaBase =
+    normalizarLinha(
+      rota.linha ||
+      rota.linhaPrincipal ||
+      rota.linhaPlanejada ||
+      ""
+    );
+
+  const srcLinha =
+    normalizarLinha(
+      rota.srcLinha ??
+      rota.linhaOrigemNegra ??
+      rota.linhaOrigem ??
+      transferencia.srcLinha ??
+      transferencia.linhaOrigemNegra ??
+      transferencia.linhaOrigem ??
+      linhaBase
+    );
+
+  const dstLinha =
+    normalizarLinha(
+      rota.dstLinha ??
+      rota.linhaDestinoBrancaCinza ??
+      rota.linhaDestino ??
+      transferencia.dstLinha ??
+      transferencia.linhaDestinoBrancaCinza ??
+      transferencia.linhaDestino ??
+      linhaBase
+    );
+
+  const rotaCruzada =
+    srcLinha &&
+    dstLinha &&
+    srcLinha !== dstLinha;
+
+  return {
+    raw:
+      transferencia.raw ??
+      rota.transferenciaRaw ??
+      null,
+
+    valido:
+      Boolean(
+        rota.transferenciaValida ??
+        transferencia.valido ??
+        false
+      ),
+
+    srcLinha,
+
+    dstLinha,
+
+    linhaOrigemNegra:
+      srcLinha,
+
+    linhaDestinoBrancaCinza:
+      dstLinha,
+
+    linhaOrigem:
+      srcLinha,
+
+    linhaDestino:
+      dstLinha,
+
+    rotaCruzada,
+
+    zonaOrigem:
+      rota.zonaOrigem ??
+      transferencia.zonaOrigem ??
+      "NEGRA",
+
+    zonaDestino:
+      rota.zonaDestino ??
+      transferencia.zonaDestino ??
+      "BRANCA_CINZA"
+  };
 
 }
 
@@ -101,14 +253,34 @@ function ordenarLinhas(a, b) {
     return -1;
   }
 
-  const numA = Number(String(linhaA).replace(/\D/g, ""));
-  const numB = Number(String(linhaB).replace(/\D/g, ""));
+  const numA =
+    Number(
+      String(linhaA)
+        .replace(/\D/g, "")
+    );
 
-  if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+  const numB =
+    Number(
+      String(linhaB)
+        .replace(/\D/g, "")
+    );
+
+  if (
+    !Number.isNaN(numA) &&
+    !Number.isNaN(numB)
+  ) {
     return numA - numB;
   }
 
-  return String(linhaA).localeCompare(String(linhaB));
+  return String(linhaA)
+    .localeCompare(
+      String(linhaB),
+      "pt-BR",
+      {
+        numeric: true,
+        sensitivity: "base"
+      }
+    );
 
 }
 
@@ -119,8 +291,22 @@ function extrairLinhasPermitidas(produtoMestre) {
 
   const linhas =
     rotas
-      .map(rota => rota.linha)
-      .filter(Boolean);
+      .flatMap(rota => {
+
+        const transferencia =
+          obterTransferenciaRota(
+            rota
+          );
+
+        return [
+          rota.linha,
+          transferencia.srcLinha,
+          transferencia.dstLinha
+        ];
+
+      })
+      .filter(Boolean)
+      .map(normalizarLinha);
 
   return Array.from(
     new Set(linhas)
@@ -134,8 +320,25 @@ function agruparRotasPorLinha(rotas) {
 
   rotas.forEach(rota => {
 
+    const transferencia =
+      obterTransferenciaRota(
+        rota
+      );
+
+    /**
+     * Para o Planejamento Real principal, usamos a linha técnica
+     * da própria seção do TXT.
+     *
+     * Os campos srcLinha/dstLinha seguem junto no produto planejado
+     * e serão usados no Plano Final por Zona.
+     */
     const linha =
-      rota.linha || "Sem linha";
+      normalizarLinha(
+        rota.linha ||
+        transferencia.srcLinha ||
+        transferencia.dstLinha ||
+        "Sem linha"
+      );
 
     if (!mapa.has(linha)) {
       mapa.set(linha, []);
@@ -229,7 +432,8 @@ function selecionarLinhaPrincipal(produtoMestre) {
 
           linha,
 
-          rotas: rotasLinha,
+          rotas:
+            rotasLinha,
 
           ...base
 
@@ -286,6 +490,17 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       rota
     );
 
+  const transferencia =
+    obterTransferenciaRota(
+      rota
+    );
+
+  const zonaOperacional =
+    normalizarZonaOperacional(
+      rota.zonaOperacional ??
+      rota.zona
+    );
+
   return {
 
     codigo:
@@ -301,7 +516,9 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       produtoMestre.descricaoTXT,
 
     linha:
-      rota.linha || "Sem linha",
+      normalizarLinha(
+        rota.linha || "Sem linha"
+      ),
 
     /**
      * Ordem real vinda do TXT.
@@ -315,14 +532,65 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     ordemLinhaTXT:
       ordemTXT,
 
+    /**
+     * Rota operacional real.
+     */
+    zonaOperacional,
+
+    transferencia,
+
+    transferenciaValida:
+      transferencia.valido,
+
+    srcLinha:
+      transferencia.srcLinha,
+
+    dstLinha:
+      transferencia.dstLinha,
+
+    linhaOrigemNegra:
+      transferencia.linhaOrigemNegra,
+
+    linhaDestinoBrancaCinza:
+      transferencia.linhaDestinoBrancaCinza,
+
+    linhaOrigem:
+      transferencia.linhaOrigem,
+
+    linhaDestino:
+      transferencia.linhaDestino,
+
+    rotaCruzada:
+      transferencia.rotaCruzada,
+
+    zonaOrigem:
+      transferencia.zonaOrigem,
+
+    zonaDestino:
+      transferencia.zonaDestino,
+
+    leadTimeMin:
+      numero(
+        rota.leadTimeMin ??
+        rota.leadTime ??
+        produtoMestre.leadTimeMin ??
+        10
+      ),
+
     linhasPermitidas:
-      extrairLinhasPermitidas(produtoMestre),
+      extrairLinhasPermitidas(
+        produtoMestre
+      ),
 
     rotasTecnicasProduto:
       produtoMestre.rotasTecnicas || [],
 
     zonas: new Set([
       rota.zona || ""
+    ]),
+
+    zonasOperacionais: new Set([
+      zonaOperacional
     ]),
 
     sequencias: [
@@ -354,6 +622,59 @@ function criarProdutoPlanejado(produtoMestre, rota) {
 
     rotasOriginais: [
       rota
+    ],
+
+    rotasOperacionais: [
+      {
+        linha:
+          normalizarLinha(
+            rota.linha || "Sem linha"
+          ),
+
+        zona:
+          rota.zona || "",
+
+        zonaOperacional,
+
+        ordemTXT,
+
+        srcLinha:
+          transferencia.srcLinha,
+
+        dstLinha:
+          transferencia.dstLinha,
+
+        linhaOrigemNegra:
+          transferencia.linhaOrigemNegra,
+
+        linhaDestinoBrancaCinza:
+          transferencia.linhaDestinoBrancaCinza,
+
+        rotaCruzada:
+          transferencia.rotaCruzada,
+
+        transferenciaValida:
+          transferencia.valido,
+
+        transferencia,
+
+        setupMin:
+          numero(rota.setupMin),
+
+        tempoProducaoMin:
+          numero(rota.tempoProducaoMin),
+
+        produtividadeKgHora:
+          numero(rota.produtividadeKgHora),
+
+        leadTimeMin:
+          numero(
+            rota.leadTimeMin ??
+            rota.leadTime ??
+            produtoMestre.leadTimeMin ??
+            10
+          )
+      }
     ]
 
   };
@@ -370,6 +691,21 @@ function mesclarRota(produtoPlanejado, rota) {
     obterOrdemTXTRota(
       rota
     );
+
+  const transferencia =
+    obterTransferenciaRota(
+      rota
+    );
+
+  const zonaOperacional =
+    normalizarZonaOperacional(
+      rota.zonaOperacional ??
+      rota.zona
+    );
+
+  produtoPlanejado.zonasOperacionais.add(
+    zonaOperacional
+  );
 
   produtoPlanejado.sequencias.push(
     ordemTXT
@@ -388,6 +724,108 @@ function mesclarRota(produtoPlanejado, rota) {
 
   produtoPlanejado.ordemLinhaTXT =
     menorOrdemAtual;
+
+  produtoPlanejado.transferenciaValida =
+    produtoPlanejado.transferenciaValida ||
+    transferencia.valido;
+
+  produtoPlanejado.rotaCruzada =
+    produtoPlanejado.rotaCruzada ||
+    transferencia.rotaCruzada;
+
+  /**
+   * Se a rota atual for válida, ela vira referência operacional.
+   * Isso evita perder N:Linha → B/C:Linha em produtos com várias rotas.
+   */
+  if (transferencia.valido) {
+
+    produtoPlanejado.transferencia =
+      transferencia;
+
+    produtoPlanejado.srcLinha =
+      transferencia.srcLinha;
+
+    produtoPlanejado.dstLinha =
+      transferencia.dstLinha;
+
+    produtoPlanejado.linhaOrigemNegra =
+      transferencia.linhaOrigemNegra;
+
+    produtoPlanejado.linhaDestinoBrancaCinza =
+      transferencia.linhaDestinoBrancaCinza;
+
+    produtoPlanejado.linhaOrigem =
+      transferencia.linhaOrigem;
+
+    produtoPlanejado.linhaDestino =
+      transferencia.linhaDestino;
+
+    produtoPlanejado.zonaOrigem =
+      transferencia.zonaOrigem;
+
+    produtoPlanejado.zonaDestino =
+      transferencia.zonaDestino;
+
+  }
+
+  produtoPlanejado.leadTimeMin = Math.max(
+    numero(produtoPlanejado.leadTimeMin),
+    numero(
+      rota.leadTimeMin ??
+      rota.leadTime ??
+      10
+    )
+  );
+
+  produtoPlanejado.rotasOperacionais.push({
+    linha:
+      normalizarLinha(
+        rota.linha || "Sem linha"
+      ),
+
+    zona:
+      rota.zona || "",
+
+    zonaOperacional,
+
+    ordemTXT,
+
+    srcLinha:
+      transferencia.srcLinha,
+
+    dstLinha:
+      transferencia.dstLinha,
+
+    linhaOrigemNegra:
+      transferencia.linhaOrigemNegra,
+
+    linhaDestinoBrancaCinza:
+      transferencia.linhaDestinoBrancaCinza,
+
+    rotaCruzada:
+      transferencia.rotaCruzada,
+
+    transferenciaValida:
+      transferencia.valido,
+
+    transferencia,
+
+    setupMin:
+      numero(rota.setupMin),
+
+    tempoProducaoMin:
+      numero(rota.tempoProducaoMin),
+
+    produtividadeKgHora:
+      numero(rota.produtividadeKgHora),
+
+    leadTimeMin:
+      numero(
+        rota.leadTimeMin ??
+        rota.leadTime ??
+        10
+      )
+  });
 
   produtoPlanejado.etapasTecnicas += 1;
 
@@ -464,7 +902,8 @@ function finalizarProdutoPlanejado(produto) {
       produto.demandaFinal * produto.tempoUnitarioMin
     );
 
-    statusCalculo = "CALCULADO_POR_DEMANDA";
+    statusCalculo =
+      "CALCULADO_POR_DEMANDA";
 
   } else {
 
@@ -490,6 +929,16 @@ function finalizarProdutoPlanejado(produto) {
   const tempoTotalPlanejadoMin =
     tempoProducaoPlanejadoMin + setupFinalMin;
 
+  const zonasTexto =
+    Array.from(produto.zonas)
+      .filter(Boolean)
+      .join(" / ");
+
+  const zonasOperacionaisTexto =
+    Array.from(produto.zonasOperacionais || [])
+      .filter(Boolean)
+      .join(" / ");
+
   return {
 
     ...produto,
@@ -510,14 +959,20 @@ function finalizarProdutoPlanejado(produto) {
       setupFinalMin,
 
     setupTrocaMin:
-      numero(produto.setupTrocaMin ?? setupFinalMin),
+      numero(
+        produto.setupTrocaMin ??
+        setupFinalMin
+      ),
 
     setupBaseMin:
-      numero(produto.setupBaseMin ?? setupFinalMin),
+      numero(
+        produto.setupBaseMin ??
+        setupFinalMin
+      ),
 
-    zonasTexto: Array.from(produto.zonas)
-      .filter(Boolean)
-      .join(" / "),
+    zonasTexto,
+
+    zonasOperacionaisTexto,
 
     sequenciaPrincipal,
 
@@ -537,10 +992,7 @@ function finalizarProdutoPlanejado(produto) {
 
 }
 
-function ordenarProdutosPlanejados(
-  produtoA,
-  produtoB
-) {
+function ordenarProdutosPlanejados(produtoA, produtoB) {
 
   const ordemA =
     obterOrdemProdutoPlanejado(
@@ -559,7 +1011,11 @@ function ordenarProdutosPlanejados(
   return String(produtoA.nomeOficial || "")
     .localeCompare(
       String(produtoB.nomeOficial || ""),
-      "pt-BR"
+      "pt-BR",
+      {
+        numeric: true,
+        sensitivity: "base"
+      }
     );
 
 }
@@ -584,7 +1040,9 @@ function agruparProdutosPorLinha(produtosMestre) {
     }
 
     const linha =
-      linhaPrincipal.linha || "Sem linha";
+      normalizarLinha(
+        linhaPrincipal.linha || "Sem linha"
+      );
 
     if (!mapaLinhas.has(linha)) {
       mapaLinhas.set(linha, new Map());
@@ -638,61 +1096,68 @@ function agruparProdutosPorLinha(produtosMestre) {
 
   });
 
-  const linhas = Array.from(mapaLinhas.entries())
-    .map(([linha, mapaProdutos]) => {
+  const linhas =
+    Array.from(mapaLinhas.entries())
+      .map(([linha, mapaProdutos]) => {
 
-      const produtos =
-        Array.from(mapaProdutos.values())
-          .map(finalizarProdutoPlanejado)
-          .sort(ordenarProdutosPlanejados);
+        const produtos =
+          Array.from(mapaProdutos.values())
+            .map(finalizarProdutoPlanejado)
+            .sort(ordenarProdutosPlanejados);
 
-      const tempoTotalLinhaMin =
-        produtos.reduce((soma, produto) => {
+        const tempoTotalLinhaMin =
+          produtos.reduce((soma, produto) => {
 
-          return soma + produto.tempoTotalPlanejadoMin;
+            return soma + produto.tempoTotalPlanejadoMin;
 
-        }, 0);
+          }, 0);
 
-      const setupTotalLinhaMin =
-        produtos.reduce((soma, produto) => {
+        const setupTotalLinhaMin =
+          produtos.reduce((soma, produto) => {
 
-          return soma + produto.setupMin;
+            return soma + produto.setupMin;
 
-        }, 0);
+          }, 0);
 
-      const demandaTotalLinha =
-        produtos.reduce((soma, produto) => {
+        const demandaTotalLinha =
+          produtos.reduce((soma, produto) => {
 
-          return soma + produto.demandaFinal;
+            return soma + produto.demandaFinal;
 
-        }, 0);
+          }, 0);
 
-      return {
+        const totalRotasCruzadas =
+          produtos.filter(produto => produto.rotaCruzada)
+            .length;
 
-        linha,
+        return {
 
-        produtos,
+          linha,
 
-        resumo: {
+          produtos,
 
-          totalProdutos:
-            produtos.length,
+          resumo: {
 
-          demandaTotal:
-            demandaTotalLinha,
+            totalProdutos:
+              produtos.length,
 
-          tempoTotalMin:
-            tempoTotalLinhaMin,
+            demandaTotal:
+              demandaTotalLinha,
 
-          setupTotalMin:
-            setupTotalLinhaMin
+            tempoTotalMin:
+              tempoTotalLinhaMin,
 
-        }
+            setupTotalMin:
+              setupTotalLinhaMin,
 
-      };
+            totalRotasCruzadas
 
-    })
-    .sort(ordenarLinhas);
+          }
+
+        };
+
+      })
+      .sort(ordenarLinhas);
 
   return linhas;
 
@@ -716,6 +1181,9 @@ function calcularResumoGeral(linhas) {
     resumo.setupTotalMin +=
       linha.resumo.setupTotalMin;
 
+    resumo.totalRotasCruzadas +=
+      numero(linha.resumo.totalRotasCruzadas);
+
     return resumo;
 
   }, {
@@ -733,6 +1201,9 @@ function calcularResumoGeral(linhas) {
       0,
 
     setupTotalMin:
+      0,
+
+    totalRotasCruzadas:
       0
 
   });
@@ -747,10 +1218,14 @@ export function gerarPlanejamentoReal(produtosMestre) {
       : [];
 
   const linhas =
-    agruparProdutosPorLinha(produtos);
+    agruparProdutosPorLinha(
+      produtos
+    );
 
   const resumo =
-    calcularResumoGeral(linhas);
+    calcularResumoGeral(
+      linhas
+    );
 
   return {
 

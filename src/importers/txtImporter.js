@@ -2,23 +2,36 @@
  * ======================================================
  * JFC FLOW
  * Módulo: txtImporter
- * Versão: 1.0.1
+ * Versão: 1.0.2
  *
  * Responsabilidade:
- * Ler o TXT oficial da fábrica e converter em produtos técnicos.
+ * Ler o TXT oficial da fábrica e converter em uma
+ * Base Técnica estruturada.
  *
- * Regra importante:
- * A numeração do TXT:
- * 1. Produto A
- * 2. Produto B
- * 3. Produto C
+ * Este arquivo NÃO vincula código do ERP.
+ * O TXT não possui código.
  *
- * representa a ordem real de entrada do produto na linha.
- * Essa ordem será salva como:
- * - sequencia
- * - sequenciaTXT
- * - ordemTXT
- * - ordemLinhaTXT
+ * O vínculo Código ERP ↔ Produto TXT será feito depois
+ * pelo sincronizador CSV + TXT.
+ *
+ * Regras importantes:
+ *
+ * 1. A numeração do TXT:
+ *    1. Produto A
+ *    2. Produto B
+ *    3. Produto C
+ *
+ *    representa a ordem real de entrada do produto na linha.
+ *
+ * 2. A rota operacional:
+ *    [N:L1→B/C:L6]
+ *    [N:L1>B/C:L6]
+ *    [N:L1-B/C:L6]
+ *
+ *    representa:
+ *    - srcLinha: linha da Zona Negra
+ *    - dstLinha: linha da Zona Branca/Cinza
+ *    - rotaCruzada: true quando origem e destino são diferentes
  * ======================================================
  */
 
@@ -57,22 +70,18 @@ function parseTempoParaMinutos(valor) {
 
   let total = 0;
 
-  const horas = texto.match(/(\d+(?:\.\d+)?)h/);
+  const horas =
+    texto.match(/(\d+(?:\.\d+)?)h/);
 
-  const minutos = texto.match(/(\d+(?:\.\d+)?)min/);
+  const minutos =
+    texto.match(/(\d+(?:\.\d+)?)min/);
 
   if (horas) {
-
-    total +=
-      Number(horas[1]) * 60;
-
+    total += Number(horas[1]) * 60;
   }
 
   if (minutos) {
-
-    total +=
-      Number(minutos[1]);
-
+    total += Number(minutos[1]);
   }
 
   if (
@@ -80,15 +89,10 @@ function parseTempoParaMinutos(valor) {
     !minutos &&
     /^\d+(?:\.\d+)?$/.test(texto)
   ) {
-
-    total =
-      Number(texto);
-
+    total = Number(texto);
   }
 
-  return Math.round(
-    total
-  );
+  return Math.round(total);
 
 }
 
@@ -98,17 +102,18 @@ function normalizarLinha(nomeLinha) {
     .trim()
     .toUpperCase();
 
-  const numero = texto.match(/(\d+)/);
+  if (
+    texto === "LT" ||
+    texto.includes("TOMATE")
+  ) {
+    return "TOMATE";
+  }
+
+  const numero =
+    texto.match(/(\d+)/);
 
   if (numero) {
     return `L${numero[1]}`;
-  }
-
-  if (
-    texto.includes("TOMATE") ||
-    texto === "LT"
-  ) {
-    return "TOMATE";
   }
 
   return texto;
@@ -127,10 +132,164 @@ function normalizarDescricao(texto) {
 
 }
 
-function extrairTransferencia(descricaoBruta) {
+function normalizarZonaOperacional(zona) {
+
+  const texto = String(zona || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+
+  if (texto.includes("NEGRA")) {
+    return "NEGRA";
+  }
+
+  if (texto.includes("BRANCA")) {
+    return "BRANCA";
+  }
+
+  if (texto.includes("CINZA")) {
+    return "CINZA";
+  }
+
+  return texto || "SEM_ZONA";
+
+}
+
+function criarTransferenciaPadrao(linhaAtual) {
+
+  const linha =
+    normalizarLinha(linhaAtual);
+
+  return {
+    raw: null,
+
+    valido: false,
+
+    srcLinha: linha,
+
+    dstLinha: linha,
+
+    linhaOrigemNegra: linha,
+
+    linhaDestinoBrancaCinza: linha,
+
+    linhaOrigem: linha,
+
+    linhaDestino: linha,
+
+    rotaCruzada: false,
+
+    zonaOrigem: "NEGRA",
+
+    zonaDestino: "BRANCA_CINZA"
+  };
+
+}
+
+function interpretarTransferencia(
+  transferenciaRaw,
+  linhaAtual
+) {
+
+  const padrao =
+    criarTransferenciaPadrao(
+      linhaAtual
+    );
+
+  const raw =
+    String(transferenciaRaw || "")
+      .trim();
+
+  if (!raw) {
+    return padrao;
+  }
+
+  /**
+   * Formatos aceitos:
+   *
+   * N:L1→B/C:L6
+   * N:L1>B/C:L6
+   * N:L1-B/C:L6
+   * N:L1->B/C:L6
+   * N:L1 / B/C:L6
+   * N:LT→B/C:L6
+   * N:TOMATE→B/C:L6
+   */
+  const texto =
+    raw
+      .toUpperCase()
+      .replace(/\s+/g, "")
+      .replace(/BC:/g, "B/C:");
+
+  const match =
+    texto.match(
+      /N:([A-Z0-9]+)(?:→|->|>|-|\/)B\/?C:([A-Z0-9]+)/
+    );
+
+  if (!match) {
+
+    return {
+      ...padrao,
+
+      raw,
+
+      valido: false
+    };
+
+  }
+
+  const srcLinha =
+    normalizarLinha(
+      match[1]
+    );
+
+  const dstLinha =
+    normalizarLinha(
+      match[2]
+    );
+
+  return {
+    raw,
+
+    valido: true,
+
+    srcLinha,
+
+    dstLinha,
+
+    linhaOrigemNegra:
+      srcLinha,
+
+    linhaDestinoBrancaCinza:
+      dstLinha,
+
+    linhaOrigem:
+      srcLinha,
+
+    linhaDestino:
+      dstLinha,
+
+    rotaCruzada:
+      srcLinha !== dstLinha,
+
+    zonaOrigem:
+      "NEGRA",
+
+    zonaDestino:
+      "BRANCA_CINZA"
+  };
+
+}
+
+function extrairTransferencia(
+  descricaoBruta,
+  linhaAtual
+) {
 
   const texto =
-    String(descricaoBruta || "").trim();
+    String(descricaoBruta || "")
+      .trim();
 
   const match =
     texto.match(/\s*\[([^\]]+)\]\s*$/);
@@ -138,8 +297,13 @@ function extrairTransferencia(descricaoBruta) {
   if (!match) {
 
     return {
-      descricaoLimpa: texto,
-      transferencia: null
+      descricaoLimpa:
+        texto,
+
+      transferencia:
+        criarTransferenciaPadrao(
+          linhaAtual
+        )
     };
 
   }
@@ -154,19 +318,21 @@ function extrairTransferencia(descricaoBruta) {
 
   return {
     descricaoLimpa,
-    transferencia: {
-      raw: transferenciaRaw
-    }
+
+    transferencia:
+      interpretarTransferencia(
+        transferenciaRaw,
+        linhaAtual
+      )
   };
 
 }
 
-function extrairSequenciaENomeProdutoTXT(
-  linha
-) {
+function extrairSequenciaENomeProdutoTXT(linha) {
 
   const texto =
-    String(linha || "").trim();
+    String(linha || "")
+      .trim();
 
   const match =
     texto.match(/^(\d+)\.\s*(.+)$/);
@@ -196,11 +362,65 @@ function criarIdTecnico(produto) {
     produto.linha,
     produto.zona,
     produto.ordemLinhaTXT,
+    produto.srcLinha,
+    produto.dstLinha,
     produto.descricaoNormalizada
   ].join("|");
 
 }
 
+function ehLinhaResumo(linha) {
+
+  return /^▶\s+(?:LINHA\s+)?(.+?)\s+[—-]\s+(.+)$/i
+    .test(linha);
+
+}
+
+function ehLinhaZona(linha) {
+
+  return /^\[(.+?)\]$/
+    .test(linha);
+
+}
+
+function ehLinhaProduto(linha) {
+
+  return /^(\d+)\.\s+(.+)$/
+    .test(linha);
+
+}
+
+function ehLinhaDetalhe(linha) {
+
+  return /^([\d.,]+)u\/dia\s*\|\s*([\d.,]+)kg\/dia\s*\|\s*([\d.,]+)kg\/h\s*\|\s*Setup:([^|]+)\|\s*Prod:([^|]+)\|\s*Acum:(.+)$/i
+    .test(linha);
+
+}
+
+function ehLinhaEstrutural(linha) {
+
+  return (
+    ehLinhaResumo(linha) ||
+    ehLinhaZona(linha) ||
+    ehLinhaProduto(linha) ||
+    ehLinhaDetalhe(linha)
+  );
+
+}
+
+/**
+ * Importa o TXT da fábrica.
+ *
+ * Retorno:
+ *
+ * {
+ *   meta,
+ *   linhasResumo,
+ *   produtosTecnicos,
+ *   linhasNaoInterpretadas,
+ *   estatisticas
+ * }
+ */
 export function importarTXT(conteudoTXT) {
 
   const linhasArquivo =
@@ -259,9 +479,19 @@ export function importarTXT(conteudoTXT) {
       continue;
     }
 
+    /**
+     * O TXT real geralmente tem título e referência nas duas primeiras linhas.
+     * Mas em testes pequenos, a primeira linha pode ser:
+     * ▶ LINHA 1 ...
+     *
+     * Por isso só pulamos título/referência se a linha NÃO for estrutural.
+     */
     if (
-      linha === meta.titulo ||
-      linha === meta.referencia
+      (
+        linha === meta.titulo ||
+        linha === meta.referencia
+      ) &&
+      !ehLinhaEstrutural(linha)
     ) {
       continue;
     }
@@ -269,10 +499,11 @@ export function importarTXT(conteudoTXT) {
     /**
      * Exemplo:
      * ▶ LINHA 2 — 1.5k u/dia | 15.7t kg/dia
+     * ▶ TOMATE — ...
      */
     const matchLinha =
       linha.match(
-        /^▶\s+(?:LINHA\s+)?(.+?)\s+—\s+(.+)$/i
+        /^▶\s+(?:LINHA\s+)?(.+?)\s+[—-]\s+(.+)$/i
       );
 
     if (matchLinha) {
@@ -313,6 +544,8 @@ export function importarTXT(conteudoTXT) {
     /**
      * Exemplo:
      * [Zona Negra]
+     * [Zona Branca]
+     * [Zona Cinza (espelho)]
      */
     const matchZona =
       linha.match(/^\[(.+?)\]$/);
@@ -331,9 +564,8 @@ export function importarTXT(conteudoTXT) {
 
     /**
      * Exemplo:
-     * 1. CEBOLA BRANCA TIRAS MC CX 4KG 4PCT 1KG
-     *
-     * O número antes do ponto é a ordem real de entrada na linha.
+     * 1. TIRAS DE ALFACE AMERICANA JFC
+     * 2. CEBOLA FATIADA 200G [N:L1→B/C:L6]
      */
     const matchProduto =
       linha.match(/^(\d+)\.\s+(.+)$/);
@@ -360,7 +592,13 @@ export function importarTXT(conteudoTXT) {
         transferencia
       } =
         extrairTransferencia(
-          descricaoBruta
+          descricaoBruta,
+          linhaAtual
+        );
+
+      const zonaOperacional =
+        normalizarZonaOperacional(
+          zonaAtual
         );
 
       produtoPendente = {
@@ -368,6 +606,9 @@ export function importarTXT(conteudoTXT) {
         linhaArquivo:
           i + 1,
 
+        /**
+         * Linha da seção do TXT.
+         */
         linha:
           linhaAtual,
 
@@ -377,6 +618,11 @@ export function importarTXT(conteudoTXT) {
         zona:
           zonaAtual,
 
+        zonaOperacional,
+
+        /**
+         * Ordem real do TXT.
+         */
         sequencia:
           sequenciaTXT,
 
@@ -403,7 +649,40 @@ export function importarTXT(conteudoTXT) {
             descricaoLimpa
           ),
 
+        /**
+         * Rota operacional real.
+         */
         transferencia,
+
+        srcLinha:
+          transferencia.srcLinha,
+
+        dstLinha:
+          transferencia.dstLinha,
+
+        linhaOrigemNegra:
+          transferencia.linhaOrigemNegra,
+
+        linhaDestinoBrancaCinza:
+          transferencia.linhaDestinoBrancaCinza,
+
+        linhaOrigem:
+          transferencia.linhaOrigem,
+
+        linhaDestino:
+          transferencia.linhaDestino,
+
+        rotaCruzada:
+          transferencia.rotaCruzada,
+
+        zonaOrigem:
+          transferencia.zonaOrigem,
+
+        zonaDestino:
+          transferencia.zonaDestino,
+
+        transferenciaValida:
+          transferencia.valido,
 
         rawProduto:
           raw

@@ -116,6 +116,14 @@ import {
   renderPlanoFinalDia
 } from "./render/renderPlanoFinalDia.js";
 
+import {
+  gerarTimelineTurno
+} from "./services/geradorTimelineTurno.js";
+
+import {
+  renderTimelineTurno
+} from "./render/renderTimelineTurno.js";
+
 // =========================
 // ELEMENTOS
 // =========================
@@ -232,6 +240,7 @@ const renderConfigL2 = {
 // =========================
 // PLANEJAMENTO REAL
 // =========================
+
 function normalizarCodigoProduto(
   codigo
 ) {
@@ -457,6 +466,23 @@ function calcularPlanejamentoCompleto(
 
 }
 
+function gerarSequenciamentoComPreservacao(
+  planejamentoComCapacidade
+) {
+
+  const planejamentoAnterior =
+    ultimoPlanejamentoComCapacidade;
+
+  return gerarSequenciamentoPlanejamento(
+    planejamentoComCapacidade,
+    {
+      planejamentoAnterior,
+      preservarSequenciaAnterior: true
+    }
+  );
+
+}
+
 function calcularBalanceamentoCompleto(
   planejamentoComCapacidade,
   opcoes = {}
@@ -511,17 +537,23 @@ function logarPlanejamento(
   console.table(
     linhasPlanejadas.map(linha => ({
 
-      linha: linha.linha,
+      linha:
+        linha.linha,
 
-      produtos: linha.resumo?.totalProdutos,
+      produtos:
+        linha.resumo?.totalProdutos,
 
-      demanda: linha.resumo?.demandaTotal,
+      demanda:
+        linha.resumo?.demandaTotal,
 
-      capacidadeMin: linha.capacidade?.capacidadeMin,
+      capacidadeMin:
+        linha.capacidade?.capacidadeMin,
 
-      tempoPlanejadoMin: linha.capacidade?.tempoPlanejadoMin,
+      tempoPlanejadoMin:
+        linha.capacidade?.tempoPlanejadoMin,
 
-      saldoMin: linha.capacidade?.saldoMin,
+      saldoMin:
+        linha.capacidade?.saldoMin,
 
       utilizacao:
         `${linha.capacidade?.utilizacaoPercentual || 0}%`,
@@ -530,6 +562,42 @@ function logarPlanejamento(
         linha.capacidade?.statusTexto
 
     }))
+  );
+
+}
+
+function renderizarPlanoFinalETimeline(
+  planejamentoSequenciado
+) {
+
+  renderPlanoFinalDia(
+    planejamentoSequenciado
+  );
+
+  if (
+    !window.jfcPlanoFinalDia ||
+    !Array.isArray(window.jfcPlanoFinalDia.linhas) ||
+    window.jfcPlanoFinalDia.linhas.length === 0
+  ) {
+
+    renderTimelineTurno(
+      null
+    );
+
+    return;
+
+  }
+
+  const timelineTurno =
+    gerarTimelineTurno(
+      window.jfcPlanoFinalDia,
+      {
+        inicioTurno: "07:00"
+      }
+    );
+
+  renderTimelineTurno(
+    timelineTurno
   );
 
 }
@@ -583,13 +651,17 @@ function moverBlocoSequenciamento({
     }
   );
 
-  renderPlanoFinalDia(
+  renderizarPlanoFinalETimeline(
     ultimoPlanejamentoComCapacidade
   );
 
-  renderBalanceamento(null);
+  renderBalanceamento(
+    null
+  );
 
-  renderPlanejamentoSimulado(null);
+  renderPlanejamentoSimulado(
+    null
+  );
 
   console.log(
     "BLOCO MOVIDO E PLANEJAMENTO RECALCULADO:",
@@ -662,7 +734,7 @@ function renderizarResultadoSincronizacao(
 ) {
 
   const planejamentoSequenciado =
-    gerarSequenciamentoPlanejamento(
+    gerarSequenciamentoComPreservacao(
       planejamentoComCapacidade
     );
 
@@ -681,7 +753,7 @@ function renderizarResultadoSincronizacao(
     }
   );
 
-  renderPlanoFinalDia(
+  renderizarPlanoFinalETimeline(
     planejamentoSequenciado
   );
 
@@ -700,7 +772,9 @@ function renderizarResultadoSincronizacao(
       onConfirmarSugestao: (sugestao) => {
 
         const produtoConfirmado =
-          confirmarSugestaoVinculo(sugestao);
+          confirmarSugestaoVinculo(
+            sugestao
+          );
 
         console.log(
           "PRODUTO CONFIRMADO MANUALMENTE:",
@@ -723,10 +797,11 @@ function renderizarResultadoSincronizacao(
         const {
           planejamentoComCapacidade:
           novoPlanejamentoComCapacidade
-        } = calcularPlanejamentoCompleto(
-          novaPersistencia.produtosMestre,
-          getDadosCSV()
-        );
+        } =
+          calcularPlanejamentoCompleto(
+            novaPersistencia.produtosMestre,
+            getDadosCSV()
+          );
 
         const novasSugestoes =
           carregarSugestoesVinculo();
@@ -828,13 +903,11 @@ function executarSincronizacao() {
 
   const {
     planejamentoComCapacidade
-  } = calcularPlanejamentoCompleto(
-    persistencia.produtosMestre,
-    dadosCSV
-  );
-
-  ultimoPlanejamentoComCapacidade =
-    planejamentoComCapacidade;
+  } =
+    calcularPlanejamentoCompleto(
+      persistencia.produtosMestre,
+      dadosCSV
+    );
 
   ultimoResultadoSincronizacao =
     resultadoSincronizacao;
@@ -899,6 +972,10 @@ function recalcularPlanejamentoComCapacidade() {
       null
     );
 
+    renderTimelineTurno(
+      null
+    );
+
     renderBalanceamento(
       null
     );
@@ -915,14 +992,16 @@ function recalcularPlanejamentoComCapacidade() {
 
   }
 
-  const { planejamentoComCapacidade } =
+  const {
+    planejamentoComCapacidade
+  } =
     calcularPlanejamentoCompleto(
       produtosMestre,
       dadosCSV
     );
 
   const planejamentoSequenciado =
-    gerarSequenciamentoPlanejamento(
+    gerarSequenciamentoComPreservacao(
       planejamentoComCapacidade
     );
 
@@ -941,7 +1020,7 @@ function recalcularPlanejamentoComCapacidade() {
     }
   );
 
-  renderPlanoFinalDia(
+  renderizarPlanoFinalETimeline(
     planejamentoSequenciado
   );
 
@@ -980,9 +1059,10 @@ function executarBalanceamentoGeral() {
   const {
     sugestoesBalanceamento,
     simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade
-  );
+  } =
+    calcularBalanceamentoCompleto(
+      ultimoPlanejamentoComCapacidade
+    );
 
   renderizarResultadoBalanceamento(
     sugestoesBalanceamento,
@@ -1019,12 +1099,13 @@ function executarBalanceamentoPorLinha() {
   const {
     sugestoesBalanceamento,
     simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade,
-    {
-      linhaOrigem
-    }
-  );
+  } =
+    calcularBalanceamentoCompleto(
+      ultimoPlanejamentoComCapacidade,
+      {
+        linhaOrigem
+      }
+    );
 
   renderizarResultadoBalanceamento(
     sugestoesBalanceamento,
@@ -1067,12 +1148,13 @@ function executarBalanceamentoLinhaDireta(
   const {
     sugestoesBalanceamento,
     simulacaoBalanceamento
-  } = calcularBalanceamentoCompleto(
-    ultimoPlanejamentoComCapacidade,
-    {
-      linhaOrigem
-    }
-  );
+  } =
+    calcularBalanceamentoCompleto(
+      ultimoPlanejamentoComCapacidade,
+      {
+        linhaOrigem
+      }
+    );
 
   renderizarResultadoBalanceamento(
     sugestoesBalanceamento,
@@ -1135,7 +1217,9 @@ function inicializarImportacoes() {
 
   configurarImportacaoCSV((dados) => {
 
-    setDadosCSV(dados);
+    setDadosCSV(
+      dados
+    );
 
     console.log(
       "CSV salvo temporariamente para sincronização:",
@@ -1147,7 +1231,9 @@ function inicializarImportacoes() {
 
   configurarImportacaoTXT((baseTecnica) => {
 
-    setBaseTXT(baseTecnica);
+    setBaseTXT(
+      baseTecnica
+    );
 
     console.log(
       "TXT salvo temporariamente para sincronização:",
@@ -1189,7 +1275,9 @@ function inicializarSincronizacao() {
 
 window.removerItem = (id) => {
 
-  removerItem(id);
+  removerItem(
+    id
+  );
 
   atualizarTodasLinhas(
     renderConfigL1,
@@ -1320,7 +1408,6 @@ function iniciarJFCFlow() {
   inicializarBotoesSequenciador();
 
   inicializarDropzones();
-
 
   renderEditorCapacidade(
     recalcularPlanejamentoComCapacidade
