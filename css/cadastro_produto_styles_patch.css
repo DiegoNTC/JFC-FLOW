@@ -1,0 +1,325 @@
+/* =========================
+   CADASTRO MESTRE / PRODUTOS CADASTRADOS
+========================= */
+
+.cadastro-produto-card {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  margin-top: 18px;
+}
+
+.cadastro-produto-header,
+.cadastro-produto-lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.cadastro-produto-header h2,
+.cadastro-produto-lista-header h3 {
+  margin: 0;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.cadastro-produto-header h2 {
+  font-size: 28px;
+}
+
+.cadastro-produto-lista-header h3 {
+  font-size: 22px;
+}
+
+.cadastro-produto-header p,
+.cadastro-produto-lista-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.cadastro-produto-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cadastro-form-details {
+  margin-bottom: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.cadastro-form-details > summary {
+  cursor: pointer;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.cadastro-form-details .cadastro-form {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.cadastro-produto-lista {
+  margin-top: 22px;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.cadastro-produto-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cadastro-produto-filtros {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr auto auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.cadastro-produto-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cadastro-produto-filtro-sm {
+  min-width: 130px;
+}
+
+.cadastro-produto-filtro label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.cadastro-produto-filtro input,
+.cadastro-produto-filtro select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cadastro-produto-filtro input:focus,
+.cadastro-produto-filtro select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.15);
+}
+
+.cadastro-produto-filtro-check {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.cadastro-checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.cadastro-produto-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cadastro-produto-tabela-wrapper,
+.cadastro-table-wrapper {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  max-height: 520px;
+}
+
+.cadastro-produto-table,
+.cadastro-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+  background: #ffffff;
+}
+
+.cadastro-produto-table thead th,
+.cadastro-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: left;
+  padding: 13px 12px;
+  border-bottom: 1px solid #dbe3ef;
+  white-space: nowrap;
+}
+
+.cadastro-produto-table tbody td,
+.cadastro-table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 13px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.cadastro-produto-table tbody tr:hover,
+.cadastro-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.cadastro-codigo {
+  white-space: nowrap;
+  font-family: monospace;
+  color: #334155;
+}
+
+.cadastro-produto-nome {
+  font-weight: 900;
+  color: #0f172a;
+  min-width: 320px;
+  max-width: 520px;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.cadastro-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cadastro-status-badge.is-ativo {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cadastro-status-badge.is-inativo {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cadastro-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cadastro-flag.is-sim {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.cadastro-flag.is-nao {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.cadastro-editar-btn,
+.cadastro-edit-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.cadastro-editar-btn:hover,
+.cadastro-edit-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.cadastro-editar-btn:active,
+.cadastro-edit-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 1100px) {
+  .cadastro-produto-filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .cadastro-produto-header,
+  .cadastro-produto-lista-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cadastro-produto-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .cadastro-produto-card,
+  .cadastro-produto-lista {
+    padding: 14px;
+  }
+
+  .cadastro-produto-header h2,
+  .cadastro-produto-lista-header h3 {
+    font-size: 20px;
+  }
+}

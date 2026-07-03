@@ -839,50 +839,64 @@ function filtrarProdutosCadastro(produtos) {
 function renderFiltrosCadastro(produtos, produtosFiltrados) {
 
     return `
-    <div class="cadastro-filtros">
+        <div class="cadastro-produto-filtros">
 
-      <label>
-        Buscar produto/código
-        <input
-          type="text"
-          id="cadastroFiltroTermo"
-          value="${escaparHTML(filtrosCadastro.termo)}"
-          placeholder="Digite código ou produto"
-        >
-      </label>
+            <div class="cadastro-produto-filtro">
+                <label for="cadastroFiltroTermo">
+                    Buscar produto/código
+                </label>
 
-      <label>
-        Linha
-        <select id="cadastroFiltroLinha">
-          ${criarOptionsLinhas(filtrosCadastro.linha, true)}
-        </select>
-      </label>
+                <input
+                    type="text"
+                    id="cadastroFiltroTermo"
+                    value="${escaparHTML(filtrosCadastro.termo)}"
+                    placeholder="Digite código ou produto"
+                >
+            </div>
 
-      <label>
-        Família
-        <input
-          type="text"
-          id="cadastroFiltroFamilia"
-          value="${escaparHTML(filtrosCadastro.familia)}"
-          placeholder="Ex: RUCULA"
-        >
-      </label>
+            <div class="cadastro-produto-filtro cadastro-produto-filtro-sm">
+                <label for="cadastroFiltroLinha">
+                    Linha
+                </label>
 
-      <label class="cadastro-filtro-check">
-        <input
-          type="checkbox"
-          id="cadastroFiltroPendentes"
-          ${filtrosCadastro.somentePendentes ? "checked" : ""}
-        >
-        Mostrar sem família/linha
-      </label>
+                <select id="cadastroFiltroLinha">
+                    ${criarOptionsLinhas(filtrosCadastro.linha, true)}
+                </select>
+            </div>
 
-      <span class="cadastro-filtros-total">
-        ${formatarNumero(produtosFiltrados.length)} de ${formatarNumero(produtos.length)} itens
-      </span>
+            <div class="cadastro-produto-filtro">
+                <label for="cadastroFiltroFamilia">
+                    Família
+                </label>
 
-    </div>
-  `;
+                <input
+                    type="text"
+                    id="cadastroFiltroFamilia"
+                    value="${escaparHTML(filtrosCadastro.familia)}"
+                    placeholder="Ex: RUCULA"
+                >
+            </div>
+
+            <div class="cadastro-produto-filtro cadastro-produto-filtro-check">
+                <label class="cadastro-checkbox-inline">
+                    <input
+                        type="checkbox"
+                        id="cadastroFiltroPendentes"
+                        ${filtrosCadastro.somentePendentes ? "checked" : ""}
+                    >
+
+                    <span>
+                        Mostrar sem família/linha
+                    </span>
+                </label>
+            </div>
+
+            <div class="cadastro-filtros-total cadastro-produto-total">
+                ${formatarNumero(produtosFiltrados.length)} de ${formatarNumero(produtos.length)} itens
+            </div>
+
+        </div>
+    `;
 
 }
 
@@ -893,10 +907,10 @@ function renderTabelaProdutos(
     if (!produtos || produtos.length === 0) {
 
         return `
-      <div class="cadastro-empty">
-        Nenhum produto encontrado com os filtros atuais.
-      </div>
-    `;
+            <div class="cadastro-empty">
+                Nenhum produto encontrado com os filtros atuais.
+            </div>
+        `;
 
     }
 
@@ -918,16 +932,27 @@ function renderTabelaProdutos(
                     produto.rotasTecnicas?.[0] || {};
 
                 const familiaSetup =
-                    produto.familiaSetup || produto.classeSetup || rota.familiaSetup || "-";
+                    produto.familiaSetup ||
+                    produto.classeSetup ||
+                    rota.familiaSetup ||
+                    "-";
 
                 const familiaSequenciamento =
-                    produto.familiaSequenciamento || produto.familiaOperacional || familiaSetup || "-";
+                    produto.familiaSequenciamento ||
+                    produto.familiaOperacional ||
+                    familiaSetup ||
+                    "-";
 
                 const linhaPrincipal =
-                    produto.linhaPrincipal || rota.linha || "-";
+                    produto.linhaPrincipal ||
+                    rota.linha ||
+                    "-";
 
                 const linhaSequenciamento =
-                    produto.linhaSequenciamento || produto.linhaPlanejada || linhaPrincipal || "-";
+                    produto.linhaSequenciamento ||
+                    produto.linhaPlanejada ||
+                    linhaPrincipal ||
+                    "-";
 
                 const linhasPermitidas =
                     Array.isArray(produto.linhasPermitidas)
@@ -936,76 +961,110 @@ function renderTabelaProdutos(
                             ? produto.linhasAlternativas
                             : [];
 
+                const usaCadastro =
+                    booleano(
+                        produto.usarLinhaCadastro
+                    );
+
+                const ativo =
+                    produto.ativo !== false;
+
+                const kgDia =
+                    produto.kgDia ?? rota.kgDia;
+
                 return `
-          <tr>
-            <td>${escaparHTML(produto.codigo || "-")}</td>
+                    <tr>
+                        <td class="cadastro-codigo">
+                            ${escaparHTML(produto.codigo || "-")}
+                        </td>
 
-            <td class="cadastro-produto-nome">
-              ${escaparHTML(produto.nomeOficial || "-")}
-            </td>
+                        <td class="cadastro-produto-nome">
+                            ${escaparHTML(produto.nomeOficial || produto.nome || "-")}
+                        </td>
 
-            <td>${escaparHTML(familiaSetup)}</td>
+                        <td>
+                            ${escaparHTML(familiaSetup)}
+                        </td>
 
-            <td>${escaparHTML(familiaSequenciamento)}</td>
+                        <td>
+                            ${escaparHTML(familiaSequenciamento)}
+                        </td>
 
-            <td>${escaparHTML(linhaPrincipal)}</td>
+                        <td>
+                            ${escaparHTML(linhaPrincipal)}
+                        </td>
 
-            <td>${escaparHTML(linhaSequenciamento)}</td>
+                        <td>
+                            ${escaparHTML(linhaSequenciamento)}
+                        </td>
 
-            <td>${booleano(produto.usarLinhaCadastro) ? "Sim" : "Não"}</td>
+                        <td>
+                            <span class="cadastro-flag ${usaCadastro ? "is-sim" : "is-nao"}">
+                                ${usaCadastro ? "Sim" : "Não"}
+                            </span>
+                        </td>
 
-            <td>${escaparHTML(linhasPermitidas.join(", ") || "-")}</td>
+                        <td>
+                            ${escaparHTML(linhasPermitidas.join(", ") || "-")}
+                        </td>
 
-            <td>${formatarNumero(produto.kgDia ?? rota.kgDia)}</td>
+                        <td>
+                            ${kgDia !== undefined && kgDia !== null && kgDia !== ""
+                                ? formatarNumero(kgDia)
+                                : "-"
+                            }
+                        </td>
 
-            <td>
-              ${produto.ativo === false ? "Inativo" : "Ativo"}
-            </td>
+                        <td>
+                            <span class="cadastro-status-badge ${ativo ? "is-ativo" : "is-inativo"}">
+                                ${ativo ? "Ativo" : "Inativo"}
+                            </span>
+                        </td>
 
-            <td>
-              <button
-                type="button"
-                class="cadastro-edit-btn"
-                data-editar-produto="${escaparHTML(produto.codigo)}"
-              >
-                Editar
-              </button>
-            </td>
-          </tr>
-        `;
+                        <td>
+                            <button
+                                type="button"
+                                class="cadastro-edit-btn cadastro-editar-btn"
+                                data-editar-produto="${escaparHTML(produto.codigo)}"
+                            >
+                                Editar
+                            </button>
+                        </td>
+                    </tr>
+                `;
 
             })
             .join("");
 
     return `
-    <div class="cadastro-table-wrapper">
+        <div class="cadastro-table-wrapper cadastro-produto-tabela-wrapper">
 
-      <table class="cadastro-table">
+            <table class="cadastro-table cadastro-produto-table">
 
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Produto</th>
-            <th>Família setup</th>
-            <th>Família seq.</th>
-            <th>Linha TXT</th>
-            <th>Linha seq.</th>
-            <th>Usa cadastro</th>
-            <th>Permitidas</th>
-            <th>Kg/dia</th>
-            <th>Status</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Produto</th>
+                        <th>Família setup</th>
+                        <th>Família seq.</th>
+                        <th>Linha TXT</th>
+                        <th>Linha seq.</th>
+                        <th>Usa cadastro</th>
+                        <th>Permitidas</th>
+                        <th>Kg/dia</th>
+                        <th>Status</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
 
-        <tbody>
-          ${linhas}
-        </tbody>
+                <tbody>
+                    ${linhas}
+                </tbody>
 
-      </table>
+            </table>
 
-    </div>
-  `;
+        </div>
+    `;
 
 }
 
@@ -1199,7 +1258,7 @@ function ativarEventosCadastro(
             });
 
         });
-        
+
     if (gerarFamiliasAutoBtn) {
 
         gerarFamiliasAutoBtn.addEventListener("click", () => {
@@ -1326,63 +1385,76 @@ export function renderCadastroProduto(
         produtoEmEdicao ? "open" : "";
 
     container.innerHTML = `
-    <section class="cadastro-produto-card">
+        <section class="cadastro-produto-card">
 
-      <details ${detailsAberto}>
-
-        <summary class="cadastro-produto-summary">
-
-          <div>
-            <h2>Cadastro Mestre de Itens</h2>
-
-            <p>
-              Cadastre ou edite as regras oficiais do PCP: linha de sequenciamento, família operacional e linhas permitidas.
-            </p>
-          </div>
-
-          <span class="cadastro-produto-badge">
-            ${formatarNumero(produtos.length)} itens
-          </span>
-
-        </summary>
-
-        <div class="cadastro-produto-content">
-
-            <div class="cadastro-tools">
+            <div class="cadastro-produto-header">
 
                 <div>
-                <strong>Famílias de setup</strong>
-                <p>
-                    Preenche automaticamente a família dos produtos que ainda estão sem cadastro.
-                </p>
+                    <h2>Cadastro Mestre</h2>
+
+                    <p>
+                        Gerencie as regras operacionais usadas pelo PCP:
+                        família de setup, família de sequenciamento, linha de sequenciamento,
+                        linhas permitidas e status do produto.
+                    </p>
                 </div>
 
+                <div class="cadastro-produto-resumo">
+                    <span class="cadastro-produto-badge">
+                        ${formatarNumero(produtosFiltrados.length)} de ${formatarNumero(produtos.length)} itens
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="cadastro-produto-toolbar">
+
                 <button
-                type="button"
-                id="gerarFamiliasAutoBtn"
-                class="action-button secondary-action"
+                    type="button"
+                    id="gerarFamiliasAutoBtn"
+                    class="action-button secondary-action"
                 >
-                🧩 Gerar famílias automaticamente
+                    ⚙️ Gerar famílias auto
                 </button>
 
             </div>
 
-  ${renderFormulario(produtoEmEdicao)}
+            <details class="cadastro-form-details" ${detailsAberto}>
 
-          <div class="cadastro-lista">
-            <h3>Produtos cadastrados</h3>
+                <summary>
+                    ${produtoEmEdicao ? "Editar produto selecionado" : "Cadastrar novo item"}
+                </summary>
 
-            ${renderFiltrosCadastro(produtos, produtosFiltrados)}
+                ${renderFormulario(produtoEmEdicao)}
 
-            ${renderTabelaProdutos(produtosFiltrados)}
-          </div>
+            </details>
 
-        </div>
+            <div class="cadastro-lista cadastro-produto-lista">
 
-      </details>
+                <div class="cadastro-produto-lista-header">
 
-    </section>
-  `;
+                    <div>
+                        <h3>Produtos cadastrados</h3>
+
+                        <p>
+                            Visualize e edite os produtos cadastrados no Cadastro Mestre.
+                        </p>
+                    </div>
+
+                    <span class="cadastro-produto-badge">
+                        ${formatarNumero(produtosFiltrados.length)} de ${formatarNumero(produtos.length)} itens
+                    </span>
+
+                </div>
+
+                ${renderFiltrosCadastro(produtos, produtosFiltrados)}
+
+                ${renderTabelaProdutos(produtosFiltrados)}
+
+            </div>
+
+        </section>
+    `;
 
     ativarEventosCadastro(
         container,
