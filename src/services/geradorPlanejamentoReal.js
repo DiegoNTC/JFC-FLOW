@@ -2,43 +2,30 @@
  * ======================================================
  * JFC FLOW
  * Módulo: geradorPlanejamentoReal
- * Versão: 1.0.2
+ * Versão: 1.1.0
  *
  * Responsabilidade:
- * Gerar o planejamento real com base no Cadastro Mestre.
+ * Gerar o planejamento real com base no CSV do dia,
+ * no TXT técnico da fábrica e no Cadastro Mestre.
  *
- * Entrada:
- * - Produtos Mestre
+ * Regras principais:
+ * - CSV = quantidade/demanda do dia.
+ * - TXT = base técnica real: linha técnica, ordem, tempo,
+ *   produtividade, setup, zona e rota operacional.
+ * - Cadastro Mestre = regra validada pelo PCP.
  *
- * Saída:
- * - Produtos planejados por linha
- * - Tempo planejado
- * - Setup planejado
- * - Resumo por linha
+ * Correção importante:
+ * quantidadeCSV não é kg.
+ * kgPlanejado = quantidadeCSV × kgPorUnidadeTXT.
  *
- * Regra:
- * Nome oficial e demanda vêm do CSV.
- * Tempo, setup, linha, zona, ordem e rota operacional vêm do TXT.
+ * O Cadastro Mestre pode definir:
+ * - linhaSequenciamento
+ * - familiaSequenciamento
+ * - usarLinhaCadastro
+ * - linhasPermitidas
  *
- * Regras importantes:
- *
- * 1. A numeração do TXT:
- *    1. Produto A
- *    2. Produto B
- *    3. Produto C
- *
- *    representa a ordem real de entrada do produto na linha.
- *
- * 2. A rota operacional real:
- *    [N:L5→B/C:L6]
- *
- *    representa:
- *    - srcLinha: linha da Zona Negra
- *    - dstLinha: linha da Zona Branca/Cinza
- *    - rotaCruzada: true quando origem e destino são diferentes
- *
- * Esses campos precisam chegar no Planejamento Real para depois
- * montar Plano Final por Zona e Timeline de Turno.
+ * Mesmo quando a linha de sequenciamento vem do cadastro,
+ * os dados técnicos do TXT continuam preservados no produto.
  * ======================================================
  */
 
@@ -115,6 +102,17 @@ function normalizarZonaOperacional(zona) {
 
 }
 
+function normalizarFamilia(valor) {
+
+  return texto(valor)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+}
+
 function obterOrdemTXTRota(rota) {
 
   return numero(
@@ -122,6 +120,7 @@ function obterOrdemTXTRota(rota) {
     rota?.ordemTXT ??
     rota?.sequenciaTXT ??
     rota?.sequencia ??
+    rota?.sequenciaPrincipal ??
     0
   );
 
@@ -284,12 +283,36 @@ function ordenarLinhas(a, b) {
 
 }
 
+function normalizarListaLinhas(lista) {
+
+  if (!Array.isArray(lista)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      lista
+        .filter(Boolean)
+        .map(normalizarLinha)
+        .filter(Boolean)
+    )
+  );
+
+}
+
 function extrairLinhasPermitidas(produtoMestre) {
 
   const rotas =
     produtoMestre.rotasTecnicas || [];
 
-  const linhas =
+  const linhasCadastro =
+    normalizarListaLinhas(
+      produtoMestre.linhasPermitidas ||
+      produtoMestre.linhasAlternativas ||
+      []
+    );
+
+  const linhasTecnicas =
     rotas
       .flatMap(rota => {
 
@@ -300,6 +323,7 @@ function extrairLinhasPermitidas(produtoMestre) {
 
         return [
           rota.linha,
+          rota.linhaPrincipal,
           transferencia.srcLinha,
           transferencia.dstLinha
         ];
@@ -309,7 +333,150 @@ function extrairLinhasPermitidas(produtoMestre) {
       .map(normalizarLinha);
 
   return Array.from(
-    new Set(linhas)
+    new Set([
+      ...linhasCadastro,
+      ...linhasTecnicas
+    ])
+  );
+
+}
+
+function linhaEstaPermitida(linha, linhasPermitidas) {
+
+  if (
+    !Array.isArray(linhasPermitidas) ||
+    linhasPermitidas.length === 0
+  ) {
+    return true;
+  }
+
+  return linhasPermitidas.includes(
+    normalizarLinha(linha)
+  );
+
+}
+
+function obterLinhaSequenciamento(
+  produtoMestre,
+  linhaTecnica,
+  linhasPermitidas
+) {
+
+  const usarLinhaCadastro =
+    produtoMestre.usarLinhaCadastro === true ||
+    produtoMestre.usarLinhaCadastro === "true" ||
+    produtoMestre.usarLinhaCadastro === "SIM" ||
+    produtoMestre.usarLinhaCadastro === "S" ||
+    produtoMestre.usarLinhaCadastro === 1;
+
+  const linhaCadastro =
+    normalizarLinha(
+      produtoMestre.linhaSequenciamento ||
+      produtoMestre.linhaPlanejada ||
+      produtoMestre.linhaCadastro ||
+      ""
+    );
+
+  const linhasPermitidasCadastro =
+    normalizarListaLinhas(
+      produtoMestre.linhasPermitidas ||
+      []
+    );
+
+  const linhaCadastroPermitida =
+    linhasPermitidasCadastro.length === 0 ||
+    linhaEstaPermitida(
+      linhaCadastro,
+      linhasPermitidasCadastro
+    );
+
+  if (
+    usarLinhaCadastro &&
+    linhaCadastro &&
+    linhaCadastro !== "Sem linha" &&
+    linhaCadastroPermitida
+  ) {
+    return linhaCadastro;
+  }
+
+  return normalizarLinha(
+    linhaTecnica ||
+    produtoMestre.linhaPrincipal ||
+    linhasPermitidas?.[0] ||
+    "Sem linha"
+  );
+
+}
+
+function obterFamiliaSequenciamento(produtoMestre, rota = {}) {
+
+  return normalizarFamilia(
+    produtoMestre.familiaSequenciamento ||
+    produtoMestre.familiaOperacional ||
+    produtoMestre.familiaSetup ||
+    produtoMestre.classeSetup ||
+    rota.familiaSequenciamento ||
+    rota.familiaSetup ||
+    rota.classeSetup ||
+    produtoMestre.nomeOficial ||
+    "SEM FAMÍLIA"
+  ) || "SEM FAMÍLIA";
+
+}
+
+function calcularKgPorUnidadeTXT(rota = {}, produtoMestre = {}) {
+
+  const kgPorUnidadeDireto =
+    numero(
+      rota.kgPorUnidadeTXT ??
+      rota.kgPorUnidade ??
+      rota.pesoUnitarioKg ??
+      produtoMestre.kgPorUnidadeTXT ??
+      produtoMestre.kgPorUnidade ??
+      produtoMestre.pesoUnitarioKg
+    );
+
+  if (kgPorUnidadeDireto > 0) {
+    return kgPorUnidadeDireto;
+  }
+
+  const kgDia =
+    numero(
+      rota.kgDia ??
+      produtoMestre.kgDia
+    );
+
+  const unidadeDia =
+    numero(
+      rota.unidadeDia ??
+      produtoMestre.unidadeDia
+    );
+
+  if (
+    kgDia > 0 &&
+    unidadeDia > 0
+  ) {
+    return kgDia / unidadeDia;
+  }
+
+  return 0;
+
+}
+
+function calcularTempoPorKg(
+  kgPlanejado,
+  produtividadeKgHora
+) {
+
+  if (
+    kgPlanejado <= 0 ||
+    produtividadeKgHora <= 0
+  ) {
+    return 0;
+  }
+
+  return Math.ceil(
+    (kgPlanejado / produtividadeKgHora) * 60
   );
 
 }
@@ -325,13 +492,6 @@ function agruparRotasPorLinha(rotas) {
         rota
       );
 
-    /**
-     * Para o Planejamento Real principal, usamos a linha técnica
-     * da própria seção do TXT.
-     *
-     * Os campos srcLinha/dstLinha seguem junto no produto planejado
-     * e serão usados no Plano Final por Zona.
-     */
     const linha =
       normalizarLinha(
         rota.linha ||
@@ -445,12 +605,6 @@ function selecionarLinhaPrincipal(produtoMestre) {
     return null;
   }
 
-  /**
-   * Regra inicial:
-   * 1. Menor sequência técnica do TXT.
-   * 2. Maior produtividade.
-   * 3. Menor tempo base.
-   */
   candidatas.sort((a, b) => {
 
     if (a.sequenciaPrincipal !== b.sequenciaPrincipal) {
@@ -471,11 +625,33 @@ function selecionarLinhaPrincipal(produtoMestre) {
 
 function criarProdutoPlanejado(produtoMestre, rota) {
 
-  const demandaFinal =
-    numero(produtoMestre.demandaReferencia);
+  const quantidadeCSV =
+    numero(
+      produtoMestre.quantidadeCSV ??
+      produtoMestre.demandaFinal ??
+      produtoMestre.demandaReferencia
+    );
 
   const unidadeBaseTXT =
-    numero(rota.unidadeDia);
+    numero(
+      rota.unidadeDia ??
+      produtoMestre.unidadeDia
+    );
+
+  const kgDiaTXT =
+    numero(
+      rota.kgDia ??
+      produtoMestre.kgDia
+    );
+
+  const kgPorUnidadeTXT =
+    calcularKgPorUnidadeTXT(
+      rota,
+      produtoMestre
+    );
+
+  const kgPlanejado =
+    quantidadeCSV * kgPorUnidadeTXT;
 
   const tempoBaseTXTMin =
     numero(rota.tempoProducaoMin);
@@ -484,6 +660,12 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     unidadeBaseTXT > 0
       ? tempoBaseTXTMin / unidadeBaseTXT
       : 0;
+
+  const produtividadeKgHora =
+    numero(
+      rota.produtividadeKgHora ??
+      produtoMestre.produtividadeKgHora
+    );
 
   const ordemTXT =
     obterOrdemTXTRota(
@@ -501,6 +683,29 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       rota.zona
     );
 
+  const linhaTecnica =
+    normalizarLinha(
+      rota.linha || "Sem linha"
+    );
+
+  const linhasPermitidas =
+    extrairLinhasPermitidas(
+      produtoMestre
+    );
+
+  const linhaSequenciamento =
+    obterLinhaSequenciamento(
+      produtoMestre,
+      linhaTecnica,
+      linhasPermitidas
+    );
+
+  const familiaSequenciamento =
+    obterFamiliaSequenciamento(
+      produtoMestre,
+      rota
+    );
+
   return {
 
     codigo:
@@ -516,13 +721,29 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       produtoMestre.descricaoTXT,
 
     linha:
-      normalizarLinha(
-        rota.linha || "Sem linha"
-      ),
+      linhaSequenciamento,
 
-    /**
-     * Ordem real vinda do TXT.
-     */
+    linhaSequenciamento,
+
+    linhaPlanejada:
+      linhaSequenciamento,
+
+    linhaTecnica,
+
+    linhaTXT:
+      linhaTecnica,
+
+    linhaPrincipalTecnica:
+      linhaTecnica,
+
+    familiaSequenciamento,
+
+    familiaSetup:
+      familiaSequenciamento,
+
+    classeSetup:
+      familiaSequenciamento,
+
     sequenciaTXT:
       ordemTXT,
 
@@ -532,9 +753,6 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     ordemLinhaTXT:
       ordemTXT,
 
-    /**
-     * Rota operacional real.
-     */
     zonaOperacional,
 
     transferencia,
@@ -577,10 +795,7 @@ function criarProdutoPlanejado(produtoMestre, rota) {
         10
       ),
 
-    linhasPermitidas:
-      extrairLinhasPermitidas(
-        produtoMestre
-      ),
+    linhasPermitidas,
 
     rotasTecnicasProduto:
       produtoMestre.rotasTecnicas || [],
@@ -597,9 +812,21 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       ordemTXT
     ],
 
-    demandaFinal,
+    quantidadeCSV,
+
+    demandaFinal:
+      quantidadeCSV,
+
+    demandaReferencia:
+      quantidadeCSV,
 
     unidadeBaseTXT,
+
+    kgDiaTXT,
+
+    kgPorUnidadeTXT,
+
+    kgPlanejado,
 
     tempoBaseTXTMin,
 
@@ -614,8 +841,7 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     setupBaseMin:
       numero(rota.setupMin),
 
-    produtividadeKgHora:
-      numero(rota.produtividadeKgHora),
+    produtividadeKgHora,
 
     etapasTecnicas:
       1,
@@ -627,9 +853,9 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     rotasOperacionais: [
       {
         linha:
-          normalizarLinha(
-            rota.linha || "Sem linha"
-          ),
+          linhaTecnica,
+
+        linhaSequenciamento,
 
         zona:
           rota.zona || "",
@@ -664,8 +890,15 @@ function criarProdutoPlanejado(produtoMestre, rota) {
         tempoProducaoMin:
           numero(rota.tempoProducaoMin),
 
-        produtividadeKgHora:
-          numero(rota.produtividadeKgHora),
+        produtividadeKgHora,
+
+        unidadeDia:
+          unidadeBaseTXT,
+
+        kgDia:
+          kgDiaTXT,
+
+        kgPorUnidadeTXT,
 
         leadTimeMin:
           numero(
@@ -733,10 +966,6 @@ function mesclarRota(produtoPlanejado, rota) {
     produtoPlanejado.rotaCruzada ||
     transferencia.rotaCruzada;
 
-  /**
-   * Se a rota atual for válida, ela vira referência operacional.
-   * Isso evita perder N:Linha → B/C:Linha em produtos com várias rotas.
-   */
   if (transferencia.valido) {
 
     produtoPlanejado.transferencia =
@@ -777,11 +1006,40 @@ function mesclarRota(produtoPlanejado, rota) {
     )
   );
 
+  const linhaTecnica =
+    normalizarLinha(
+      rota.linha || "Sem linha"
+    );
+
+  const unidadeBaseTXT =
+    numero(rota.unidadeDia);
+
+  const kgDiaTXT =
+    numero(rota.kgDia);
+
+  const kgPorUnidadeTXT =
+    calcularKgPorUnidadeTXT(
+      rota,
+      produtoPlanejado
+    );
+
+  const tempoBaseTXTMin =
+    numero(rota.tempoProducaoMin);
+
+  const tempoUnitarioMin =
+    unidadeBaseTXT > 0
+      ? tempoBaseTXTMin / unidadeBaseTXT
+      : 0;
+
+  const produtividadeKgHora =
+    numero(rota.produtividadeKgHora);
+
   produtoPlanejado.rotasOperacionais.push({
     linha:
-      normalizarLinha(
-        rota.linha || "Sem linha"
-      ),
+      linhaTecnica,
+
+    linhaSequenciamento:
+      produtoPlanejado.linhaSequenciamento,
 
     zona:
       rota.zona || "",
@@ -814,10 +1072,17 @@ function mesclarRota(produtoPlanejado, rota) {
       numero(rota.setupMin),
 
     tempoProducaoMin:
-      numero(rota.tempoProducaoMin),
+      tempoBaseTXTMin,
 
-    produtividadeKgHora:
-      numero(rota.produtividadeKgHora),
+    produtividadeKgHora,
+
+    unidadeDia:
+      unidadeBaseTXT,
+
+    kgDia:
+      kgDiaTXT,
+
+    kgPorUnidadeTXT,
 
     leadTimeMin:
       numero(
@@ -829,21 +1094,6 @@ function mesclarRota(produtoPlanejado, rota) {
 
   produtoPlanejado.etapasTecnicas += 1;
 
-  const unidadeBaseTXT =
-    numero(rota.unidadeDia);
-
-  const tempoBaseTXTMin =
-    numero(rota.tempoProducaoMin);
-
-  const tempoUnitarioMin =
-    unidadeBaseTXT > 0
-      ? tempoBaseTXTMin / unidadeBaseTXT
-      : 0;
-
-  /**
-   * Usamos o maior tempo unitário encontrado.
-   * É uma regra conservadora para não subestimar capacidade.
-   */
   produtoPlanejado.tempoUnitarioMin = Math.max(
     produtoPlanejado.tempoUnitarioMin,
     tempoUnitarioMin
@@ -858,6 +1108,20 @@ function mesclarRota(produtoPlanejado, rota) {
     produtoPlanejado.unidadeBaseTXT,
     unidadeBaseTXT
   );
+
+  produtoPlanejado.kgDiaTXT = Math.max(
+    numero(produtoPlanejado.kgDiaTXT),
+    kgDiaTXT
+  );
+
+  produtoPlanejado.kgPorUnidadeTXT = Math.max(
+    numero(produtoPlanejado.kgPorUnidadeTXT),
+    kgPorUnidadeTXT
+  );
+
+  produtoPlanejado.kgPlanejado =
+    numero(produtoPlanejado.quantidadeCSV) *
+    numero(produtoPlanejado.kgPorUnidadeTXT);
 
   produtoPlanejado.setupMin = Math.max(
     produtoPlanejado.setupMin,
@@ -876,7 +1140,7 @@ function mesclarRota(produtoPlanejado, rota) {
 
   produtoPlanejado.produtividadeKgHora = Math.max(
     produtoPlanejado.produtividadeKgHora,
-    numero(rota.produtividadeKgHora)
+    produtividadeKgHora
   );
 
   produtoPlanejado.rotasOriginais.push(
@@ -892,25 +1156,47 @@ function finalizarProdutoPlanejado(produto) {
       produto.sequencias
     );
 
+  const quantidadeCSV =
+    numero(
+      produto.quantidadeCSV ??
+      produto.demandaFinal
+    );
+
+  const kgPorUnidadeTXT =
+    numero(produto.kgPorUnidadeTXT);
+
+  const kgPlanejado =
+    quantidadeCSV * kgPorUnidadeTXT;
+
   let tempoProducaoPlanejadoMin = 0;
 
   let statusCalculo = "";
 
-  if (produto.tempoUnitarioMin > 0) {
+  if (
+    kgPlanejado > 0 &&
+    produto.produtividadeKgHora > 0
+  ) {
+
+    tempoProducaoPlanejadoMin =
+      calcularTempoPorKg(
+        kgPlanejado,
+        produto.produtividadeKgHora
+      );
+
+    statusCalculo =
+      "CALCULADO_POR_KG_PLANEJADO";
+
+  } else if (produto.tempoUnitarioMin > 0) {
 
     tempoProducaoPlanejadoMin = Math.ceil(
-      produto.demandaFinal * produto.tempoUnitarioMin
+      quantidadeCSV * produto.tempoUnitarioMin
     );
 
     statusCalculo =
-      "CALCULADO_POR_DEMANDA";
+      "CALCULADO_POR_QUANTIDADE";
 
   } else {
 
-    /**
-     * Fallback:
-     * Caso o TXT não tenha unidade base, usa o tempo técnico original.
-     */
     tempoProducaoPlanejadoMin =
       produto.tempoBaseTXTMin;
 
@@ -943,9 +1229,6 @@ function finalizarProdutoPlanejado(produto) {
 
     ...produto,
 
-    /**
-     * Ordem real vinda do TXT preservada no produto planejado.
-     */
     sequenciaTXT:
       sequenciaPrincipal,
 
@@ -975,6 +1258,15 @@ function finalizarProdutoPlanejado(produto) {
     zonasOperacionaisTexto,
 
     sequenciaPrincipal,
+
+    quantidadeCSV,
+
+    demandaFinal:
+      quantidadeCSV,
+
+    kgPorUnidadeTXT,
+
+    kgPlanejado,
 
     tempoProducaoPlanejadoMin,
 
@@ -1026,38 +1318,50 @@ function agruparProdutosPorLinha(produtosMestre) {
 
   produtosMestre.forEach(produtoMestre => {
 
-    const linhaPrincipal =
+    const linhaPrincipalTecnica =
       selecionarLinhaPrincipal(
         produtoMestre
       );
 
     if (
-      !linhaPrincipal ||
-      !linhaPrincipal.rotas ||
-      linhaPrincipal.rotas.length === 0
+      !linhaPrincipalTecnica ||
+      !linhaPrincipalTecnica.rotas ||
+      linhaPrincipalTecnica.rotas.length === 0
     ) {
       return;
     }
 
-    const linha =
+    const linhaTecnica =
       normalizarLinha(
-        linhaPrincipal.linha || "Sem linha"
+        linhaPrincipalTecnica.linha || "Sem linha"
       );
 
-    if (!mapaLinhas.has(linha)) {
-      mapaLinhas.set(linha, new Map());
+    const linhasPermitidas =
+      extrairLinhasPermitidas(
+        produtoMestre
+      );
+
+    const linhaSequenciamento =
+      obterLinhaSequenciamento(
+        produtoMestre,
+        linhaTecnica,
+        linhasPermitidas
+      );
+
+    if (!mapaLinhas.has(linhaSequenciamento)) {
+      mapaLinhas.set(linhaSequenciamento, new Map());
     }
 
     const mapaProdutos =
-      mapaLinhas.get(linha);
+      mapaLinhas.get(linhaSequenciamento);
 
     const chaveProduto = [
       produtoMestre.codigo,
       produtoMestre.nomeOficial,
-      linha
+      linhaSequenciamento
     ].join("|");
 
-    linhaPrincipal.rotas.forEach(rota => {
+    linhaPrincipalTecnica.rotas.forEach(rota => {
 
       if (!mapaProdutos.has(chaveProduto)) {
 
@@ -1068,14 +1372,23 @@ function agruparProdutosPorLinha(produtosMestre) {
           );
 
         produtoPlanejado.linhaPrincipal =
-          linha;
+          linhaTecnica;
+
+        produtoPlanejado.linhaPrincipalTecnica =
+          linhaTecnica;
 
         produtoPlanejado.linhaPlanejada =
-          linha;
+          linhaSequenciamento;
+
+        produtoPlanejado.linhaSequenciamento =
+          linhaSequenciamento;
+
+        produtoPlanejado.linha =
+          linhaSequenciamento;
 
         produtoPlanejado.linhasAlternativas =
-          produtoPlanejado.linhasPermitidas.filter(
-            item => item !== linha
+          linhasPermitidas.filter(
+            item => item !== linhaSequenciamento
           );
 
         mapaProdutos.set(
@@ -1126,6 +1439,13 @@ function agruparProdutosPorLinha(produtosMestre) {
 
           }, 0);
 
+        const kgTotalPlanejado =
+          produtos.reduce((soma, produto) => {
+
+            return soma + numero(produto.kgPlanejado);
+
+          }, 0);
+
         const totalRotasCruzadas =
           produtos.filter(produto => produto.rotaCruzada)
             .length;
@@ -1143,6 +1463,14 @@ function agruparProdutosPorLinha(produtosMestre) {
 
             demandaTotal:
               demandaTotalLinha,
+
+            quantidadeTotalCSV:
+              demandaTotalLinha,
+
+            kgTotalPlanejado,
+
+            kgTotal:
+              kgTotalPlanejado,
 
             tempoTotalMin:
               tempoTotalLinhaMin,
@@ -1175,6 +1503,15 @@ function calcularResumoGeral(linhas) {
     resumo.demandaTotal +=
       linha.resumo.demandaTotal;
 
+    resumo.quantidadeTotalCSV +=
+      linha.resumo.quantidadeTotalCSV;
+
+    resumo.kgTotalPlanejado +=
+      numero(linha.resumo.kgTotalPlanejado);
+
+    resumo.kgTotal +=
+      numero(linha.resumo.kgTotalPlanejado);
+
     resumo.tempoTotalMin +=
       linha.resumo.tempoTotalMin;
 
@@ -1195,6 +1532,15 @@ function calcularResumoGeral(linhas) {
       0,
 
     demandaTotal:
+      0,
+
+    quantidadeTotalCSV:
+      0,
+
+    kgTotalPlanejado:
+      0,
+
+    kgTotal:
       0,
 
     tempoTotalMin:

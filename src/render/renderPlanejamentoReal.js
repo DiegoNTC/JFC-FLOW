@@ -17,6 +17,20 @@ function formatarNumero(valor) {
 
 }
 
+function formatarKg(valor) {
+
+  const numero = Number(valor) || 0;
+
+  return numero.toLocaleString(
+    "pt-BR",
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }
+  );
+
+}
+
 function formatarTempo(minutos) {
 
   const total = Math.round(Number(minutos) || 0);
@@ -107,7 +121,11 @@ function criarTabelaLinha(linhaPlanejada) {
 
           <td>${textoSeguro(produto.sequenciaPrincipal)}</td>
 
-          <td>${formatarNumero(produto.demandaFinal)}</td>
+          <td>${formatarNumero(produto.quantidadeCSV ?? produto.demandaFinal)}</td>
+
+          <td>${formatarKg(produto.kgPorUnidadeTXT)} kg</td>
+
+          <td>${formatarKg(produto.kgPlanejado)} kg</td>
 
           <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
 
@@ -171,7 +189,9 @@ function criarTabelaLinha(linhaPlanejada) {
               <th>Nome oficial</th>
               <th>Zonas</th>
               <th>Seq.</th>
-              <th>Demanda</th>
+              <th>Qtd. CSV</th>
+              <th>Kg/un TXT</th>
+              <th>Kg planejado</th>
               <th>Tempo produção</th>
               <th>Setup</th>
               <th>Tempo total</th>
@@ -311,8 +331,13 @@ export function renderPlanejamentoReal(
         </div>
 
         <div class="real-kpi">
-          <span>Demanda total</span>
-          <strong>${formatarNumero(resumo.demandaTotal)}</strong>
+          <span>Qtd. CSV total</span>
+          <strong>${formatarNumero(resumo.quantidadeTotalCSV ?? resumo.demandaTotal)}</strong>
+        </div>
+
+        <div class="real-kpi">
+          <span>Kg planejado</span>
+          <strong>${formatarKg(resumo.kgTotalPlanejado ?? resumo.kgTotal)} kg</strong>
         </div>
 
         <div class="real-kpi">

@@ -459,12 +459,16 @@ function obterFamiliaSetup(produto = {}) {
     obterPrimeiraRota(produto);
 
   return normalizarFamilia(
+    produto.familiaSequenciamento ??
+    produto.familiaOperacional ??
     produto.familiaSetup ??
     produto.classeSetup ??
     produto.familia ??
     produto.categoria ??
     produto.grupoSetup ??
     produto.categoriaSetup ??
+    rota.familiaSequenciamento ??
+    rota.familiaOperacional ??
     rota.familiaSetup ??
     rota.classeSetup ??
     rota.familia ??
@@ -473,6 +477,81 @@ function obterFamiliaSetup(produto = {}) {
     rota.categoriaSetup ??
     obterNomeProduto(produto).split(" ")[0]
   );
+
+}
+
+function obterOrdemBlocoFamilia(produto = {}) {
+
+  return normalizarNumeroOrdem(
+    produto.ordemBlocoFamiliaTXT ??
+    produto.menorOrdemTXTDaFamilia ??
+    produto.ordemFamiliaTXT ??
+    produto.ordemFamilia ??
+    produto.familiaOrdemTXT ??
+    produto.familiaSequenciaTXT ??
+    obterOrdemTXT(produto)
+  );
+
+}
+
+function calcularMapaOrdemFamilia(produtos = []) {
+
+  const mapa =
+    new Map();
+
+  produtos.forEach(produto => {
+
+    const familia =
+      obterFamiliaSetup(produto);
+
+    const ordemTXT =
+      obterOrdemTXT(produto);
+
+    if (ordemTXT === null) {
+      return;
+    }
+
+    if (
+      !mapa.has(familia) ||
+      ordemTXT < mapa.get(familia)
+    ) {
+
+      mapa.set(
+        familia,
+        ordemTXT
+      );
+
+    }
+
+  });
+
+  return mapa;
+
+}
+
+function aplicarOrdemBlocoFamilia(produto, mapaOrdemFamilia) {
+
+  const familia =
+    obterFamiliaSetup(produto);
+
+  return {
+    ...produto,
+
+    familiaSequenciamento:
+      produto.familiaSequenciamento ||
+      familia,
+
+    familiaSetup:
+      familia,
+
+    classeSetup:
+      familia,
+
+    ordemBlocoFamiliaTXT:
+      mapaOrdemFamilia.get(familia) ??
+      obterOrdemTXT(produto) ??
+      null
+  };
 
 }
 
@@ -794,12 +873,12 @@ function aplicarOrdemPreservada(
  * Comparador oficial do Sequenciamento por Família.
  *
  * Ordem:
- * 1. Ordem manual
- * 2. Ordem preservada do planejamento anterior
- * 3. Ordem real do TXT
- * 4. Ordem da família
- * 5. Nome da família
- * 6. Nome do produto
+ * 1. Ordem manual do PCP.
+ * 2. Ordem preservada do planejamento anterior.
+ * 3. Menor ordem TXT da família dentro da linha.
+ * 4. Nome da família como fallback.
+ * 5. Ordem TXT do produto dentro do bloco.
+ * 6. Nome do produto.
  *
  * Observação:
  * A ordem preservada entra no mesmo campo de ordem manual:
@@ -828,13 +907,27 @@ function compararProdutosSequenciamento(produtoA, produtoB) {
 
   }
 
-  /**
-   * No sequenciamento por família, a família precisa vir antes
-   * da ordem individual do produto.
-   *
-   * Se ordenar primeiro por TXT, produtos da mesma família podem
-   * ficar separados e o bloco não fecha corretamente.
-   */
+  const ordemBlocoA =
+    obterOrdemBlocoFamilia(produtoA);
+
+  const ordemBlocoB =
+    obterOrdemBlocoFamilia(produtoB);
+
+  if (
+    ordemBlocoA !== null ||
+    ordemBlocoB !== null
+  ) {
+
+    const diferencaBloco =
+      (ordemBlocoA ?? 999999) -
+      (ordemBlocoB ?? 999999);
+
+    if (diferencaBloco !== 0) {
+      return diferencaBloco;
+    }
+
+  }
+
   const familiaA =
     obterFamiliaSetup(produtoA);
 
@@ -855,9 +948,6 @@ function compararProdutosSequenciamento(produtoA, produtoB) {
     return diferencaNomeFamilia;
   }
 
-  /**
-   * Dentro da mesma família, aí sim respeita a ordem do TXT.
-   */
   const ordemTXTA =
     obterOrdemTXT(produtoA);
 
@@ -875,27 +965,6 @@ function compararProdutosSequenciamento(produtoA, produtoB) {
 
     if (diferencaTXT !== 0) {
       return diferencaTXT;
-    }
-
-  }
-
-  const ordemFamiliaA =
-    obterOrdemFamilia(produtoA);
-
-  const ordemFamiliaB =
-    obterOrdemFamilia(produtoB);
-
-  if (
-    ordemFamiliaA !== null ||
-    ordemFamiliaB !== null
-  ) {
-
-    const diferencaFamilia =
-      (ordemFamiliaA ?? 999999) -
-      (ordemFamiliaB ?? 999999);
-
-    if (diferencaFamilia !== 0) {
-      return diferencaFamilia;
     }
 
   }
@@ -1221,7 +1290,7 @@ export function gerarSequenciamentoLinha(
 
   let produtosComSequenciaPreservada = 0;
 
-  const produtosOrdenados =
+  const produtosPreparados =
     produtosOriginais
       .map(produto => {
 
@@ -1242,6 +1311,22 @@ export function gerarSequenciamentoLinha(
         }
 
         return produtoComOrdemPreservada;
+
+      });
+
+  const mapaOrdemFamilia =
+    calcularMapaOrdemFamilia(
+      produtosPreparados
+    );
+
+  const produtosOrdenados =
+    produtosPreparados
+      .map(produto => {
+
+        return aplicarOrdemBlocoFamilia(
+          produto,
+          mapaOrdemFamilia
+        );
 
       })
       .sort(

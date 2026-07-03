@@ -543,8 +543,11 @@ function logarPlanejamento(
       produtos:
         linha.resumo?.totalProdutos,
 
-      demanda:
-        linha.resumo?.demandaTotal,
+      quantidadeCSV:
+        linha.resumo?.quantidadeTotalCSV ?? linha.resumo?.demandaTotal,
+
+      kgPlanejado:
+        linha.resumo?.kgTotalPlanejado ?? linha.resumo?.kgTotal,
 
       capacidadeMin:
         linha.capacidade?.capacidadeMin,
