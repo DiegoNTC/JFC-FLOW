@@ -115,3 +115,80 @@ export function removerFamiliaManualProduto(
   );
 
 }
+
+export function salvarFamiliasManuaisProdutos(
+  codigosProdutos = [],
+  familia
+) {
+
+  const familiaFinal =
+    String(familia ?? "").trim();
+
+  if (!familiaFinal) {
+    return [];
+  }
+
+  const codigosValidos =
+    Array.from(
+      new Set(
+        (codigosProdutos || [])
+          .map(codigo => String(codigo ?? "").trim())
+          .filter(Boolean)
+      )
+    );
+
+  if (codigosValidos.length === 0) {
+    return [];
+  }
+
+  const mapa =
+    carregarMapa();
+
+  codigosValidos.forEach(codigo => {
+
+    mapa[codigo] =
+      familiaFinal;
+
+  });
+
+  salvarMapa(
+    mapa
+  );
+
+  return codigosValidos;
+
+}
+
+export function removerFamiliasManuaisProdutos(
+  codigosProdutos = []
+) {
+
+  const codigosValidos =
+    Array.from(
+      new Set(
+        (codigosProdutos || [])
+          .map(codigo => String(codigo ?? "").trim())
+          .filter(Boolean)
+      )
+    );
+
+  if (codigosValidos.length === 0) {
+    return [];
+  }
+
+  const mapa =
+    carregarMapa();
+
+  codigosValidos.forEach(codigo => {
+
+    delete mapa[codigo];
+
+  });
+
+  salvarMapa(
+    mapa
+  );
+
+  return codigosValidos;
+
+}

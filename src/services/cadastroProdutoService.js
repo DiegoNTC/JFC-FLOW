@@ -26,6 +26,17 @@ function texto(valor) {
 
 }
 
+function booleano(valor) {
+
+  return valor === true ||
+    valor === "true" ||
+    valor === "SIM" ||
+    valor === "S" ||
+    valor === 1 ||
+    valor === "1";
+
+}
+
 function normalizarCodigo(codigo) {
 
   return texto(codigo);
@@ -125,6 +136,15 @@ function criarRotaManual(dados) {
     linha:
       dados.linhaPrincipal,
 
+    linhaSequenciamento:
+      dados.linhaSequenciamento,
+
+    usarLinhaCadastro:
+      dados.usarLinhaCadastro,
+
+    linhasPermitidas:
+      dados.linhasPermitidas,
+
     zona:
       dados.zona,
 
@@ -136,6 +156,9 @@ function criarRotaManual(dados) {
 
     familiaSetup:
       dados.familiaSetup,
+
+    familiaSequenciamento:
+      dados.familiaSequenciamento,
 
     classeSetup:
       dados.classeSetup,
@@ -222,6 +245,9 @@ function atualizarRotasTecnicas(
         familiaSetup:
           dados.familiaSetup,
 
+        familiaSequenciamento:
+          dados.familiaSequenciamento,
+
         classeSetup:
           dados.classeSetup,
 
@@ -238,6 +264,21 @@ function atualizarRotasTecnicas(
           mesmaLinha
             ? dados.linhaPrincipal
             : rota.linha,
+
+        linhaSequenciamento:
+          mesmaLinha
+            ? dados.linhaSequenciamento
+            : rota.linhaSequenciamento,
+
+        usarLinhaCadastro:
+          mesmaLinha
+            ? dados.usarLinhaCadastro
+            : rota.usarLinhaCadastro,
+
+        linhasPermitidas:
+          mesmaLinha
+            ? dados.linhasPermitidas
+            : rota.linhasPermitidas,
 
         zona:
           mesmaLinha
@@ -330,15 +371,37 @@ export function montarProdutoMestreCadastro(
   const classeSetup =
     familiaSetup;
 
+  const familiaSequenciamento =
+    normalizarClasseSetup(
+      dadosFormulario.familiaSequenciamento ||
+      dadosFormulario.familiaSetup
+    );
+
   const linhaPrincipal =
     texto(
       dadosFormulario.linhaPrincipal
     );
 
+  const linhaSequenciamento =
+    texto(
+      dadosFormulario.linhaSequenciamento ||
+      dadosFormulario.linhaPrincipal
+    );
+
+  const usarLinhaCadastro =
+    booleano(
+      dadosFormulario.usarLinhaCadastro
+    );
+
+  const linhasPermitidas =
+    Array.isArray(dadosFormulario.linhasPermitidas)
+      ? dadosFormulario.linhasPermitidas
+      : Array.isArray(dadosFormulario.linhasAlternativas)
+        ? dadosFormulario.linhasAlternativas
+        : [];
+
   const linhasAlternativas =
-    Array.isArray(dadosFormulario.linhasAlternativas)
-      ? dadosFormulario.linhasAlternativas
-      : [];
+    linhasPermitidas;
 
   const dados = {
 
@@ -350,12 +413,20 @@ export function montarProdutoMestreCadastro(
 
     familiaSetup,
 
+    familiaSequenciamento,
+
     classeSetup,
 
     setupTrocaMin:
       numero(dadosFormulario.setupTrocaMin),
 
     linhaPrincipal,
+
+    linhaSequenciamento,
+
+    usarLinhaCadastro,
+
+    linhasPermitidas,
 
     linhasAlternativas,
 
@@ -406,12 +477,20 @@ export function montarProdutoMestreCadastro(
 
     familiaSetup,
 
+    familiaSequenciamento,
+
     classeSetup,
 
     setupTrocaMin:
       dados.setupTrocaMin,
 
     linhaPrincipal,
+
+    linhaSequenciamento,
+
+    usarLinhaCadastro,
+
+    linhasPermitidas,
 
     linhasAlternativas,
 

@@ -29,6 +29,8 @@
  * ======================================================
  */
 
+import { inferirFamiliaSetup } from "./familiaSetupService.js";
+
 function numero(valor) {
 
   if (
@@ -408,18 +410,86 @@ function obterLinhaSequenciamento(
 
 }
 
-function obterFamiliaSequenciamento(produtoMestre, rota = {}) {
+function obterFamiliaSetupTecnica(produtoMestre, rota = {}) {
 
   return normalizarFamilia(
-    produtoMestre.familiaSequenciamento ||
-    produtoMestre.familiaOperacional ||
     produtoMestre.familiaSetup ||
     produtoMestre.classeSetup ||
-    rota.familiaSequenciamento ||
+    produtoMestre.grupoSetup ||
+    produtoMestre.categoriaSetup ||
     rota.familiaSetup ||
     rota.classeSetup ||
-    produtoMestre.nomeOficial ||
-    "SEM FAMÍLIA"
+    rota.grupoSetup ||
+    rota.categoriaSetup ||
+    ""
+  );
+
+}
+
+function obterFamiliaSequenciamento(produtoMestre, rota = {}) {
+
+  /**
+   * Regra importante:
+   *
+   * familiaSequenciamento é a família operacional usada para agrupar
+   * os blocos no sequenciamento.
+   *
+   * Ela NÃO deve herdar automaticamente familiaSetup/classeSetup,
+   * porque familiaSetup é uma família técnica e pode estar ampla,
+   * antiga ou contaminada.
+   *
+   * Exemplo do erro:
+   * CHICORIA e ALFACE ROMANA entrando dentro do bloco RUCULA.
+   *
+   * Prioridade correta:
+   * 1. familiaSequenciamento cadastrada pelo PCP;
+   * 2. familiaOperacional cadastrada;
+   * 3. familiaSequenciamento da rota, se existir;
+   * 4. inferência segura pelo nome do produto;
+   * 5. familiaSetup técnica apenas como último recurso.
+   */
+
+  const familiaOperacionalCadastro =
+    normalizarFamilia(
+      produtoMestre.familiaSequenciamento ||
+      produtoMestre.familiaOperacional ||
+      ""
+    );
+
+  if (familiaOperacionalCadastro) {
+    return familiaOperacionalCadastro;
+  }
+
+  const familiaOperacionalRota =
+    normalizarFamilia(
+      rota.familiaSequenciamento ||
+      rota.familiaOperacional ||
+      ""
+    );
+
+  if (familiaOperacionalRota) {
+    return familiaOperacionalRota;
+  }
+
+  const familiaInferidaNome =
+    normalizarFamilia(
+      inferirFamiliaSetup(
+        produtoMestre.nomeOficial ||
+        produtoMestre.descricaoCSV ||
+        produtoMestre.descricaoTXT ||
+        produtoMestre.produto ||
+        produtoMestre.descricao ||
+        ""
+      )
+    );
+
+  if (familiaInferidaNome) {
+    return familiaInferidaNome;
+  }
+
+  return obterFamiliaSetupTecnica(
+    produtoMestre,
+    rota
   ) || "SEM FAMÍLIA";
 
 }

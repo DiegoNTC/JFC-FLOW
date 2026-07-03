@@ -437,8 +437,7 @@ function normalizarFamilia(valor) {
 
         return (
           familiaLimpa === termoNormalizado ||
-          familiaLimpa.includes(termoNormalizado) ||
-          termoNormalizado.includes(familiaLimpa)
+          familiaLimpa.startsWith(`${termoNormalizado} `)
         );
 
       });

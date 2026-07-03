@@ -17,7 +17,9 @@ import {
 import {
     buscarFamiliaManualProduto,
     salvarFamiliaManualProduto,
-    removerFamiliaManualProduto
+    removerFamiliaManualProduto,
+    salvarFamiliasManuaisProdutos,
+    removerFamiliasManuaisProdutos
 } from "../repositories/produtoFamiliaManualRepository.js";
 
 function escaparHTML(
@@ -49,6 +51,70 @@ function valorInput(
     return escaparHTML(
         valor
     );
+
+}
+
+function montarOpcoesFamilia(
+    familias = [],
+    selecionada = ""
+) {
+
+    const familiaSelecionada =
+        String(selecionada ?? "").trim();
+
+    const valoresAdicionados =
+        new Set();
+
+    const opcoes =
+        familias.map(familia => {
+
+            const nomeOpcao =
+                familia.nomeFamilia ||
+                familia.familiaOriginal;
+
+            const valorOpcao =
+                String(
+                    familia.familiaOriginal ||
+                    familia.nomeFamilia ||
+                    ""
+                ).trim();
+
+            if (!valorOpcao) {
+                return "";
+            }
+
+            valoresAdicionados.add(
+                valorOpcao
+            );
+
+            const selecionado =
+                valorOpcao === familiaSelecionada
+                    ? "selected"
+                    : "";
+
+            return `
+        <option value="${escaparHTML(valorOpcao)}" ${selecionado}>
+          ${escaparHTML(nomeOpcao)}
+        </option>
+      `;
+
+        }).join("");
+
+    if (
+        familiaSelecionada &&
+        familiaSelecionada !== "__AUTO__" &&
+        !valoresAdicionados.has(familiaSelecionada)
+    ) {
+
+        return `
+        <option value="${escaparHTML(familiaSelecionada)}" selected>
+          ${escaparHTML(familiaSelecionada)}
+        </option>
+      ` + opcoes;
+
+    }
+
+    return opcoes;
 
 }
 
@@ -232,25 +298,6 @@ function renderItensFamilia(
 
     }
 
-    const opcoesFamilia =
-        familias.map(familia => {
-
-            const nomeOpcao =
-                familia.nomeFamilia ||
-                familia.familiaOriginal;
-
-            const valorOpcao =
-                familia.familiaOriginal ||
-                familia.nomeFamilia;
-
-            return `
-        <option value="${escaparHTML(valorOpcao)}">
-          ${escaparHTML(nomeOpcao)}
-        </option>
-      `;
-
-        }).join("");
-
     return `
     <details class="familia-itens-details">
 
@@ -258,12 +305,50 @@ function renderItensFamilia(
         Ver itens (${itens.length})
       </summary>
 
+      <div class="familia-itens-bulk-actions">
+
+        <label class="familia-selecionar-todos-label">
+          <input
+            type="checkbox"
+            data-selecionar-todos-itens
+          >
+          Selecionar todos os itens visíveis
+        </label>
+
+        <select data-transferir-familia-lote-select>
+          <option value="">
+            Escolha a família
+          </option>
+
+          <option value="__AUTO__">
+            Voltar para automático
+          </option>
+
+          ${montarOpcoesFamilia(familias)}
+        </select>
+
+        <button
+          type="button"
+          class="familia-transferir-btn"
+          data-transferir-familia-lote-btn
+        >
+          Transferir selecionados
+        </button>
+
+        <span
+          class="familia-itens-bulk-status"
+          data-transferir-familia-lote-status
+        ></span>
+
+      </div>
+
       <div class="familia-itens-wrapper">
 
         <table class="familia-itens-table">
 
           <thead>
             <tr>
+              <th class="familia-item-check-col"></th>
               <th>Ordem TXT</th>
               <th>Código</th>
               <th>Produto</th>
@@ -278,8 +363,20 @@ function renderItensFamilia(
           <tbody>
             ${itens.map(item => {
 
+        const codigoValido =
+            item.codigo &&
+            item.codigo !== "-";
+
         return `
                 <tr data-item-codigo="${escaparHTML(item.codigo)}">
+
+                  <td class="familia-item-check-col">
+                    <input
+                      type="checkbox"
+                      data-transferir-familia-checkbox
+                      ${codigoValido ? "" : "disabled"}
+                    >
+                  </td>
 
                   <td>${escaparHTML(item.ordemTXT ?? "-")}</td>
 
@@ -304,11 +401,11 @@ function renderItensFamilia(
 
                   <td>
                     <select data-transferir-familia-select>
-                      <option value="__AUTO__">
+                      <option value="__AUTO__" ${item.familiaManual ? "" : "selected"}>
                         Automático
                       </option>
 
-                      ${opcoesFamilia}
+                      ${montarOpcoesFamilia(familias, item.familiaManual)}
                     </select>
                   </td>
 
@@ -317,6 +414,7 @@ function renderItensFamilia(
                       type="button"
                       class="familia-transferir-btn"
                       data-transferir-familia-btn
+                      ${codigoValido ? "" : "disabled"}
                     >
                       Transferir
                     </button>
@@ -557,6 +655,140 @@ function ativarEventos(
         });
 
     }
+
+        const checkboxesSelecionarTodos =
+        container.querySelectorAll(
+            "[data-selecionar-todos-itens]"
+        );
+
+    checkboxesSelecionarTodos.forEach(checkboxTodos => {
+
+        checkboxTodos.addEventListener("change", () => {
+
+            const detalhes =
+                checkboxTodos.closest(
+                    ".familia-itens-details"
+                );
+
+            if (!detalhes) {
+                return;
+            }
+
+            const checkboxesItens =
+                detalhes.querySelectorAll(
+                    "[data-transferir-familia-checkbox]:not(:disabled)"
+                );
+
+            checkboxesItens.forEach(checkboxItem => {
+
+                checkboxItem.checked =
+                    checkboxTodos.checked;
+
+            });
+
+        });
+
+    });
+
+    const botoesTransferirLote =
+        container.querySelectorAll(
+            "[data-transferir-familia-lote-btn]"
+        );
+
+    botoesTransferirLote.forEach(botao => {
+
+        botao.addEventListener("click", () => {
+
+            const detalhes =
+                botao.closest(
+                    ".familia-itens-details"
+                );
+
+            if (!detalhes) {
+                return;
+            }
+
+            const statusLote =
+                detalhes.querySelector(
+                    "[data-transferir-familia-lote-status]"
+                );
+
+            const selectFamilia =
+                detalhes.querySelector(
+                    "[data-transferir-familia-lote-select]"
+                );
+
+            const familiaSelecionada =
+                selectFamilia?.value;
+
+            const codigosSelecionados =
+                Array.from(
+                    detalhes.querySelectorAll(
+                        "[data-transferir-familia-checkbox]:checked"
+                    )
+                )
+                    .map(checkbox => {
+
+                        return checkbox.closest(
+                            "[data-item-codigo]"
+                        )?.dataset.itemCodigo;
+
+                    })
+                    .map(codigo => String(codigo ?? "").trim())
+                    .filter(codigo => codigo && codigo !== "-");
+
+            if (codigosSelecionados.length === 0) {
+
+                if (statusLote) {
+                    statusLote.textContent =
+                        "Selecione pelo menos 1 item.";
+                }
+
+                return;
+
+            }
+
+            if (!familiaSelecionada) {
+
+                if (statusLote) {
+                    statusLote.textContent =
+                        "Escolha a família de destino.";
+                }
+
+                return;
+
+            }
+
+            if (familiaSelecionada === "__AUTO__") {
+
+                removerFamiliasManuaisProdutos(
+                    codigosSelecionados
+                );
+
+            } else {
+
+                salvarFamiliasManuaisProdutos(
+                    codigosSelecionados,
+                    familiaSelecionada
+                );
+
+            }
+
+            if (
+                typeof opcoes?.onSalvar === "function"
+            ) {
+
+                opcoes.onSalvar();
+
+            }
+
+            renderFamiliasSetup(
+                opcoes
+            );
+
+        });
+
+    });
 
     const botoesTransferir =
         container.querySelectorAll(
