@@ -1,6 +1,9 @@
 const STORAGE_KEY =
   "jfc_flow_familias_setup_v1";
 
+const STORAGE_KEY_OCULTAS =
+  "jfc_flow_familias_setup_ocultas_v1";  
+
 export function normalizarChaveFamilia(
   valor
 ) {
@@ -14,6 +17,171 @@ export function normalizarChaveFamilia(
     .replace(/[^A-Z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+}
+
+export function carregarChavesFamiliasOcultas() {
+
+  try {
+
+    const bruto =
+      localStorage.getItem(
+        STORAGE_KEY_OCULTAS
+      );
+
+    if (!bruto) {
+      return [];
+    }
+
+    const dados =
+      JSON.parse(
+        bruto
+      );
+
+    if (!Array.isArray(dados)) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        dados
+          .map(chave => normalizarChaveFamilia(chave))
+          .filter(Boolean)
+      )
+    );
+
+  } catch (erro) {
+
+    console.error(
+      "Erro ao carregar famílias ocultas:",
+      erro
+    );
+
+    return [];
+
+  }
+
+}
+
+function salvarChavesFamiliasOcultas(
+  chaves = []
+) {
+
+  const chavesNormalizadas =
+    Array.from(
+      new Set(
+        chaves
+          .map(chave => normalizarChaveFamilia(chave))
+          .filter(Boolean)
+      )
+    );
+
+  localStorage.setItem(
+    STORAGE_KEY_OCULTAS,
+    JSON.stringify(chavesNormalizadas)
+  );
+
+  return chavesNormalizadas;
+
+}
+
+export function familiaSetupEstaOculta(
+  familiaOuChave
+) {
+
+  const chave =
+    normalizarChaveFamilia(
+      typeof familiaOuChave === "object"
+        ? (
+            familiaOuChave.chave ||
+            familiaOuChave.familiaOriginal ||
+            familiaOuChave.nomeFamilia ||
+            familiaOuChave.nomeTXTReferencia
+          )
+        : familiaOuChave
+    );
+
+  if (!chave) {
+    return false;
+  }
+
+  return carregarChavesFamiliasOcultas()
+    .includes(chave);
+
+}
+
+export function ocultarFamiliaSetup(
+  familiaOuChave
+) {
+
+  const chave =
+    normalizarChaveFamilia(
+      typeof familiaOuChave === "object"
+        ? (
+            familiaOuChave.chave ||
+            familiaOuChave.familiaOriginal ||
+            familiaOuChave.nomeFamilia ||
+            familiaOuChave.nomeTXTReferencia
+          )
+        : familiaOuChave
+    );
+
+  if (!chave) {
+    return null;
+  }
+
+  const chaves =
+    carregarChavesFamiliasOcultas();
+
+  if (!chaves.includes(chave)) {
+    chaves.push(chave);
+  }
+
+  salvarChavesFamiliasOcultas(
+    chaves
+  );
+
+  return chave;
+
+}
+
+export function restaurarFamiliaSetup(
+  familiaOuChave
+) {
+
+  const chave =
+    normalizarChaveFamilia(
+      typeof familiaOuChave === "object"
+        ? (
+            familiaOuChave.chave ||
+            familiaOuChave.familiaOriginal ||
+            familiaOuChave.nomeFamilia ||
+            familiaOuChave.nomeTXTReferencia
+          )
+        : familiaOuChave
+    );
+
+  if (!chave) {
+    return [];
+  }
+
+  const chavesAtualizadas =
+    carregarChavesFamiliasOcultas()
+      .filter(chaveAtual => chaveAtual !== chave);
+
+  return salvarChavesFamiliasOcultas(
+    chavesAtualizadas
+  );
+
+}
+
+export function restaurarTodasFamiliasOcultas() {
+
+  localStorage.removeItem(
+    STORAGE_KEY_OCULTAS
+  );
+
+  return [];
 
 }
 

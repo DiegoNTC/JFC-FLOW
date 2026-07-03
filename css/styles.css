@@ -2787,12 +2787,12 @@ body {
   background: #ffffff;
 }
 
-.plano-final-linha-card > summary {
+.plano-final-linha-card>summary {
   list-style: none;
   cursor: pointer;
 }
 
-.plano-final-linha-card > summary::-webkit-details-marker {
+.plano-final-linha-card>summary::-webkit-details-marker {
   display: none;
 }
 
@@ -2974,6 +2974,7 @@ body {
 }
 
 @media (max-width: 900px) {
+
   .plano-final-header,
   .plano-final-linha-header,
   .plano-final-zona-header {
@@ -3121,12 +3122,12 @@ body {
   background: #ffffff;
 }
 
-.timeline-compacta .timeline-linha-card > summary {
+.timeline-compacta .timeline-linha-card>summary {
   list-style: none;
   cursor: pointer;
 }
 
-.timeline-compacta .timeline-linha-card > summary::-webkit-details-marker {
+.timeline-compacta .timeline-linha-card>summary::-webkit-details-marker {
   display: none;
 }
 
@@ -3160,12 +3161,12 @@ body {
   background: #ffffff;
 }
 
-.timeline-compacta .timeline-zona-card > summary {
+.timeline-compacta .timeline-zona-card>summary {
   list-style: none;
   cursor: pointer;
 }
 
-.timeline-compacta .timeline-zona-card > summary::-webkit-details-marker {
+.timeline-compacta .timeline-zona-card>summary::-webkit-details-marker {
   display: none;
 }
 
@@ -3309,6 +3310,7 @@ body {
 }
 
 @media (max-width: 900px) {
+
   .timeline-compacta .timeline-turno-header,
   .timeline-compacta .timeline-linha-header,
   .timeline-compacta .timeline-zona-header {
@@ -3390,4 +3392,28 @@ body {
 .familia-transferir-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* =========================
+   FAMÍLIAS OCULTAS / APAGAR FAMÍLIA
+========================= */
+
+.familia-apagar-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.familia-apagar-btn {
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: #fff1f2;
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.familia-apagar-btn:hover {
+  background: #ffe4e6;
 }

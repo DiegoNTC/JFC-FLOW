@@ -4,7 +4,11 @@ import {
 
 import {
     salvarFamiliasSetup,
-    normalizarChaveFamilia
+    normalizarChaveFamilia,
+    carregarChavesFamiliasOcultas,
+    familiaSetupEstaOculta,
+    ocultarFamiliaSetup,
+    restaurarTodasFamiliasOcultas
 } from "../repositories/familiaSetupRepository.js";
 
 import {
@@ -66,39 +70,41 @@ function montarOpcoesFamilia(
         new Set();
 
     const opcoes =
-        familias.map(familia => {
+        familias
+            .filter(familia => !familiaSetupEstaOculta(familia))
+            .map(familia => {
 
-            const nomeOpcao =
-                familia.nomeFamilia ||
-                familia.familiaOriginal;
-
-            const valorOpcao =
-                String(
-                    familia.familiaOriginal ||
+                const nomeOpcao =
                     familia.nomeFamilia ||
-                    ""
-                ).trim();
+                    familia.familiaOriginal;
 
-            if (!valorOpcao) {
-                return "";
-            }
+                const valorOpcao =
+                    String(
+                        familia.familiaOriginal ||
+                        familia.nomeFamilia ||
+                        ""
+                    ).trim();
 
-            valoresAdicionados.add(
-                valorOpcao
-            );
+                if (!valorOpcao) {
+                    return "";
+                }
 
-            const selecionado =
-                valorOpcao === familiaSelecionada
-                    ? "selected"
-                    : "";
+                valoresAdicionados.add(
+                    valorOpcao
+                );
 
-            return `
-        <option value="${escaparHTML(valorOpcao)}" ${selecionado}>
-          ${escaparHTML(nomeOpcao)}
-        </option>
-      `;
+                const selecionado =
+                    valorOpcao === familiaSelecionada
+                        ? "selected"
+                        : "";
 
-        }).join("");
+                return `
+                    <option value="${escaparHTML(valorOpcao)}" ${selecionado}>
+                        ${escaparHTML(nomeOpcao)}
+                    </option>
+                `;
+
+            }).join("");
 
     if (
         familiaSelecionada &&
@@ -107,10 +113,10 @@ function montarOpcoesFamilia(
     ) {
 
         return `
-        <option value="${escaparHTML(familiaSelecionada)}" selected>
-          ${escaparHTML(familiaSelecionada)}
-        </option>
-      ` + opcoes;
+            <option value="${escaparHTML(familiaSelecionada)}" selected>
+                ${escaparHTML(familiaSelecionada)}
+            </option>
+        ` + opcoes;
 
     }
 
@@ -217,7 +223,10 @@ function montarMapaItensPorFamilia(
         }
 
         if (!mapa.has(chaveFamilia)) {
-            mapa.set(chaveFamilia, []);
+            mapa.set(
+                chaveFamilia,
+                []
+            );
         }
 
         mapa.get(chaveFamilia).push({
@@ -283,155 +292,155 @@ function renderItensFamilia(
     if (!itens || itens.length === 0) {
 
         return `
-      <details class="familia-itens-details">
+            <details class="familia-itens-details">
 
-        <summary>
-          Ver itens
-        </summary>
+                <summary>
+                    Ver itens
+                </summary>
 
-        <div class="familia-itens-empty">
-          Nenhum item encontrado para esta família.
-        </div>
+                <div class="familia-itens-empty">
+                    Nenhum item encontrado para esta família.
+                </div>
 
-      </details>
-    `;
+            </details>
+        `;
 
     }
 
     return `
-    <details class="familia-itens-details">
+        <details class="familia-itens-details">
 
-      <summary>
-        Ver itens (${itens.length})
-      </summary>
+            <summary>
+                Ver itens (${itens.length})
+            </summary>
 
-      <div class="familia-itens-bulk-actions">
+            <div class="familia-itens-bulk-actions">
 
-        <label class="familia-selecionar-todos-label">
-          <input
-            type="checkbox"
-            data-selecionar-todos-itens
-          >
-          Selecionar todos os itens visíveis
-        </label>
-
-        <select data-transferir-familia-lote-select>
-          <option value="">
-            Escolha a família
-          </option>
-
-          <option value="__AUTO__">
-            Voltar para automático
-          </option>
-
-          ${montarOpcoesFamilia(familias)}
-        </select>
-
-        <button
-          type="button"
-          class="familia-transferir-btn"
-          data-transferir-familia-lote-btn
-        >
-          Transferir selecionados
-        </button>
-
-        <span
-          class="familia-itens-bulk-status"
-          data-transferir-familia-lote-status
-        ></span>
-
-      </div>
-
-      <div class="familia-itens-wrapper">
-
-        <table class="familia-itens-table">
-
-          <thead>
-            <tr>
-              <th class="familia-item-check-col"></th>
-              <th>Ordem TXT</th>
-              <th>Código</th>
-              <th>Produto</th>
-              <th>Linha</th>
-              <th>Demanda</th>
-              <th>Família atual</th>
-              <th>Mover para</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            ${itens.map(item => {
-
-        const codigoValido =
-            item.codigo &&
-            item.codigo !== "-";
-
-        return `
-                <tr data-item-codigo="${escaparHTML(item.codigo)}">
-
-                  <td class="familia-item-check-col">
+                <label class="familia-selecionar-todos-label">
                     <input
-                      type="checkbox"
-                      data-transferir-familia-checkbox
-                      ${codigoValido ? "" : "disabled"}
+                        type="checkbox"
+                        data-selecionar-todos-itens
                     >
-                  </td>
+                    Selecionar todos os itens visíveis
+                </label>
 
-                  <td>${escaparHTML(item.ordemTXT ?? "-")}</td>
+                <select data-transferir-familia-lote-select>
+                    <option value="">
+                        Escolha a família
+                    </option>
 
-                  <td>${escaparHTML(item.codigo)}</td>
+                    <option value="__AUTO__">
+                        Voltar para automático
+                    </option>
 
-                  <td class="familia-item-produto">
-                    ${escaparHTML(item.nome)}
+                    ${montarOpcoesFamilia(familias)}
+                </select>
 
-                    ${item.familiaManual
-                ? `<span class="familia-manual-tag">Manual</span>`
-                : ""
-            }
-                  </td>
+                <button
+                    type="button"
+                    class="familia-transferir-btn"
+                    data-transferir-familia-lote-btn
+                >
+                    Transferir selecionados
+                </button>
 
-                  <td>${escaparHTML(item.linhas)}</td>
+                <span
+                    class="familia-itens-bulk-status"
+                    data-transferir-familia-lote-status
+                ></span>
 
-                  <td>${escaparHTML(item.demanda)}</td>
+            </div>
 
-                  <td>
-                    <strong>${escaparHTML(item.familiaAtual)}</strong>
-                  </td>
+            <div class="familia-itens-wrapper">
 
-                  <td>
-                    <select data-transferir-familia-select>
-                      <option value="__AUTO__" ${item.familiaManual ? "" : "selected"}>
-                        Automático
-                      </option>
+                <table class="familia-itens-table">
 
-                      ${montarOpcoesFamilia(familias, item.familiaManual)}
-                    </select>
-                  </td>
+                    <thead>
+                        <tr>
+                            <th class="familia-item-check-col"></th>
+                            <th>Ordem TXT</th>
+                            <th>Código</th>
+                            <th>Produto</th>
+                            <th>Linha</th>
+                            <th>Demanda</th>
+                            <th>Família atual</th>
+                            <th>Mover para</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
 
-                  <td>
-                    <button
-                      type="button"
-                      class="familia-transferir-btn"
-                      data-transferir-familia-btn
-                      ${codigoValido ? "" : "disabled"}
-                    >
-                      Transferir
-                    </button>
-                  </td>
+                    <tbody>
+                        ${itens.map(item => {
 
-                </tr>
-              `;
+                            const codigoValido =
+                                item.codigo &&
+                                item.codigo !== "-";
 
-    }).join("")}
-          </tbody>
+                            return `
+                                <tr data-item-codigo="${escaparHTML(item.codigo)}">
 
-        </table>
+                                    <td class="familia-item-check-col">
+                                        <input
+                                            type="checkbox"
+                                            data-transferir-familia-checkbox
+                                            ${codigoValido ? "" : "disabled"}
+                                        >
+                                    </td>
 
-      </div>
+                                    <td>${escaparHTML(item.ordemTXT ?? "-")}</td>
 
-    </details>
-  `;
+                                    <td>${escaparHTML(item.codigo)}</td>
+
+                                    <td class="familia-item-produto">
+                                        ${escaparHTML(item.nome)}
+
+                                        ${item.familiaManual
+                                            ? `<span class="familia-manual-tag">Manual</span>`
+                                            : ""
+                                        }
+                                    </td>
+
+                                    <td>${escaparHTML(item.linhas)}</td>
+
+                                    <td>${escaparHTML(item.demanda)}</td>
+
+                                    <td>
+                                        <strong>${escaparHTML(item.familiaAtual)}</strong>
+                                    </td>
+
+                                    <td>
+                                        <select data-transferir-familia-select>
+                                            <option value="__AUTO__" ${item.familiaManual ? "" : "selected"}>
+                                                Automático
+                                            </option>
+
+                                            ${montarOpcoesFamilia(familias, item.familiaManual)}
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="familia-transferir-btn"
+                                            data-transferir-familia-btn
+                                            ${codigoValido ? "" : "disabled"}
+                                        >
+                                            Transferir
+                                        </button>
+                                    </td>
+
+                                </tr>
+                            `;
+
+                        }).join("")}
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </details>
+    `;
 
 }
 
@@ -448,80 +457,92 @@ function renderLinhaFamilia(
         ) || [];
 
     return `
-    <tr
-      data-familia-chave="${escaparHTML(familia.chave)}"
-      data-familia-original="${escaparHTML(familia.familiaOriginal)}"
-    >
-
-      <td>
-        <strong>${indice + 1}</strong>
-      </td>
-
-      <td class="familia-original-cell">
-
-        <strong>${escaparHTML(familia.familiaOriginal)}</strong>
-
-        <small>
-          Família detectada pelo sistema
-        </small>
-
-        ${renderItensFamilia(itens, familias)}
-
-      </td>
-
-      <td>
-        <input
-          type="text"
-          data-campo="nomeFamilia"
-          value="${valorInput(familia.nomeFamilia)}"
-          placeholder="Nome da família"
+        <tr
+            data-familia-chave="${escaparHTML(familia.chave)}"
+            data-familia-original="${escaparHTML(familia.familiaOriginal)}"
+            data-total-itens="${itens.length}"
         >
-      </td>
 
-      <td>
-        <input
-          type="text"
-          data-campo="nomeTXTReferencia"
-          value="${valorInput(familia.nomeTXTReferencia)}"
-          placeholder="Nome usado como referência do TXT"
-        >
-      </td>
+            <td>
+                <strong>${indice + 1}</strong>
+            </td>
 
-      <td>
-        <input
-          type="number"
-          data-campo="ordemTXT"
-          value="${valorInput(familia.ordemTXT)}"
-          placeholder="Ex: 1"
-          step="1"
-          min="0"
-        >
-      </td>
+            <td class="familia-original-cell">
 
-      <td>
-        <input
-          type="number"
-          data-campo="setupTrocaMin"
-          value="${valorInput(familia.setupTrocaMin)}"
-          placeholder="Min"
-          step="1"
-          min="0"
-        >
-      </td>
+                <strong>${escaparHTML(familia.familiaOriginal)}</strong>
 
-      <td class="familia-ativa-cell">
-        <label>
-          <input
-            type="checkbox"
-            data-campo="ativa"
-            ${familia.ativa !== false ? "checked" : ""}
-          >
-          Ativa
-        </label>
-      </td>
+                <small>
+                    Família detectada pelo sistema
+                </small>
 
-    </tr>
-  `;
+                ${renderItensFamilia(itens, familias)}
+
+            </td>
+
+            <td>
+                <input
+                    type="text"
+                    data-campo="nomeFamilia"
+                    value="${valorInput(familia.nomeFamilia)}"
+                    placeholder="Nome da família"
+                >
+            </td>
+
+            <td>
+                <input
+                    type="text"
+                    data-campo="nomeTXTReferencia"
+                    value="${valorInput(familia.nomeTXTReferencia)}"
+                    placeholder="Nome usado como referência do TXT"
+                >
+            </td>
+
+            <td>
+                <input
+                    type="number"
+                    data-campo="ordemTXT"
+                    value="${valorInput(familia.ordemTXT)}"
+                    placeholder="Ex: 1"
+                    step="1"
+                    min="0"
+                >
+            </td>
+
+            <td>
+                <input
+                    type="number"
+                    data-campo="setupTrocaMin"
+                    value="${valorInput(familia.setupTrocaMin)}"
+                    placeholder="Min"
+                    step="1"
+                    min="0"
+                >
+            </td>
+
+            <td class="familia-ativa-cell">
+                <label>
+                    <input
+                        type="checkbox"
+                        data-campo="ativa"
+                        ${familia.ativa !== false ? "checked" : ""}
+                    >
+                    Ativa
+                </label>
+            </td>
+
+            <td class="familia-apagar-cell">
+                <button
+                    type="button"
+                    class="familia-apagar-btn"
+                    data-ocultar-familia-btn
+                    title="Ocultar família manualmente"
+                >
+                    Apagar/Ocultar
+                </button>
+            </td>
+
+        </tr>
+    `;
 
 }
 
@@ -656,7 +677,104 @@ function ativarEventos(
 
     }
 
-        const checkboxesSelecionarTodos =
+    const restaurarOcultasBtn =
+        container.querySelector(
+            "#restaurarFamiliasOcultasBtn"
+        );
+
+    if (restaurarOcultasBtn) {
+
+        restaurarOcultasBtn.addEventListener("click", () => {
+
+            const confirmar =
+                window.confirm(
+                    "Restaurar todas as famílias ocultas manualmente?"
+                );
+
+            if (!confirmar) {
+                return;
+            }
+
+            restaurarTodasFamiliasOcultas();
+
+            if (status) {
+                status.textContent =
+                    "Famílias ocultas restauradas.";
+            }
+
+            renderFamiliasSetup(
+                opcoes
+            );
+
+        });
+
+    }
+
+    const botoesOcultarFamilia =
+        container.querySelectorAll(
+            "[data-ocultar-familia-btn]"
+        );
+
+    botoesOcultarFamilia.forEach(botao => {
+
+        botao.addEventListener("click", () => {
+
+            const linhaFamilia =
+                botao.closest(
+                    "[data-familia-chave]"
+                );
+
+            if (!linhaFamilia) {
+                return;
+            }
+
+            const totalItens =
+                Number(
+                    linhaFamilia.dataset.totalItens || 0
+                );
+
+            const nomeFamilia =
+                linhaFamilia.dataset.familiaOriginal ||
+                linhaFamilia.dataset.familiaChave;
+
+            const mensagem =
+                totalItens > 0
+                    ? `A família "${nomeFamilia}" possui ${totalItens} item(ns).\n\n` +
+                      "Mesmo assim ela será ocultada da lista e das opções de transferência.\n\n" +
+                      "Os produtos não serão apagados.\n" +
+                      "A família só voltará se você clicar em Restaurar ocultas.\n\n" +
+                      "Deseja continuar?"
+                    : `Apagar/ocultar a família "${nomeFamilia}"?\n\n` +
+                      "Ela não aparecerá mais na lista nem nas opções de transferência.\n\n" +
+                      "Deseja continuar?";
+
+            const confirmar =
+                window.confirm(
+                    mensagem
+                );
+
+            if (!confirmar) {
+                return;
+            }
+
+            ocultarFamiliaSetup(
+                linhaFamilia.dataset.familiaChave
+            );
+
+            if (status) {
+                status.textContent =
+                    `Família ${nomeFamilia} ocultada manualmente.`;
+            }
+
+            renderFamiliasSetup(
+                opcoes
+            );
+
+        });
+
+    });
+
+    const checkboxesSelecionarTodos =
         container.querySelectorAll(
             "[data-selecionar-todos-itens]"
         );
@@ -875,6 +993,9 @@ export function renderFamiliasSetup(
 
     }
 
+    const familiasOcultas =
+        carregarChavesFamiliasOcultas();
+
     const produtosMestre =
         carregarProdutosMestre() || [];
 
@@ -883,130 +1004,204 @@ export function renderFamiliasSetup(
             produtosMestre
         );
 
-    const familias =
+    const familiasSincronizadas =
         sincronizarFamiliasComProdutos(
             produtosMestre
         );
 
+    const familias =
+        familiasSincronizadas.filter(familia => {
+
+            return !familiaSetupEstaOculta(
+                familia
+            );
+
+        });
+
     if (
-        !familias ||
-        familias.length === 0
+        (!familias || familias.length === 0) &&
+        familiasOcultas.length === 0
     ) {
 
         container.innerHTML = `
-      <section class="familias-setup-card">
+            <section class="familias-setup-card">
 
-        <div class="familias-setup-header">
+                <div class="familias-setup-header">
 
-          <div>
-            <h2>Cadastro de Famílias</h2>
+                    <div>
+                        <h2>Cadastro de Famílias</h2>
 
-            <p>
-              Importe ou cadastre produtos para visualizar as famílias de setup.
-            </p>
-          </div>
+                        <p>
+                            Importe ou cadastre produtos para visualizar as famílias de setup.
+                        </p>
+                    </div>
 
-          <span class="familias-setup-badge">
-            Famílias
-          </span>
+                    <span class="familias-setup-badge">
+                        Famílias
+                    </span>
 
-        </div>
+                </div>
 
-        <div class="familias-setup-empty">
-          Nenhuma família encontrada ainda.
-        </div>
+                <div class="familias-setup-empty">
+                    Nenhuma família encontrada ainda.
+                </div>
 
-      </section>
-    `;
+            </section>
+        `;
+
+        return;
+
+    }
+
+    if (
+        (!familias || familias.length === 0) &&
+        familiasOcultas.length > 0
+    ) {
+
+        container.innerHTML = `
+            <section class="familias-setup-card">
+
+                <div class="familias-setup-header">
+
+                    <div>
+                        <h2>Cadastro de Famílias</h2>
+
+                        <p>
+                            Todas as famílias estão ocultas manualmente.
+                        </p>
+                    </div>
+
+                    <span class="familias-setup-badge">
+                        0 famílias / ${familiasOcultas.length} ocultas
+                    </span>
+
+                </div>
+
+                <div class="familias-setup-actions">
+
+                    <button
+                        type="button"
+                        id="restaurarFamiliasOcultasBtn"
+                        class="action-button secondary-action"
+                    >
+                        ↩ Restaurar ocultas (${familiasOcultas.length})
+                    </button>
+
+                    <span class="familias-setup-status"></span>
+
+                </div>
+
+                <div class="familias-setup-empty">
+                    Nenhuma família visível. Clique em Restaurar ocultas para exibir novamente.
+                </div>
+
+            </section>
+        `;
+
+        ativarEventos(
+            container,
+            opcoes
+        );
 
         return;
 
     }
 
     container.innerHTML = `
-    <section class="familias-setup-card">
+        <section class="familias-setup-card">
 
-      <div class="familias-setup-header">
+            <div class="familias-setup-header">
 
-        <div>
-          <h2>Cadastro de Famílias</h2>
+                <div>
+                    <h2>Cadastro de Famílias</h2>
 
-          <p>
-            Edite o nome da família e a ordem de entrada conforme referência do TXT.
-            Essa ordem será usada no Sequenciamento por Família.
-          </p>
-        </div>
+                    <p>
+                        Edite o nome da família e a ordem de entrada conforme referência do TXT.
+                        Essa ordem será usada no Sequenciamento por Família.
+                    </p>
+                </div>
 
-        <span class="familias-setup-badge">
-          ${familias.length} famílias
-        </span>
+                <span class="familias-setup-badge">
+                    ${familias.length} famílias${familiasOcultas.length > 0 ? ` / ${familiasOcultas.length} ocultas` : ""}
+                </span>
 
-      </div>
+            </div>
 
-      <div class="familias-setup-alerta">
-        <strong>Regra:</strong>
-        a ordem manual do sequenciamento tem prioridade.
-        Se não houver ordem manual, o sistema usa a ordem da família cadastrada aqui.
-        Se não houver ordem da família, usa a ordem original do TXT.
-      </div>
+            <div class="familias-setup-alerta">
+                <strong>Regra:</strong>
+                a ordem manual do sequenciamento tem prioridade.
+                Se não houver ordem manual, o sistema usa a ordem da família cadastrada aqui.
+                Se não houver ordem da família, usa a ordem original do TXT.
+            </div>
 
-      <div class="familias-setup-actions">
+            <div class="familias-setup-actions">
 
-        <button
-          type="button"
-          id="atualizarFamiliasSetupBtn"
-          class="action-button secondary-action"
-        >
-          🔄 Atualizar famílias
-        </button>
+                <button
+                    type="button"
+                    id="atualizarFamiliasSetupBtn"
+                    class="action-button secondary-action"
+                >
+                    🔄 Atualizar famílias
+                </button>
 
-        <button
-          type="button"
-          id="salvarFamiliasSetupBtn"
-          class="action-button"
-        >
-          💾 Salvar famílias
-        </button>
+                ${familiasOcultas.length > 0 ? `
+                    <button
+                        type="button"
+                        id="restaurarFamiliasOcultasBtn"
+                        class="action-button secondary-action"
+                    >
+                        ↩ Restaurar ocultas (${familiasOcultas.length})
+                    </button>
+                ` : ""}
 
-        <span class="familias-setup-status"></span>
+                <button
+                    type="button"
+                    id="salvarFamiliasSetupBtn"
+                    class="action-button"
+                >
+                    💾 Salvar famílias
+                </button>
 
-      </div>
+                <span class="familias-setup-status"></span>
 
-      <div class="familias-setup-table-wrapper">
+            </div>
 
-        <table class="familias-setup-table">
+            <div class="familias-setup-table-wrapper">
 
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Família detectada</th>
-              <th>Nome da família</th>
-              <th>Nome referência TXT</th>
-              <th>Ordem TXT</th>
-              <th>Setup troca</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+                <table class="familias-setup-table">
 
-          <tbody>
-            ${familias.map((familia, indice) => {
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Família detectada</th>
+                            <th>Nome da família</th>
+                            <th>Nome referência TXT</th>
+                            <th>Ordem TXT</th>
+                            <th>Setup troca</th>
+                            <th>Status</th>
+                            <th>Apagar</th>
+                        </tr>
+                    </thead>
 
-        return renderLinhaFamilia(
-            familia,
-            indice,
-            itensPorFamilia,
-            familias
-        );
+                    <tbody>
+                        ${familias.map((familia, indice) => {
 
-    }).join("")}
-          </tbody>
+                            return renderLinhaFamilia(
+                                familia,
+                                indice,
+                                itensPorFamilia,
+                                familias
+                            );
 
-        </table>
+                        }).join("")}
+                    </tbody>
 
-      </div>
+                </table>
 
-    </section>
-  `;
+            </div>
+
+        </section>
+    `;
 
     ativarEventos(
         container,
