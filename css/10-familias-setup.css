@@ -1,0 +1,373 @@
+/* ======================================================
+   JFC FLOW - CADASTRO DE FAMÍLIAS E TRANSFERÊNCIA MANUAL
+====================================================== */
+
+/* =========================
+   CADASTRO DE FAMÍLIAS
+========================= */
+
+.familias-setup-container {
+  margin: 22px 0;
+}
+
+.familias-setup-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+}
+
+.familias-setup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.familias-setup-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 26px;
+}
+
+.familias-setup-header p {
+  margin: 6px 0 0 0;
+  color: #64748b;
+  font-size: 14px;
+  max-width: 860px;
+}
+
+.familias-setup-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.familias-setup-alerta {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 13px 15px;
+  color: #475569;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.familias-setup-alerta strong {
+  color: #0f172a;
+}
+
+.familias-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.familias-setup-status {
+  color: #166534;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.familias-setup-table-wrapper {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.familias-setup-table {
+  width: 100%;
+  min-width: 1150px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.familias-setup-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.familias-setup-table th,
+.familias-setup-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 9px 11px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.familias-setup-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.familia-original-cell strong {
+  display: block;
+  color: #0f172a;
+}
+
+.familia-original-cell small {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.familias-setup-table input[type="text"],
+.familias-setup-table input[type="number"] {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.familias-setup-table input:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  border-color: #2563eb;
+}
+
+.familia-ativa-cell label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.familias-setup-empty {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  border-radius: 14px;
+  padding: 16px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .familias-setup-header {
+    flex-direction: column;
+  }
+}
+
+/* =========================
+   ITENS DENTRO DA FAMÍLIA
+========================= */
+
+.familia-itens-details {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.familia-itens-details summary {
+  cursor: pointer;
+  width: fit-content;
+  list-style: none;
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  user-select: none;
+}
+
+.familia-itens-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.familia-itens-details summary::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.familia-itens-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.familia-itens-wrapper {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.familia-itens-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.familia-itens-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.familia-itens-table th,
+.familia-itens-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.familia-itens-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.familia-item-produto {
+  min-width: 280px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.familia-itens-empty {
+  margin-top: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================
+   TRANSFERÊNCIA MANUAL DE FAMÍLIA
+========================= */
+
+.familia-itens-table select {
+  width: 170px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.familia-transferir-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.familia-transferir-btn:hover {
+  background: #1d4ed8;
+}
+
+.familia-manual-tag {
+  display: inline-block;
+  margin-left: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* =========================
+   TRANSFERÊNCIA EM MASSA DE FAMÍLIA
+========================= */
+
+.familia-itens-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.familia-selecionar-todos-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.familia-itens-bulk-actions select {
+  min-width: 220px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.familia-itens-bulk-status {
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.familia-item-check-col {
+  width: 34px;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.familia-transferir-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================
+   FAMÍLIAS OCULTAS / APAGAR FAMÍLIA
+========================= */
+
+.familia-apagar-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.familia-apagar-btn {
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: #fff1f2;
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.familia-apagar-btn:hover {
+  background: #ffe4e6;
+}

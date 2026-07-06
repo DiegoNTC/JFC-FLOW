@@ -1,0 +1,249 @@
+/* ======================================================
+   JFC FLOW - BASE, LAYOUT E COMPONENTES GERAIS
+   Arquivo modular gerado para substituir blocos gerais do styles.css
+====================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #e5e7eb;
+  color: #222;
+  overflow-x: hidden;
+}
+
+/* =========================
+   HEADER / LAYOUT
+========================= */
+
+.header {
+  background: #111827;
+  color: #ffffff;
+  padding: 18px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.header h1 {
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.container {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: 28px;
+}
+
+.content h2 {
+  font-size: 42px;
+  margin-bottom: 22px;
+  color: #0f172a;
+}
+
+/* =========================
+   SIDEBAR / SKUS MANUAIS
+========================= */
+
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #f8fafc;
+  border-right: 1px solid #dbe2ea;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #0f172a;
+}
+
+.sidebar-note {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.sku-card {
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  cursor: grab;
+  font-weight: 700;
+  transition: 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.sku-card:hover {
+  transform: translateY(-2px);
+  background: #f1f5f9;
+}
+
+.sku-card:active {
+  cursor: grabbing;
+}
+
+/* =========================
+   BOTÕES / INPUTS
+========================= */
+
+.file-input {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 22px 0;
+}
+
+.action-button,
+.optimize-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  transition: 0.2s;
+}
+
+.action-button:hover,
+.optimize-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.secondary-action {
+  background: #475569;
+}
+
+.secondary-action:hover {
+  background: #334155;
+}
+
+.linha-balanceamento-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #0f172a;
+  background: #ffffff;
+  min-width: 170px;
+  cursor: pointer;
+}
+
+.linha-balanceamento-select:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  border-color: #2563eb;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1400px) {
+  .lines-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .sync-kpis {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #dbe2ea;
+  }
+
+  .content {
+    padding: 18px;
+  }
+
+  .planning-header,
+  .pedido-header,
+  .real-header,
+  .capacidade-header,
+  .manual-header {
+    flex-direction: column;
+  }
+
+  .pedido-kpis,
+  .real-kpis,
+  .capacidade-grid,
+  .balanceamento-kpis {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .real-line-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sync-kpis {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .sync-dashboard {
+    padding: 18px;
+  }
+
+  .sync-dashboard h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-container {
+    flex-direction: column;
+  }
+
+  .kpi-box,
+  .sequenced-item {
+    width: 100%;
+    min-width: 100%;
+  }
+}

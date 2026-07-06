@@ -1,0 +1,138 @@
+/* ======================================================
+   JFC FLOW - PEDIDO IMPORTADO CSV
+====================================================== */
+
+/* =========================
+   PEDIDO IMPORTADO CSV
+========================= */
+
+#pedidoContainer {
+  margin-bottom: 22px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.pedido-dashboard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin: 22px 0;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.pedido-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.pedido-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 26px;
+}
+
+.pedido-header p {
+  margin: 6px 0 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.pedido-badge {
+  background: #e0f2fe;
+  color: #075985;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pedido-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.pedido-kpi {
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 15px;
+}
+
+.pedido-kpi span {
+  display: block;
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
+.pedido-kpi strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pedido-detalhes {
+  margin-top: 12px;
+}
+
+.pedido-detalhes summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  user-select: none;
+}
+
+.pedido-detalhes summary:hover {
+  background: #f1f5f9;
+}
+
+.pedido-table-wrapper {
+  margin-top: 12px;
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.pedido-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1000px;
+}
+
+.pedido-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.pedido-table th,
+.pedido-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 9px 11px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pedido-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.pedido-produto {
+  min-width: 360px;
+  font-weight: 600;
+  color: #0f172a;
+}

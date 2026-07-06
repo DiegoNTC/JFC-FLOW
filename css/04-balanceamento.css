@@ -1,0 +1,133 @@
+/* ======================================================
+   JFC FLOW - BALANCEAMENTO
+====================================================== */
+
+/* =========================
+   BALANCEAMENTO
+========================= */
+
+.balanceamento-container {
+  margin: 22px 0;
+}
+
+.balanceamento-box {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.balanceamento-header h2 {
+  margin: 0 0 8px;
+  font-size: 34px;
+  color: #0b1736;
+}
+
+.balanceamento-header p {
+  margin: 0 0 20px;
+  color: #5f6b85;
+  font-size: 16px;
+}
+
+.balanceamento-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.balanceamento-kpi {
+  background: #071636;
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.balanceamento-kpi-label {
+  display: block;
+  font-size: 14px;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
+.balanceamento-kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.balanceamento-collapse {
+  margin-top: 16px;
+  border: 1px solid #d9e1ec;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fafcff;
+}
+
+.balanceamento-collapse summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 18px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #324156;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.balanceamento-collapse summary::-webkit-details-marker {
+  display: none;
+}
+
+.balanceamento-collapse summary::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 10px;
+  transition: transform 0.2s ease;
+  font-size: 12px;
+}
+
+.balanceamento-collapse[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.balanceamento-collapse-content {
+  padding: 0 16px 16px;
+}
+
+.balanceamento-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.balanceamento-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+}
+
+.balanceamento-table th {
+  background: #f1f4f9;
+  color: #0b1736;
+  text-align: left;
+  padding: 12px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid #dbe2ee;
+}
+
+.balanceamento-table td {
+  padding: 12px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid #e6ebf2;
+  color: #1d2433;
+}
+
+.balanceamento-empty {
+  background: #f8fafc;
+  border: 1px dashed #ccd6e4;
+  border-radius: 12px;
+  padding: 18px;
+  color: #55627c;
+  margin-top: 10px;
+}

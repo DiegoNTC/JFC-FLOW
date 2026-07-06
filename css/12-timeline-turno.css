@@ -1,0 +1,799 @@
+/* ======================================================
+   JFC FLOW - TIMELINE DE TURNO
+   CSS separado para evitar conflitos com o styles.css geral.
+====================================================== */
+
+/* =========================
+   TIMELINE DE TURNO - MODO COMPACTO
+   Seção consolidada sem duplicidades
+========================= */
+
+.timeline-turno-container {
+  margin-top: 16px;
+}
+
+.timeline-turno-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.timeline-compacta {
+  margin-top: 16px;
+}
+
+.timeline-compacta .timeline-turno-header,
+.timeline-compacta .timeline-linha-header,
+.timeline-compacta .timeline-zona-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.timeline-compacta .timeline-turno-header {
+  padding: 14px 18px;
+}
+
+.timeline-compacta .timeline-turno-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.timeline-compacta .timeline-turno-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.timeline-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.timeline-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.timeline-compacta .timeline-kpis,
+.timeline-compacta .timeline-linha-kpis,
+.timeline-compacta .timeline-zona-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-compacta .timeline-kpis {
+  margin-top: 16px;
+}
+
+.timeline-compacta .timeline-kpis span,
+.timeline-compacta .timeline-linha-kpis span,
+.timeline-compacta .timeline-zona-kpis span {
+  min-width: 78px;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.timeline-compacta .timeline-kpis small,
+.timeline-compacta .timeline-linha-kpis small,
+.timeline-compacta .timeline-zona-kpis small {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.1;
+}
+
+.timeline-compacta .timeline-kpis strong,
+.timeline-compacta .timeline-linha-kpis strong,
+.timeline-compacta .timeline-zona-kpis strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1.15;
+}
+
+.timeline-observacao-card {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  color: #475569;
+  font-size: 13px;
+}
+
+.timeline-linhas-lista {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.timeline-compacta .timeline-linha-card {
+  margin: 10px 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.timeline-compacta .timeline-linha-card>summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.timeline-compacta .timeline-linha-card>summary::-webkit-details-marker {
+  display: none;
+}
+
+.timeline-compacta .timeline-linha-header {
+  padding: 12px 16px;
+  cursor: pointer;
+  background: #f8fafc;
+}
+
+.timeline-compacta .timeline-linha-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.timeline-compacta .timeline-linha-header p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.timeline-compacta .timeline-zonas-lista {
+  padding: 8px 12px 12px;
+}
+
+.timeline-compacta .timeline-zona-card {
+  margin: 8px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.timeline-compacta .timeline-zona-card>summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.timeline-compacta .timeline-zona-card>summary::-webkit-details-marker {
+  display: none;
+}
+
+.timeline-compacta .timeline-zona-header {
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #f9fafb;
+}
+
+.timeline-compacta .timeline-zona-header h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.timeline-compacta .timeline-zona-header p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.timeline-compacta .timeline-table-wrapper {
+  max-height: 260px;
+  overflow: auto;
+  border-top: 1px solid #e5e7eb;
+}
+
+.timeline-compacta .timeline-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.timeline-compacta .timeline-table th,
+.timeline-compacta .timeline-table td {
+  padding: 6px 8px;
+  line-height: 1.2;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.timeline-compacta .timeline-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+}
+
+.timeline-compacta .timeline-produto {
+  max-width: 420px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.timeline-compacta .timeline-produto strong {
+  display: block;
+  max-width: 420px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-compacta .timeline-observacao {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.timeline-compacta .timeline-evento-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.timeline-compacta .timeline-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.timeline-compacta .timeline-tipo-evento {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.timeline-compacta .timeline-evento-producao .timeline-tipo-evento {
+  color: #047857;
+}
+
+.timeline-compacta .timeline-evento-setup .timeline-tipo-evento {
+  color: #b45309;
+}
+
+.timeline-compacta .timeline-evento-espera .timeline-tipo-evento {
+  color: #475569;
+}
+
+.timeline-compacta .timeline-evento-espelho .timeline-tipo-evento {
+  color: #1d4ed8;
+}
+
+.timeline-compacta .timeline-numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.timeline-compacta .timeline-col-horario {
+  white-space: nowrap;
+}
+
+.timeline-alerta-capacidade {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.timeline-compacta .timeline-zona-cinza .timeline-table-wrapper {
+  max-height: 180px;
+}
+
+.timeline-compacta .timeline-zona-cinza .timeline-zona-header {
+  background: #eef2ff;
+}
+
+@media (max-width: 900px) {
+
+  .timeline-compacta .timeline-turno-header,
+  .timeline-compacta .timeline-linha-header,
+  .timeline-compacta .timeline-zona-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .timeline-header-actions,
+  .timeline-compacta .timeline-kpis,
+  .timeline-compacta .timeline-linha-kpis,
+  .timeline-compacta .timeline-zona-kpis {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .timeline-badge,
+  .timeline-compacta .timeline-kpis span,
+  .timeline-compacta .timeline-linha-kpis span,
+  .timeline-compacta .timeline-zona-kpis span {
+    flex: 0 0 auto;
+  }
+
+  .timeline-compacta .timeline-produto,
+  .timeline-compacta .timeline-produto strong {
+    max-width: 240px;
+  }
+}
+
+/* ======================================================
+   TIMELINE DE TURNO - CORREÇÃO VISUAL COMPLETA
+   Cole no FINAL do css/styles.css
+====================================================== */
+
+.timeline-turno-container {
+  margin-top: 24px !important;
+}
+
+.timeline-turno-card {
+  background: #ffffff !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 22px !important;
+  padding: 26px !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08) !important;
+  overflow: hidden !important;
+}
+
+/* Cabeçalho principal */
+.timeline-turno-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+.timeline-turno-header h2 {
+  margin: 0 !important;
+  color: #0f172a !important;
+  font-size: 34px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.6px !important;
+}
+
+.timeline-turno-header p {
+  margin: 10px 0 0 !important;
+  color: #475569 !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+.timeline-header-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+
+.timeline-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  border: 1px solid #dbe3ef !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+/* KPIs principais */
+.timeline-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(130px, 1fr)) !important;
+  gap: 12px !important;
+  margin: 18px 0 !important;
+}
+
+.timeline-kpis span {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  padding: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  background: #f8fafc !important;
+}
+
+.timeline-kpis small {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+}
+
+.timeline-kpis strong {
+  color: #0f172a !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+/* Observação */
+.timeline-observacao-card {
+  margin: 18px 0 22px !important;
+  padding: 13px 16px !important;
+  border-radius: 14px !important;
+  border: 1px solid #dbe3ef !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.timeline-observacao-card strong {
+  color: #0f172a !important;
+}
+
+/* Lista de linhas */
+.timeline-linhas-lista {
+  display: grid !important;
+  gap: 16px !important;
+  margin-top: 16px !important;
+}
+
+/* Card de cada linha */
+.timeline-linha-card {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04) !important;
+}
+
+.timeline-linha-card summary {
+  list-style: none !important;
+}
+
+.timeline-linha-card summary::-webkit-details-marker {
+  display: none !important;
+}
+
+/* Cabeçalho da linha */
+.timeline-linha-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding: 18px 20px !important;
+  background: #f8fafc !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid transparent !important;
+}
+
+.timeline-linha-card[open] > .timeline-linha-header {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.timeline-linha-header::before {
+  content: "▶" !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  margin-right: 2px !important;
+}
+
+.timeline-linha-card[open] > .timeline-linha-header::before {
+  content: "▼" !important;
+}
+
+.timeline-linha-header > div:first-child {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 120px !important;
+}
+
+.timeline-linha-header h3 {
+  margin: 0 !important;
+  color: #0f172a !important;
+  font-size: 22px !important;
+  font-weight: 950 !important;
+}
+
+.timeline-linha-header p {
+  margin: 0 !important;
+  color: #475569 !important;
+  font-size: 13px !important;
+}
+
+/* KPIs da linha */
+.timeline-linha-kpis {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.timeline-linha-kpis span {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 92px !important;
+  padding: 9px 11px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 13px !important;
+  background: #ffffff !important;
+}
+
+.timeline-linha-kpis small {
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+}
+
+.timeline-linha-kpis strong {
+  color: #0f172a !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+/* Zonas */
+.timeline-zonas-lista {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 18px !important;
+  background: #ffffff !important;
+}
+
+.timeline-zona-card {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.timeline-zona-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+  padding: 14px 16px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.timeline-zona-header h4 {
+  margin: 0 !important;
+  color: #0f172a !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+/* KPIs das zonas */
+.timeline-zona-kpis {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.timeline-zona-kpis span {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 78px !important;
+  padding: 8px 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+}
+
+.timeline-zona-kpis small {
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+}
+
+.timeline-zona-kpis strong {
+  color: #0f172a !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+/* Tabela */
+.timeline-table-wrapper {
+  width: 100% !important;
+  overflow-x: auto !important;
+  background: #ffffff !important;
+}
+
+.timeline-table {
+  width: 100% !important;
+  min-width: 1100px !important;
+  border-collapse: collapse !important;
+  table-layout: auto !important;
+  background: #ffffff !important;
+}
+
+.timeline-table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  padding: 12px 11px !important;
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+.timeline-table tbody td {
+  padding: 12px 11px !important;
+  border-bottom: 1px solid #eef2f7 !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  vertical-align: top !important;
+}
+
+.timeline-table tbody tr:hover {
+  background: #f8fbff !important;
+}
+
+.timeline-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Colunas específicas */
+.timeline-table td:first-child {
+  white-space: nowrap !important;
+  color: #0f172a !important;
+  font-weight: 850 !important;
+}
+
+.timeline-produto {
+  min-width: 280px !important;
+  max-width: 440px !important;
+  color: #0f172a !important;
+  font-weight: 850 !important;
+  white-space: normal !important;
+}
+
+.timeline-tipo-evento {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 86px !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+}
+
+/* Tipos de evento */
+.timeline-evento-producao .timeline-tipo-evento {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.timeline-evento-setup .timeline-tipo-evento {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.timeline-evento-espera .timeline-tipo-evento {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.timeline-evento-espelho .timeline-tipo-evento {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+/* Badges dentro do produto */
+.timeline-evento-badges {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  margin-top: 6px !important;
+}
+
+.timeline-mini-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 7px !important;
+  border-radius: 999px !important;
+  border: 1px solid #bae6fd !important;
+  background: #e0f2fe !important;
+  color: #075985 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.timeline-observacao {
+  display: block !important;
+  margin-top: 5px !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+/* Responsivo */
+@media (max-width: 1200px) {
+  .timeline-turno-header,
+  .timeline-linha-header,
+  .timeline-zona-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .timeline-header-actions,
+  .timeline-linha-kpis,
+  .timeline-zona-kpis {
+    justify-content: flex-start !important;
+  }
+
+  .timeline-kpis {
+    grid-template-columns: repeat(3, minmax(130px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .timeline-turno-card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .timeline-turno-header h2 {
+    font-size: 26px !important;
+  }
+
+  .timeline-kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .timeline-linha-header h3 {
+    font-size: 19px !important;
+  }
+
+  .timeline-zonas-lista {
+    padding: 12px !important;
+  }
+}

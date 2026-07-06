@@ -1,0 +1,88 @@
+/* ======================================================
+   JFC FLOW - EDITOR DE CAPACIDADE
+====================================================== */
+
+/* =========================
+   EDITOR DE CAPACIDADE
+========================= */
+
+.capacidade-container {
+  margin: 22px 0;
+}
+
+.capacidade-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+}
+
+.capacidade-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.capacidade-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 26px;
+}
+
+.capacidade-header p {
+  margin: 6px 0 0 0;
+  color: #64748b;
+  font-size: 14px;
+  max-width: 820px;
+}
+
+.capacidade-badge {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.capacidade-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.capacidade-row {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.capacidade-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.capacidade-row input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.capacidade-row small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+}
+
+.capacidade-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
