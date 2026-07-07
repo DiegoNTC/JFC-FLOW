@@ -371,3 +371,97 @@
 .familia-apagar-btn:hover {
   background: #ffe4e6;
 }
+
+/* ======================================================
+   FILTRO / PESQUISA DE FAMÍLIAS
+====================================================== */
+
+.familias-setup-filtros {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.familias-setup-filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.familias-setup-filtro-campo label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.familias-setup-filtro-campo input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.familias-setup-filtro-campo input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16);
+}
+
+.familias-setup-limpar-filtro {
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.familias-setup-limpar-filtro:hover {
+  background: #f1f5f9;
+}
+
+.familias-setup-limpar-filtro:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.familias-setup-filtro-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .familias-setup-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .familias-setup-filtro-total {
+    justify-content: flex-start;
+    width: fit-content;
+  }
+}

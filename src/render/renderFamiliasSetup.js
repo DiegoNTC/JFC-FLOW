@@ -26,6 +26,128 @@ import {
     removerFamiliasManuaisProdutos
 } from "../repositories/produtoFamiliaManualRepository.js";
 
+let filtroFamiliasSetup = "";
+
+function normalizarBuscaFamilia(
+    valor
+) {
+
+    return String(valor ?? "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+}
+
+function ordenarFamiliasAlfabeticamente(
+    familiaA,
+    familiaB
+) {
+
+    const nomeA =
+        normalizarBuscaFamilia(
+            familiaA.nomeFamilia ||
+            familiaA.familiaOriginal ||
+            familiaA.nomeTXTReferencia ||
+            familiaA.chave
+        );
+
+    const nomeB =
+        normalizarBuscaFamilia(
+            familiaB.nomeFamilia ||
+            familiaB.familiaOriginal ||
+            familiaB.nomeTXTReferencia ||
+            familiaB.chave
+        );
+
+    return nomeA.localeCompare(
+        nomeB,
+        "pt-BR"
+    );
+
+}
+
+function filtrarFamiliasPorPesquisa(
+    familias = []
+) {
+
+    const termo =
+        normalizarBuscaFamilia(
+            filtroFamiliasSetup
+        );
+
+    const familiasOrdenadas =
+        familias
+            .slice()
+            .sort(
+                ordenarFamiliasAlfabeticamente
+            );
+
+    if (!termo) {
+        return familiasOrdenadas;
+    }
+
+    return familiasOrdenadas.filter(familia => {
+
+        const baseBusca =
+            [
+                familia.familiaOriginal,
+                familia.nomeFamilia,
+                familia.nomeTXTReferencia,
+                familia.chave
+            ]
+                .map(normalizarBuscaFamilia)
+                .join(" ");
+
+        return baseBusca.includes(
+            termo
+        );
+
+    });
+
+}
+
+function renderPesquisaFamiliasSetup(
+    totalVisiveis,
+    totalFiltrado
+) {
+
+    return `
+        <div class="familias-setup-filtros">
+
+            <div class="familias-setup-filtro-campo">
+                <label for="filtroFamiliasSetup">
+                    Pesquisar família
+                </label>
+
+                <input
+                    type="text"
+                    id="filtroFamiliasSetup"
+                    value="${escaparHTML(filtroFamiliasSetup)}"
+                    placeholder="Digite o nome da família. Ex: ALFACE, RUCULA, CENOURA..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <button
+                type="button"
+                id="limparFiltroFamiliasSetupBtn"
+                class="familias-setup-limpar-filtro"
+                ${filtroFamiliasSetup ? "" : "disabled"}
+            >
+                Limpar
+            </button>
+
+            <span class="familias-setup-filtro-total">
+                ${totalFiltrado} de ${totalVisiveis} famílias visíveis
+            </span>
+
+        </div>
+    `;
+
+}
+
 function escaparHTML(
     valor
 ) {
@@ -372,11 +494,11 @@ function renderItensFamilia(
                     <tbody>
                         ${itens.map(item => {
 
-                            const codigoValido =
-                                item.codigo &&
-                                item.codigo !== "-";
+        const codigoValido =
+            item.codigo &&
+            item.codigo !== "-";
 
-                            return `
+        return `
                                 <tr data-item-codigo="${escaparHTML(item.codigo)}">
 
                                     <td class="familia-item-check-col">
@@ -395,9 +517,9 @@ function renderItensFamilia(
                                         ${escaparHTML(item.nome)}
 
                                         ${item.familiaManual
-                                            ? `<span class="familia-manual-tag">Manual</span>`
-                                            : ""
-                                        }
+                ? `<span class="familia-manual-tag">Manual</span>`
+                : ""
+            }
                                     </td>
 
                                     <td>${escaparHTML(item.linhas)}</td>
@@ -432,7 +554,7 @@ function renderItensFamilia(
                                 </tr>
                             `;
 
-                        }).join("")}
+    }).join("")}
                     </tbody>
 
                 </table>
@@ -628,6 +750,69 @@ function ativarEventos(
             "#atualizarFamiliasSetupBtn"
         );
 
+    const filtroFamiliasInput =
+        container.querySelector(
+            "#filtroFamiliasSetup"
+        );
+
+    if (filtroFamiliasInput) {
+
+        filtroFamiliasInput.addEventListener("input", (event) => {
+
+            filtroFamiliasSetup =
+                event.target.value || "";
+
+            renderFamiliasSetup(
+                opcoes
+            );
+
+            setTimeout(() => {
+
+                const inputAtualizado =
+                    document.getElementById(
+                        "filtroFamiliasSetup"
+                    );
+
+                if (inputAtualizado) {
+
+                    inputAtualizado.focus();
+
+                    const posicao =
+                        inputAtualizado.value.length;
+
+                    inputAtualizado.setSelectionRange(
+                        posicao,
+                        posicao
+                    );
+
+                }
+
+            }, 0);
+
+        });
+
+    }
+
+    const limparFiltroFamiliasBtn =
+        container.querySelector(
+            "#limparFiltroFamiliasSetupBtn"
+        );
+
+    if (limparFiltroFamiliasBtn) {
+
+        limparFiltroFamiliasBtn.addEventListener("click", () => {
+
+            filtroFamiliasSetup =
+                "";
+
+            renderFamiliasSetup(
+                opcoes
+            );
+
+        });
+
+    }
+
     const status =
         container.querySelector(
             ".familias-setup-status"
@@ -740,13 +925,13 @@ function ativarEventos(
             const mensagem =
                 totalItens > 0
                     ? `A família "${nomeFamilia}" possui ${totalItens} item(ns).\n\n` +
-                      "Mesmo assim ela será ocultada da lista e das opções de transferência.\n\n" +
-                      "Os produtos não serão apagados.\n" +
-                      "A família só voltará se você clicar em Restaurar ocultas.\n\n" +
-                      "Deseja continuar?"
+                    "Mesmo assim ela será ocultada da lista e das opções de transferência.\n\n" +
+                    "Os produtos não serão apagados.\n" +
+                    "A família só voltará se você clicar em Restaurar ocultas.\n\n" +
+                    "Deseja continuar?"
                     : `Apagar/ocultar a família "${nomeFamilia}"?\n\n` +
-                      "Ela não aparecerá mais na lista nem nas opções de transferência.\n\n" +
-                      "Deseja continuar?";
+                    "Ela não aparecerá mais na lista nem nas opções de transferência.\n\n" +
+                    "Deseja continuar?";
 
             const confirmar =
                 window.confirm(
@@ -1009,14 +1194,23 @@ export function renderFamiliasSetup(
             produtosMestre
         );
 
-    const familias =
-        familiasSincronizadas.filter(familia => {
+    const familiasVisiveis =
+        familiasSincronizadas
+            .filter(familia => {
 
-            return !familiaSetupEstaOculta(
-                familia
+                return !familiaSetupEstaOculta(
+                    familia
+                );
+
+            })
+            .sort(
+                ordenarFamiliasAlfabeticamente
             );
 
-        });
+    const familias =
+        filtrarFamiliasPorPesquisa(
+            familiasVisiveis
+        );
 
     if (
         (!familias || familias.length === 0) &&
@@ -1122,7 +1316,7 @@ export function renderFamiliasSetup(
                 </div>
 
                 <span class="familias-setup-badge">
-                    ${familias.length} famílias${familiasOcultas.length > 0 ? ` / ${familiasOcultas.length} ocultas` : ""}
+                    ${familiasVisiveis.length} famílias${familiasOcultas.length > 0 ? ` / ${familiasOcultas.length} ocultas` : ""}
                 </span>
 
             </div>
@@ -1165,6 +1359,10 @@ export function renderFamiliasSetup(
                 <span class="familias-setup-status"></span>
 
             </div>
+            ${renderPesquisaFamiliasSetup(
+        familiasVisiveis.length,
+        familias.length
+    )}
 
             <div class="familias-setup-table-wrapper">
 
@@ -1186,14 +1384,14 @@ export function renderFamiliasSetup(
                     <tbody>
                         ${familias.map((familia, indice) => {
 
-                            return renderLinhaFamilia(
-                                familia,
-                                indice,
-                                itensPorFamilia,
-                                familias
-                            );
+        return renderLinhaFamilia(
+            familia,
+            indice,
+            itensPorFamilia,
+            familias
+        );
 
-                        }).join("")}
+    }).join("")}
                     </tbody>
 
                 </table>

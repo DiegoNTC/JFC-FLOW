@@ -23,6 +23,10 @@ import {
     atualizarFamiliasCadastroMestre
 } from "../services/familiaSetupService.js";
 
+import {
+    sincronizarCadastroMestreComFamiliasManuais
+} from "../repositories/produtoFamiliaManualRepository.js";
+
 const LINHAS_DISPONIVEIS = [
     "L1",
     "L2",
@@ -1367,6 +1371,8 @@ export function renderCadastroProduto(
         opcoes;
 
     configurarEventoCadastroPendente();
+
+    sincronizarCadastroMestreComFamiliasManuais();
 
     const produtos =
         carregarProdutosMestre();
