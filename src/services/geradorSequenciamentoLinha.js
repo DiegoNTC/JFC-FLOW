@@ -270,6 +270,14 @@ function obterCodigoProduto(produto = {}) {
 
 function criarChavesProduto(produto = {}) {
 
+  const registroCSV =
+    normalizarChaveComparacao(
+      produto.csvRegistroId ??
+      produto.chavePlanejamentoCSV ??
+      produto.idPlanejamentoCSV ??
+      ""
+    );
+
   const codigo =
     normalizarChaveComparacao(
       obterCodigoProduto(produto)
@@ -281,6 +289,12 @@ function criarChavesProduto(produto = {}) {
     );
 
   const chaves = [];
+
+  if (registroCSV) {
+    chaves.push(
+      `CSV:${registroCSV}`
+    );
+  }
 
   if (codigo) {
     chaves.push(
@@ -697,11 +711,38 @@ function obterProdutosLinha(linhaPlanejada = {}) {
   const linha =
     linhaPlanejada || {};
 
-  return Array.isArray(linha.produtos)
-    ? linha.produtos
-    : Array.isArray(linha.itens)
-      ? linha.itens
-      : [];
+  if (Array.isArray(linha.produtos)) {
+    return linha.produtos;
+  }
+
+  if (Array.isArray(linha.itens)) {
+    return linha.itens;
+  }
+
+  /**
+   * Fallbacks defensivos:
+   * Alguns módulos podem entregar produtos em campos diferentes
+   * após cálculo de capacidade, simulação ou integração com plano final.
+   * O Sequenciamento por Família não pode perder SKU por causa do
+   * nome do campo usado no objeto da linha.
+   */
+  if (Array.isArray(linha.produtosPlanejados)) {
+    return linha.produtosPlanejados;
+  }
+
+  if (Array.isArray(linha.produtosSequenciados)) {
+    return linha.produtosSequenciados;
+  }
+
+  if (Array.isArray(linha.itensPlanejados)) {
+    return linha.itensPlanejados;
+  }
+
+  if (Array.isArray(linha.itensSequenciados)) {
+    return linha.itensSequenciados;
+  }
+
+  return [];
 
 }
 
@@ -1849,6 +1890,271 @@ export function gerarSequenciamentoLinha(
 
 }
 
+
+function obterLinhaSequenciamentoProduto(
+  produto = {},
+  linhaAtual = ""
+) {
+
+  const rota =
+    obterPrimeiraRota(
+      produto
+    );
+
+  return texto(
+    produto.linhaSequenciamentoCadastro ??
+    produto.linhaCadastroOperacional ??
+    produto.linhaOperacionalCadastro ??
+    produto.cadastroMestre?.linhaSequenciamento ??
+    produto.cadastro?.linhaSequenciamento ??
+    produto.linhaSequenciamento ??
+    produto.linhaPlanejada ??
+    produto.linhaCadastro ??
+    produto.linhaPrincipal ??
+    produto.linha ??
+    rota.linhaSequenciamento ??
+    rota.linhaPlanejada ??
+    rota.linhaCadastro ??
+    rota.linhaPrincipal ??
+    rota.linha ??
+    linhaAtual
+  ) || texto(linhaAtual) || "Sem linha";
+
+}
+
+function produtoTemDemandaParaSequenciar(
+  produto = {}
+) {
+
+  const quantidade =
+    numero(
+      produto.quantidadeCSV ??
+      produto.demandaFinal ??
+      produto.demandaReferencia ??
+      produto.demanda ??
+      produto.unidadeDia ??
+      produto.unidades,
+      0
+    );
+
+  const kg =
+    numero(
+      produto.kgPlanejado ??
+      produto.kgTotal ??
+      produto.kgDia,
+      0
+    );
+
+  const tempo =
+    numero(
+      produto.tempoProducaoPlanejadoMin ??
+      produto.tempoTotalPlanejadoMin ??
+      produto.tempoPlanejadoMin ??
+      produto.tempoMin,
+      0
+    );
+
+  return quantidade > 0 || kg > 0 || tempo > 0;
+
+}
+
+function criarChaveUnicaProdutoSequenciamento(
+  produto = {}
+) {
+
+  /**
+   * CSV linha a linha, visual consolidado:
+   * O registro individual do CSV não pode ser a chave principal do
+   * Sequenciamento, senão o mesmo SKU aparece várias vezes dentro
+   * da mesma família.
+   *
+   * A chave operacional do sequenciamento é o SKU, principalmente
+   * pelo código. O csvRegistroId fica apenas como rastreabilidade.
+   */
+
+  const codigo =
+    normalizarChaveComparacao(
+      obterCodigoProduto(
+        produto
+      )
+    );
+
+  if (codigo) {
+    return `CODIGO:${codigo}`;
+  }
+
+  const nome =
+    normalizarChaveComparacao(
+      obterNomeProduto(
+        produto
+      )
+    );
+
+  if (nome) {
+    return `NOME:${nome}`;
+  }
+
+  const registroCSV =
+    normalizarChaveComparacao(
+      produto.csvRegistroId ??
+      produto.chavePlanejamentoCSV ??
+      produto.idPlanejamentoCSV ??
+      ""
+    );
+
+  if (registroCSV) {
+    return `CSV:${registroCSV}`;
+  }
+
+  return `ITEM:${Math.random().toString(36).slice(2)}`;
+
+}
+
+function criarLinhaSequenciamentoVazia(
+  linha
+) {
+
+  return {
+    linha,
+    produtos: [],
+    resumo: {
+      totalProdutos: 0,
+      demandaTotal: 0,
+      quantidadeTotalCSV: 0,
+      kgTotalPlanejado: 0,
+      kgTotal: 0,
+      tempoTotalMin: 0,
+      setupTotalMin: 0
+    }
+  };
+
+}
+
+function redistribuirProdutosPorLinhaSequenciamento(
+  linhasOriginais = []
+) {
+
+  /**
+   * Correção importante:
+   * O Sequenciamento por Família precisa usar a linha operacional
+   * do produto, principalmente `linhaSequenciamento` do Cadastro Mestre.
+   *
+   * Antes, se um produto chegasse dentro da linha técnica do TXT,
+   * mas o Cadastro Mestre já estivesse apontando outra linha,
+   * ele podia ficar invisível na linha esperada pelo PCP.
+   *
+   * Agora, antes de sequenciar, todos os produtos do planejamento são
+   * reagrupados pela linha final de sequenciamento do próprio produto.
+   */
+
+  const mapaLinhas =
+    new Map();
+
+  const mapaChavesPorLinha =
+    new Map();
+
+  linhasOriginais.forEach(linhaOriginal => {
+
+    const linhaAtual =
+      obterNomeLinha(
+        linhaOriginal
+      );
+
+    if (
+      linhaAtual &&
+      !mapaLinhas.has(linhaAtual)
+    ) {
+      mapaLinhas.set(
+        linhaAtual,
+        {
+          ...linhaOriginal,
+          linha: linhaAtual,
+          produtos: []
+        }
+      );
+    }
+
+    const produtos =
+      obterProdutosLinha(
+        linhaOriginal
+      );
+
+    produtos.forEach(produto => {
+
+      if (!produtoTemDemandaParaSequenciar(produto)) {
+        return;
+      }
+
+      const linhaDestino =
+        obterLinhaSequenciamentoProduto(
+          produto,
+          linhaAtual
+        );
+
+      if (!mapaLinhas.has(linhaDestino)) {
+        mapaLinhas.set(
+          linhaDestino,
+          criarLinhaSequenciamentoVazia(
+            linhaDestino
+          )
+        );
+      }
+
+      if (!mapaChavesPorLinha.has(linhaDestino)) {
+        mapaChavesPorLinha.set(
+          linhaDestino,
+          new Set()
+        );
+      }
+
+      const chaveProduto =
+        criarChaveUnicaProdutoSequenciamento(
+          produto
+        );
+
+      const chavesLinha =
+        mapaChavesPorLinha.get(
+          linhaDestino
+        );
+
+      if (chavesLinha.has(chaveProduto)) {
+        return;
+      }
+
+      chavesLinha.add(
+        chaveProduto
+      );
+
+      mapaLinhas.get(linhaDestino)
+        .produtos
+        .push({
+          ...produto,
+          linha: linhaDestino,
+          linhaPlanejada: linhaDestino,
+          linhaSequenciamento: linhaDestino,
+          linhaOrigemAntesSequenciamento:
+            linhaAtual
+        });
+
+    });
+
+  });
+
+  return Array.from(
+    mapaLinhas.values()
+  ).filter(linha => {
+
+    const produtos =
+      obterProdutosLinha(
+        linha
+      );
+
+    return produtos.length > 0;
+
+  });
+
+}
+
 export function gerarSequenciamentoPlanejamento(
   planejamento,
   opcoes = {}
@@ -1872,8 +2178,13 @@ export function gerarSequenciamentoPlanejamento(
     planejamento.linhas ||
     [];
 
+  const linhasBaseSequenciamento =
+    redistribuirProdutosPorLinhaSequenciamento(
+      linhasOriginais
+    );
+
   const linhasSequenciadas =
-    linhasOriginais.map(linha => {
+    linhasBaseSequenciamento.map(linha => {
 
       return gerarSequenciamentoLinha(
         linha,

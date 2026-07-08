@@ -175,45 +175,104 @@ function pegarDescricaoCSV(item) {
 
 }
 
-function calcularDemandaFinal(item) {
+function obterCampoVolumeCSV(
+  item,
+  nomes,
+  padrao = 0
+) {
 
-  const previa =
-    parseNumero(
-      item?.previa ??
-      item?.Previa ??
-      item?.PREVIA ??
-      0
-    );
+  for (const nome of nomes) {
 
-  const pedidos =
-    parseNumero(
-      item?.pedidos ??
-      item?.Pedidos ??
-      item?.PEDIDOS ??
-      0
-    );
+    if (
+      item &&
+      item[nome] !== undefined &&
+      item[nome] !== null &&
+      item[nome] !== ""
+    ) {
+      return item[nome];
+    }
 
-  const prioridade =
-    parseNumero(
-      item?.prioridade ??
-      item?.Prioridade ??
-      item?.["Pedidos Prioritarios"] ??
-      item?.["Pedidos Prioritários"] ??
-      item?.prioritario ??
-      item?.prioritarios ??
-      0
-    );
+  }
 
-  /**
-   * Regra definida:
-   * Se existir Pedido, usar Pedido + Prioridade.
-   * Se não existir Pedido, usar Prévia + Prioridade.
-   */
+  return padrao;
+
+}
+
+function calcularDemandaPorRegraLegada({
+  previa,
+  prioridade,
+  pedidos
+}) {
+
   if (pedidos > 0) {
     return pedidos + prioridade;
   }
 
-  return previa + prioridade;
+  if (previa > 0) {
+    return previa;
+  }
+
+  return prioridade;
+
+}
+
+function calcularDemandaFinal(item) {
+
+  if (item?.csvConsolidado === true) {
+
+    return parseNumero(
+      item.demandaFinal ??
+      item.quantidadeCSV ??
+      0
+    );
+
+  }
+
+  const previa =
+    parseNumero(
+      obterCampoVolumeCSV(
+        item,
+        [
+          "previa",
+          "Previa",
+          "PREVIA"
+        ]
+      )
+    );
+
+  const pedidos =
+    parseNumero(
+      obterCampoVolumeCSV(
+        item,
+        [
+          "pedidos",
+          "Pedidos",
+          "PEDIDOS",
+          "Pedidos "
+        ]
+      )
+    );
+
+  const prioridade =
+    parseNumero(
+      obterCampoVolumeCSV(
+        item,
+        [
+          "prioridade",
+          "Prioridade",
+          "Pedidos Prioritarios",
+          "Pedidos Prioritários",
+          "prioritario",
+          "prioritarios"
+        ]
+      )
+    );
+
+  return calcularDemandaPorRegraLegada({
+    previa,
+    prioridade,
+    pedidos
+  });
 
 }
 
@@ -226,88 +285,205 @@ function calcularDemandaFinal(item) {
  * Importante:
  * Código continua como texto.
  */
+function criarChaveConsolidacaoCSV({ codigo, descricaoCSV }) {
+
+  const codigoNormalizado =
+    normalizarCodigo(codigo);
+
+  if (codigoNormalizado) {
+    return `CODIGO:${codigoNormalizado}`;
+  }
+
+  const descricaoNormalizada =
+    normalizarTextoForte(descricaoCSV);
+
+  if (descricaoNormalizada) {
+    return `NOME:${descricaoNormalizada}`;
+  }
+
+  return "SEM_IDENTIFICACAO";
+
+}
+
+/**
+ * Lê o CSV linha a linha, mas gera UM registro operacional por SKU.
+ *
+ * Por quê?
+ * - A leitura linha a linha evita erro na regra de demanda de cada linha.
+ * - O planejamento/sequenciamento não pode exibir o mesmo SKU repetido
+ *   várias vezes dentro da mesma família.
+ * - Depois de calcular a demanda de cada linha, somamos as linhas do
+ *   mesmo código para formar o item operacional do dia.
+ */
 function prepararProdutosCSV(dadosCSV) {
 
-  const mapa = new Map();
+  const mapa =
+    new Map();
 
-  dadosCSV.forEach((item, index) => {
+  (Array.isArray(dadosCSV) ? dadosCSV : [])
+    .forEach((item, index) => {
 
-    const codigo =
-      pegarCodigoCSV(item);
+      const codigo =
+        pegarCodigoCSV(item);
 
-    const descricaoCSV =
-      pegarDescricaoCSV(item);
+      const descricaoCSV =
+        pegarDescricaoCSV(item);
 
-    if (
-      !codigo &&
-      !descricaoCSV
-    ) {
-      return;
-    }
+      const demandaFinal =
+        calcularDemandaFinal(item);
 
-    const chaveMapa =
-      codigo ||
-      `SEM_CODIGO_${index}`;
+      if (
+        (!codigo && !descricaoCSV) ||
+        demandaFinal <= 0
+      ) {
+        return;
+      }
 
-    const demandaFinal =
-      calcularDemandaFinal(item);
+      const previa =
+        parseNumero(
+          obterCampoVolumeCSV(
+            item,
+            [
+              "previa",
+              "Previa",
+              "PREVIA"
+            ]
+          )
+        );
 
-    if (!mapa.has(chaveMapa)) {
+      const prioridade =
+        parseNumero(
+          obterCampoVolumeCSV(
+            item,
+            [
+              "prioridade",
+              "Prioridade",
+              "Pedidos Prioritarios",
+              "Pedidos Prioritários",
+              "prioritario",
+              "prioritarios"
+            ]
+          )
+        );
 
-      mapa.set(
-        chaveMapa,
-        {
+      const pedidos =
+        parseNumero(
+          obterCampoVolumeCSV(
+            item,
+            [
+              "pedidos",
+              "Pedidos",
+              "PEDIDOS",
+              "Pedidos "
+            ]
+          )
+        );
+
+      const csvRegistroId =
+        texto(
+          item?.csvRegistroId ??
+          item?.chavePlanejamentoCSV ??
+          `${codigo || normalizarTextoForte(descricaoCSV) || "SEM_CODIGO"}__CSV_ITEM_${index + 1}`
+        );
+
+      const linhaOrigem =
+        item?.linhaOrigemCSV ??
+        item;
+
+      const chave =
+        criarChaveConsolidacaoCSV({
           codigo,
+          descricaoCSV
+        });
 
-          nomeOficial:
+      if (!mapa.has(chave)) {
+
+        mapa.set(
+          chave,
+          {
+            codigo,
+
+            nomeOficial:
+              descricaoCSV,
+
             descricaoCSV,
 
-          descricaoCSV,
+            descricaoNormalizadaCSV:
+              normalizarTextoForte(descricaoCSV),
 
-          descricaoNormalizadaCSV:
-            normalizarTextoForte(descricaoCSV),
+            previa: 0,
 
-          demandaFinal,
+            prioridade: 0,
 
-          linhasOrigemCSV:
-            [item],
+            pedidos: 0,
 
-          indiceOrigem:
-            index
-        }
+            demandaFinal: 0,
+
+            quantidadeCSV: 0,
+
+            csvLinhaALinha:
+              true,
+
+            csvConsolidadoOperacional:
+              true,
+
+            csvRegistroId:
+              `${codigo || normalizarTextoForte(descricaoCSV) || "SEM_CODIGO"}__CSV_AGREGADO`,
+
+            chavePlanejamentoCSV:
+              `${codigo || normalizarTextoForte(descricaoCSV) || "SEM_CODIGO"}__CSV_AGREGADO`,
+
+            csvRegistrosOrigem: [],
+
+            csvLinhasNumero: [],
+
+            linhasOrigemCSV: [],
+
+            indiceOrigem:
+              index
+          }
+        );
+
+      }
+
+      const acumulado =
+        mapa.get(chave);
+
+      acumulado.previa +=
+        previa;
+
+      acumulado.prioridade +=
+        prioridade;
+
+      acumulado.pedidos +=
+        pedidos;
+
+      acumulado.demandaFinal +=
+        demandaFinal;
+
+      acumulado.quantidadeCSV =
+        acumulado.demandaFinal;
+
+      acumulado.csvRegistrosOrigem.push(
+        csvRegistroId
       );
 
-      return;
+      acumulado.csvLinhasNumero.push(
+        item?.csvLinhaNumero ??
+        item?.linhaOrigemCSV?.numeroLinhaCSV ??
+        index + 1
+      );
 
-    }
+      acumulado.linhasOrigemCSV.push(
+        linhaOrigem
+      );
 
-    const existente =
-      mapa.get(chaveMapa);
+      if (!acumulado.nomeOficial && descricaoCSV) {
+        acumulado.nomeOficial = descricaoCSV;
+        acumulado.descricaoCSV = descricaoCSV;
+      }
 
-    existente.demandaFinal +=
-      demandaFinal;
-
-    existente.linhasOrigemCSV.push(
-      item
-    );
-
-    if (
-      !existente.descricaoCSV &&
-      descricaoCSV
-    ) {
-
-      existente.nomeOficial =
-        descricaoCSV;
-
-      existente.descricaoCSV =
-        descricaoCSV;
-
-      existente.descricaoNormalizadaCSV =
-        normalizarTextoForte(descricaoCSV);
-
-    }
-
-  });
+    });
 
   return Array.from(
     mapa.values()
@@ -708,6 +884,30 @@ function criarProdutoMestre(
     demandaReferencia:
       produtoCSV.demandaFinal,
 
+    demandaFinal:
+      produtoCSV.demandaFinal,
+
+    quantidadeCSV:
+      produtoCSV.demandaFinal,
+
+    csvLinhaALinha:
+      produtoCSV.csvLinhaALinha || true,
+
+    csvRegistroId:
+      produtoCSV.csvRegistroId,
+
+    chavePlanejamentoCSV:
+      produtoCSV.chavePlanejamentoCSV || produtoCSV.csvRegistroId,
+
+    csvLinhaNumero:
+      produtoCSV.csvLinhaNumero,
+
+    indiceOrigemCSV:
+      produtoCSV.indiceOrigemCSV,
+
+    linhaOrigemCSV:
+      produtoCSV.linhaOrigemCSV,
+
     rotasTecnicas,
 
     /**
@@ -780,6 +980,27 @@ function criarPendencia(
 
     demandaFinal:
       produtoCSV.demandaFinal,
+
+    quantidadeCSV:
+      produtoCSV.demandaFinal,
+
+    csvLinhaALinha:
+      produtoCSV.csvLinhaALinha || true,
+
+    csvRegistroId:
+      produtoCSV.csvRegistroId,
+
+    chavePlanejamentoCSV:
+      produtoCSV.chavePlanejamentoCSV || produtoCSV.csvRegistroId,
+
+    csvLinhaNumero:
+      produtoCSV.csvLinhaNumero,
+
+    indiceOrigemCSV:
+      produtoCSV.indiceOrigemCSV,
+
+    linhaOrigemCSV:
+      produtoCSV.linhaOrigemCSV,
 
     motivo,
 
@@ -967,6 +1188,30 @@ export function sincronizarProdutos(
         demandaReferencia:
           produtoCSV.demandaFinal,
 
+        demandaFinal:
+          produtoCSV.demandaFinal,
+
+        quantidadeCSV:
+          produtoCSV.demandaFinal,
+
+        csvLinhaALinha:
+          true,
+
+        csvRegistroId:
+          produtoCSV.csvRegistroId,
+
+        chavePlanejamentoCSV:
+          produtoCSV.chavePlanejamentoCSV || produtoCSV.csvRegistroId,
+
+        csvLinhaNumero:
+          produtoCSV.csvLinhaNumero,
+
+        indiceOrigemCSV:
+          produtoCSV.indiceOrigemCSV,
+
+        linhaOrigemCSV:
+          produtoCSV.linhaOrigemCSV,
+
         rotasTecnicas,
 
         zonaOperacional:
@@ -1074,6 +1319,27 @@ export function sincronizarProdutos(
 
         demandaFinal:
           produtoCSV.demandaFinal,
+
+        quantidadeCSV:
+          produtoCSV.demandaFinal,
+
+        csvLinhaALinha:
+          true,
+
+        csvRegistroId:
+          produtoCSV.csvRegistroId,
+
+        chavePlanejamentoCSV:
+          produtoCSV.chavePlanejamentoCSV || produtoCSV.csvRegistroId,
+
+        csvLinhaNumero:
+          produtoCSV.csvLinhaNumero,
+
+        indiceOrigemCSV:
+          produtoCSV.indiceOrigemCSV,
+
+        linhaOrigemCSV:
+          produtoCSV.linhaOrigemCSV,
 
         melhorSugestao: {
 

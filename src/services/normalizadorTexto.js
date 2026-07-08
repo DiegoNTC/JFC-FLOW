@@ -67,7 +67,7 @@ export function expandirAbreviacoes(texto) {
         [" FAT ", " FATIADA "],
         [" INT ", " INTEIRA "],
         [" NS ", " NATURAL SALADS "],
-        [" QA ", " QUALIDADE ASSEGURADA "],
+        [" QA ", " QUALITA "],
         [" BCA ", " BRANCA "],
         [" BCO ", " BRANCO "],
         [" BC ", " BRANCO "],

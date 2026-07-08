@@ -91,54 +91,122 @@ function textoSeguro(valor) {
 
 }
 
-function obterSequenciaProduto(
-  produto = {}
+
+function criarPainelAuditoriaSKUs(
+  auditoriaSKUs
 ) {
 
-  return produto.ordemPlanejada ??
-    produto.ordemProducao ??
-    produto.ordemSequenciamentoManual ??
-    produto.sequenciaPrincipal ??
-    produto.ordemTXT ??
-    produto.sequenciaTXT;
-
-}
-
-function obterFamiliaProduto(
-  produto = {}
-) {
-
-  return produto.familiaSequenciamento ??
-    produto.familiaSetup ??
-    produto.classeSetup ??
-    produto.familiaOperacional;
-
-}
-
-function obterSetupAplicadoProduto(
-  produto = {}
-) {
-
-  return produto.setupAplicadoMin ??
-    produto.setupMin ??
-    produto.setupBaseMin ??
-    0;
-
-}
-
-function obterOrigemSequencia(
-  linhaPlanejada = {}
-) {
-
-  if (linhaPlanejada.sequenciaAplicadaAoPlanejamentoReal) {
-    return "Sequência: Sequenciamento por Família";
+  if (
+    !auditoriaSKUs ||
+    !auditoriaSKUs.resumo
+  ) {
+    return "";
   }
 
-  if (linhaPlanejada.resumo?.sequenciaAplicada) {
-    return "Sequência: Sequenciamento por Família";
-  }
+  const resumo =
+    auditoriaSKUs.resumo;
 
-  return "Sequência: TXT";
+  const divergencias =
+    Array.isArray(auditoriaSKUs.divergencias)
+      ? auditoriaSKUs.divergencias
+      : [];
+
+  const itensTabela =
+    divergencias
+      .slice()
+      .sort((a, b) => {
+
+        const peso = {
+          ERRO: 1,
+          ATENCAO: 2,
+          OK: 3
+        };
+
+        const pesoA = peso[a.severidade] || 9;
+        const pesoB = peso[b.severidade] || 9;
+
+        if (pesoA !== pesoB) {
+          return pesoA - pesoB;
+        }
+
+        return String(a.nomeOficial || "")
+          .localeCompare(
+            String(b.nomeOficial || ""),
+            "pt-BR"
+          );
+
+      })
+      .slice(0, 120);
+
+  const linhasTabela =
+    itensTabela.length > 0
+      ? itensTabela.map(item => `
+        <tr>
+          <td>${textoSeguro(item.statusTexto)}</td>
+          <td>${textoSeguro(item.codigo)}</td>
+          <td class="real-produto">${textoSeguro(item.nomeOficial)}</td>
+          <td>${formatarNumero(item.quantidadeCSV)}</td>
+          <td>${textoSeguro(item.linha)}</td>
+          <td>${textoSeguro(item.familia)}</td>
+          <td>${textoSeguro(item.motivo)}</td>
+          <td>${textoSeguro(item.acao)}</td>
+        </tr>
+      `).join("")
+      : `
+        <tr>
+          <td colspan="8">
+            Todos os SKUs do CSV com volume válido entraram no Planejamento Real.
+          </td>
+        </tr>
+      `;
+
+  const avisoLimite =
+    divergencias.length > itensTabela.length
+      ? `<p style="margin: 8px 0 0; color: #475569; font-size: 12px;">
+          Mostrando ${formatarNumero(itensTabela.length)} de ${formatarNumero(divergencias.length)} divergências.
+        </p>`
+      : "";
+
+  return `
+    <details class="real-line-card" ${divergencias.length > 0 ? "open" : ""}>
+
+      <summary>
+        <div class="real-line-summary">
+          <strong>Conferência de SKUs da Importação</strong>
+          <span>CSV: ${formatarNumero(resumo.totalCSV)}</span>
+          <span>Planejados: ${formatarNumero(resumo.planejados)}</span>
+          <span>Fora do planejamento: ${formatarNumero(resumo.naoPlanejados)}</span>
+          <span>Pendências críticas: ${formatarNumero(resumo.pendentes)}</span>
+          <span>Alertas: ${formatarNumero(resumo.alertas)}</span>
+          <span class="real-status-badge ${resumo.naoPlanejados > 0 ? "status-atencao" : "status-ok"}">
+            ${resumo.percentualPlanejado}% planejado
+          </span>
+        </div>
+      </summary>
+
+      <div class="real-table-wrapper">
+        <table class="real-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Código</th>
+              <th>Produto</th>
+              <th>Qtd. CSV</th>
+              <th>Linha</th>
+              <th>Família</th>
+              <th>Motivo</th>
+              <th>Ação recomendada</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasTabela}
+          </tbody>
+        </table>
+        ${avisoLimite}
+      </div>
+
+    </details>
+  `;
 
 }
 
@@ -170,9 +238,7 @@ function criarTabelaLinha(linhaPlanejada) {
 
           <td>${textoSeguro(produto.zonasTexto)}</td>
 
-          <td>${textoSeguro(obterSequenciaProduto(produto))}</td>
-
-          <td>${textoSeguro(obterFamiliaProduto(produto))}</td>
+          <td>${textoSeguro(produto.sequenciaPrincipal)}</td>
 
           <td>${formatarNumero(produto.quantidadeCSV ?? produto.demandaFinal)}</td>
 
@@ -182,7 +248,7 @@ function criarTabelaLinha(linhaPlanejada) {
 
           <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
 
-          <td>${formatarTempo(obterSetupAplicadoProduto(produto))}</td>
+          <td>${formatarTempo(produto.setupMin)}</td>
 
           <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
 
@@ -221,10 +287,6 @@ function criarTabelaLinha(linhaPlanejada) {
             ${textoSeguro(capacidade.statusTexto)}
           </span>
 
-          <span>
-            ${obterOrigemSequencia(linhaPlanejada)}
-          </span>
-
           <button
             type="button"
             class="real-balance-line-btn"
@@ -246,7 +308,6 @@ function criarTabelaLinha(linhaPlanejada) {
               <th>Nome oficial</th>
               <th>Zonas</th>
               <th>Seq.</th>
-              <th>Família</th>
               <th>Qtd. CSV</th>
               <th>Kg/un TXT</th>
               <th>Kg planejado</th>
@@ -424,6 +485,8 @@ export function renderPlanejamentoReal(
         </div>
 
       </div>
+
+      ${criarPainelAuditoriaSKUs(planejamentoComCapacidade.auditoriaSKUs)}
 
       <div class="real-lines-list">
         ${linhas.map(criarTabelaLinha).join("")}

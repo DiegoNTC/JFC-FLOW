@@ -375,18 +375,13 @@ function obterLinhaCadastroMestre(produtoMestre = {}) {
 
   /**
    * Regra operacional do PCP:
-   * A linha de sequenciamento cadastrada no Cadastro Mestre
-   * é a linha onde o produto deve aparecer no Sequenciamento
-   * por Família.
+   * a linhaSequenciamento do Cadastro Mestre define onde o
+   * produto entra no Planejamento Real e no Sequenciamento por Família.
    *
-   * Antes, o sistema só usava essa linha se
-   * usarLinhaCadastro estivesse marcado. Isso fazia alguns produtos
-   * continuarem presos à linha técnica do TXT.
-   *
-   * Agora, se linhaSequenciamento estiver preenchida, ela tem
-   * prioridade para o sequenciamento.
+   * A flag usarLinhaCadastro não pode bloquear essa regra, porque ela
+   * era usada como apoio visual/configuração antiga e fazia produtos
+   * cadastrados corretamente caírem na linha técnica do TXT.
    */
-
   const linhaCadastro =
     normalizarLinha(
       produtoMestre.linhaSequenciamento ||
@@ -825,6 +820,27 @@ function criarProdutoPlanejado(produtoMestre, rota) {
 
     codigo:
       produtoMestre.codigo,
+
+    csvLinhaALinha:
+      produtoMestre.csvLinhaALinha || true,
+
+    csvRegistroId:
+      produtoMestre.csvRegistroId,
+
+    chavePlanejamentoCSV:
+      produtoMestre.chavePlanejamentoCSV || produtoMestre.csvRegistroId,
+
+    csvLinhaNumero:
+      produtoMestre.csvLinhaNumero,
+
+    indiceOrigemCSV:
+      produtoMestre.indiceOrigemCSV,
+
+    linhaOrigemCSV:
+      produtoMestre.linhaOrigemCSV,
+
+    linhasOrigemCSV:
+      produtoMestre.linhasOrigemCSV || [],
 
     nomeOficial:
       produtoMestre.nomeOficial,
@@ -1473,7 +1489,10 @@ function agruparProdutosPorLinha(produtosMestre) {
       mapaLinhas.get(linhaSequenciamento);
 
     const chaveProduto = [
-      produtoMestre.codigo,
+      produtoMestre.codigo ||
+      produtoMestre.codProduto ||
+      produtoMestre.codigoProduto ||
+      produtoMestre.nomeOficial,
       produtoMestre.nomeOficial,
       linhaSequenciamento
     ].join("|");

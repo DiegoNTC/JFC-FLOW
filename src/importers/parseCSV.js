@@ -2,12 +2,29 @@
  * ======================================================
  * JFC FLOW
  * Módulo: parseCSV
- * Versão: 1.2.0
+ * Versão: 1.4.0
  *
  * Responsabilidade:
- * Ler o CSV de pedidos.
+ * Ler o CSV de pedidos do dia LINHA A LINHA.
  *
- * Regra importante:
+ * Decisão operacional:
+ * - NÃO consolidar produtos duplicados.
+ * - NÃO somar linhas repetidas.
+ * - Cada linha válida do CSV vira um registro independente.
+ * - O cruzamento posterior com o Cadastro Mestre decide se o
+ *   item entra no planejamento.
+ *
+ * Categorias permitidas:
+ * - processados
+ * - institucional
+ * - mcdonalds
+ *
+ * Quantidade da linha:
+ * - se Pedidos > 0: Pedidos + Prioritários
+ * - senão, se Prévia > 0: Prévia
+ * - senão: Prioritários
+ *
+ * Importante:
  * O código do produto é texto.
  * Nunca converter código para Number.
  * ======================================================
@@ -39,7 +56,8 @@ function limparTexto(valor) {
 
   return String(valor || "")
     .trim()
-    .replace(/^"|"$/g, "");
+    .replace(/^"|"$/g, "")
+    .replace(/""/g, "\"");
 
 }
 
@@ -51,21 +69,136 @@ function normalizarCategoria(categoria) {
 
 }
 
+function normalizarCabecalho(valor) {
+
+  return limparTexto(valor)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+}
+
+function normalizarChaveTexto(valor) {
+
+  return limparTexto(valor)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+}
+
+function detectarSeparador(linhaCabecalho) {
+
+  const qtdVirgula =
+    (linhaCabecalho.match(/,/g) || []).length;
+
+  const qtdPontoVirgula =
+    (linhaCabecalho.match(/;/g) || []).length;
+
+  return qtdPontoVirgula > qtdVirgula
+    ? ";"
+    : ",";
+
+}
+
+function parseLinhaCSV(linha, separador) {
+
+  const colunas = [];
+  let atual = "";
+  let dentroAspas = false;
+
+  for (let i = 0; i < linha.length; i++) {
+
+    const caractere = linha[i];
+    const proximo = linha[i + 1];
+
+    if (caractere === "\"") {
+
+      if (dentroAspas && proximo === "\"") {
+        atual += "\"";
+        i += 1;
+      } else {
+        dentroAspas = !dentroAspas;
+      }
+
+      continue;
+
+    }
+
+    if (
+      caractere === separador &&
+      !dentroAspas
+    ) {
+      colunas.push(limparTexto(atual));
+      atual = "";
+      continue;
+    }
+
+    atual += caractere;
+
+  }
+
+  colunas.push(
+    limparTexto(atual)
+  );
+
+  return colunas;
+
+}
+
+function localizarIndice(cabecalhos, predicado) {
+
+  return cabecalhos.findIndex(predicado);
+
+}
+
+function obterValor(row, indice, padrao = "") {
+
+  return indice >= 0
+    ? row[indice] ?? padrao
+    : padrao;
+
+}
+
+function calcularDemandaDaLinha({
+  previa,
+  prioridade,
+  pedidos
+}) {
+
+  if (pedidos > 0) {
+    return pedidos + prioridade;
+  }
+
+  if (previa > 0) {
+    return previa;
+  }
+
+  return prioridade;
+
+}
+
+function criarIdRegistroCSV({
+  codigo,
+  produto,
+  numeroLinha
+}) {
+
+  const base =
+    codigo ||
+    normalizarChaveTexto(produto) ||
+    "SEM_IDENTIFICACAO";
+
+  return `${base}__CSV_LINHA_${numeroLinha}`;
+
+}
+
 /**
  * CSV esperado:
- *
- * Data,
- * Produto,
- * Previa,
- * Pedidos Prioritarios,
- * Pedidos,
- * Producao,
- * Categoria,
- * Código
- *
- * Observação:
- * O produto pode conter vírgula no nome.
- * Por isso lemos as colunas fixas pelo final da linha.
+ * Data, Produto, Previa, Pedidos Prioritarios, Pedidos, Producao, Categoria, Código
  */
 export function parseCSV(textoCSV) {
 
@@ -73,62 +206,114 @@ export function parseCSV(textoCSV) {
     .split(/\r?\n/)
     .filter(linha => linha.trim() !== "");
 
-  const resultado = [];
+  if (linhas.length === 0) {
+    return [];
+  }
+
+  const separador =
+    detectarSeparador(
+      linhas[0]
+    );
+
+  const cabecalhoOriginal =
+    parseLinhaCSV(
+      linhas[0],
+      separador
+    );
+
+  const cabecalhos =
+    cabecalhoOriginal.map(
+      normalizarCabecalho
+    );
+
+  const indiceData =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("data")
+    );
+
+  const indiceProduto =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("produto")
+    );
+
+  const indicePrevia =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("previa")
+    );
+
+  const indicePrioridade =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("priorit")
+    );
+
+  const indicePedidos =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("pedido") && !cabecalho.includes("priorit")
+    );
+
+  const indiceProducao =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("producao")
+    );
+
+  const indiceCategoria =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("categoria")
+    );
+
+  const indiceCodigo =
+    localizarIndice(
+      cabecalhos,
+      cabecalho => cabecalho.includes("codigo") || cabecalho === "cod"
+    );
+
+  const registros = [];
 
   for (let i = 1; i < linhas.length; i++) {
 
-    const linha = linhas[i];
+    const row =
+      parseLinhaCSV(
+        linhas[i],
+        separador
+      );
 
-    const partes = linha.split(",");
-
-    if (partes.length < 8) {
+    if (row.length === 0) {
       continue;
     }
 
-    /**
-     * Lendo do final para o início.
-     * Isso evita erro quando o nome do produto contém vírgula.
-     */
-    const codigo = limparTexto(
-      partes[partes.length - 1]
-    );
+    const numeroLinhaCSV =
+      i + 1;
 
-    const categoria = limparTexto(
-      partes[partes.length - 2]
-    );
+    const data =
+      limparTexto(
+        obterValor(row, indiceData, row[0])
+      );
 
-    const producao = limparTexto(
-      partes[partes.length - 3]
-    );
+    const produto =
+      limparTexto(
+        obterValor(row, indiceProduto, "")
+      );
 
-    const pedidos = limparTexto(
-      partes[partes.length - 4]
-    );
+    const codigo =
+      limparTexto(
+        obterValor(row, indiceCodigo, "")
+      );
 
-    const prioridade = limparTexto(
-      partes[partes.length - 5]
-    );
-
-    const previa = limparTexto(
-      partes[partes.length - 6]
-    );
-
-    const data = limparTexto(
-      partes[0]
-    );
-
-    const produto = limparTexto(
-      partes
-        .slice(1, partes.length - 6)
-        .join(",")
-    );
+    const categoria =
+      limparTexto(
+        obterValor(row, indiceCategoria, "")
+      );
 
     const categoriaNormalizada =
       normalizarCategoria(categoria);
 
-    /**
-     * Mantém apenas as categorias definidas no projeto.
-     */
     if (
       Array.isArray(categoriasPermitidas) &&
       categoriasPermitidas.length > 0 &&
@@ -137,37 +322,97 @@ export function parseCSV(textoCSV) {
       continue;
     }
 
-    resultado.push({
+    if (
+      !codigo &&
+      !produto
+    ) {
+      continue;
+    }
 
+    const previa =
+      parseNumero(
+        obterValor(row, indicePrevia, 0)
+      );
+
+    const prioridade =
+      parseNumero(
+        obterValor(row, indicePrioridade, 0)
+      );
+
+    const pedidos =
+      parseNumero(
+        obterValor(row, indicePedidos, 0)
+      );
+
+    const producao =
+      parseNumero(
+        obterValor(row, indiceProducao, 0)
+      );
+
+    const demandaFinal =
+      calcularDemandaDaLinha({
+        previa,
+        prioridade,
+        pedidos
+      });
+
+    const csvRegistroId =
+      criarIdRegistroCSV({
+        codigo,
+        produto,
+        numeroLinha:
+          numeroLinhaCSV
+      });
+
+    registros.push({
       data,
-
-      /**
-       * Código oficial do ERP.
-       * Mantido como texto para preservar zeros à esquerda.
-       */
       codigo,
-
       produto,
-
-      previa: parseNumero(previa),
-
-      prioridade: parseNumero(prioridade),
-
-      pedidos: parseNumero(pedidos),
-
-      producao: parseNumero(producao),
-
+      nomeOficial:
+        produto,
+      descricaoCSV:
+        produto,
       categoria,
-
-      demandaFinal:
-        parseNumero(pedidos) > 0
-          ? parseNumero(pedidos) + parseNumero(prioridade)
-          : parseNumero(previa) + parseNumero(prioridade)
-
+      categoriaNormalizada,
+      previa,
+      prioridade,
+      pedidos,
+      producao,
+      demandaFinal,
+      quantidadeCSV:
+        demandaFinal,
+      demandaCalculadaPor:
+        pedidos > 0
+          ? "LINHA_PEDIDOS_MAIS_PRIORITARIOS"
+          : previa > 0
+            ? "LINHA_PREVIA"
+            : "LINHA_PRIORITARIOS",
+      csvLinhaALinha:
+        true,
+      csvConsolidado:
+        false,
+      csvRegistroId,
+      chavePlanejamentoCSV:
+        csvRegistroId,
+      csvLinhaNumero:
+        numeroLinhaCSV,
+      indiceOrigemCSV:
+        i,
+      linhaOrigemCSV: {
+        data,
+        codigo,
+        produto,
+        previa,
+        prioridade,
+        pedidos,
+        producao,
+        categoria,
+        numeroLinhaCSV
+      }
     });
 
   }
 
-  return resultado;
+  return registros;
 
 }

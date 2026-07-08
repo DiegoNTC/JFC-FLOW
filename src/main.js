@@ -250,71 +250,267 @@ function normalizarCodigoProduto(
 
 }
 
+function numeroCSV(
+  valor
+) {
+
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+    return 0;
+  }
+
+  return Number(
+    String(valor)
+      .replace(",", ".")
+      .replace(/[^0-9.-]/g, "")
+  ) || 0;
+
+}
+
+function obterCampoCSV(
+  item,
+  nomes,
+  padrao = 0
+) {
+
+  for (const nome of nomes) {
+
+    if (
+      item &&
+      item[nome] !== undefined &&
+      item[nome] !== null &&
+      item[nome] !== ""
+    ) {
+      return item[nome];
+    }
+
+  }
+
+  return padrao;
+
+}
+
+function calcularDemandaCSVConsolidada({
+  previa,
+  prioridade,
+  pedidos
+}) {
+
+  if (pedidos > 0) {
+    return pedidos + prioridade;
+  }
+
+  if (previa > 0) {
+    return previa;
+  }
+
+  return prioridade;
+
+}
+
+function criarChaveConsolidacaoPlanejamentoCSV(
+  item
+) {
+
+  const codigo =
+    normalizarCodigoProduto(
+      item.codigo ??
+      item.Código ??
+      item.Codigo ??
+      item.CODIGO ??
+      ""
+    );
+
+  if (codigo) {
+    return `CODIGO:${codigo}`;
+  }
+
+  const nome =
+    String(
+      item.produto ||
+      item.nomeOficial ||
+      item.descricaoCSV ||
+      item.descricao ||
+      ""
+    )
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  return nome
+    ? `NOME:${nome}`
+    : "SEM_IDENTIFICACAO";
+
+}
+
 function consolidarProdutosCSVDoDia(
   dadosCSV
 ) {
 
+  /**
+   * Regra ajustada:
+   * 1. O CSV é lido linha a linha no parseCSV.
+   * 2. Cada linha calcula sua própria demanda corretamente.
+   * 3. Para o Planejamento/Sequenciamento, juntamos as linhas do
+   *    mesmo SKU por código, somando a demanda final.
+   *
+   * Assim o sistema não erra a leitura do CSV, mas também não mostra
+   * o mesmo produto repetido várias vezes dentro da mesma família.
+   */
+
   const mapa =
     new Map();
 
-  (dadosCSV || []).forEach(item => {
+  (dadosCSV || [])
+    .forEach((item, index) => {
 
-    const codigo =
-      normalizarCodigoProduto(
-        item.codigo
+      const codigo =
+        normalizarCodigoProduto(
+          item.codigo ??
+          item.Código ??
+          item.Codigo ??
+          item.CODIGO ??
+          ""
+        );
+
+      const nomeOficial =
+        item.produto ||
+        item.nomeOficial ||
+        item.descricaoCSV ||
+        item.descricao ||
+        "";
+
+      const demandaFinal =
+        item.csvLinhaALinha === true ||
+        item.csvConsolidado === false ||
+        item.csvConsolidadoOperacional === true
+          ? numeroCSV(
+              item.demandaFinal ??
+              item.quantidadeCSV ??
+              0
+            )
+          : calcularDemandaCSVConsolidada({
+              previa:
+                numeroCSV(
+                  obterCampoCSV(
+                    item,
+                    [
+                      "previa",
+                      "Previa",
+                      "PREVIA"
+                    ]
+                  )
+                ),
+              prioridade:
+                numeroCSV(
+                  obterCampoCSV(
+                    item,
+                    [
+                      "prioridade",
+                      "Prioridade",
+                      "Pedidos Prioritarios",
+                      "Pedidos Prioritários",
+                      "prioritario",
+                      "prioritarios"
+                    ]
+                  )
+                ),
+              pedidos:
+                numeroCSV(
+                  obterCampoCSV(
+                    item,
+                    [
+                      "pedidos",
+                      "Pedidos",
+                      "PEDIDOS",
+                      "Pedidos "
+                    ]
+                  )
+                )
+            });
+
+      if (
+        (!codigo && !nomeOficial) ||
+        demandaFinal <= 0
+      ) {
+        return;
+      }
+
+      const chave =
+        criarChaveConsolidacaoPlanejamentoCSV(
+          item
+        );
+
+      const csvRegistroId =
+        item.csvRegistroId ||
+        item.chavePlanejamentoCSV ||
+        `${codigo || nomeOficial || "SEM_CODIGO"}__CSV_ITEM_${index + 1}`;
+
+      if (!mapa.has(chave)) {
+
+        const idAgregado =
+          `${codigo || nomeOficial || "SEM_CODIGO"}__CSV_AGREGADO`;
+
+        mapa.set(
+          chave,
+          {
+            codigo,
+            nomeOficial,
+            descricaoCSV:
+              nomeOficial,
+            demandaFinal: 0,
+            quantidadeCSV: 0,
+            csvLinhaALinha:
+              true,
+            csvConsolidadoOperacional:
+              true,
+            csvRegistroId:
+              idAgregado,
+            chavePlanejamentoCSV:
+              idAgregado,
+            csvRegistrosOrigem: [],
+            csvLinhasNumero: [],
+            linhasOrigemCSV: []
+          }
+        );
+
+      }
+
+      const acumulado =
+        mapa.get(chave);
+
+      acumulado.demandaFinal +=
+        demandaFinal;
+
+      acumulado.quantidadeCSV =
+        acumulado.demandaFinal;
+
+      acumulado.csvRegistrosOrigem.push(
+        csvRegistroId
       );
 
-    if (!codigo) {
-      return;
-    }
-
-    const demanda =
-      Number(
-        item.demandaFinal ??
-        item.pedidos ??
-        item.previa ??
-        0
-      ) || 0;
-
-    if (!mapa.has(codigo)) {
-
-      mapa.set(
-        codigo,
-        {
-          codigo,
-          nomeOficial:
-            item.produto || item.nomeOficial || "",
-          descricaoCSV:
-            item.produto || item.nomeOficial || "",
-          demandaFinal:
-            demanda
-        }
+      acumulado.csvLinhasNumero.push(
+        item.csvLinhaNumero ??
+        item.linhaOrigemCSV?.numeroLinhaCSV ??
+        index + 1
       );
 
-      return;
+      acumulado.linhasOrigemCSV.push(
+        item.linhaOrigemCSV ??
+        item
+      );
 
-    }
+      if (!acumulado.nomeOficial && nomeOficial) {
+        acumulado.nomeOficial = nomeOficial;
+        acumulado.descricaoCSV = nomeOficial;
+      }
 
-    const existente =
-      mapa.get(codigo);
-
-    existente.demandaFinal +=
-      demanda;
-
-    if (
-      !existente.nomeOficial &&
-      item.produto
-    ) {
-
-      existente.nomeOficial =
-        item.produto;
-
-      existente.descricaoCSV =
-        item.produto;
-
-    }
-
-  });
+    });
 
   return Array.from(
     mapa.values()
@@ -400,6 +596,30 @@ function montarProdutosMestreParaPlanejamento(
 
       demandaFinal:
         produtoCSV.demandaFinal,
+
+      quantidadeCSV:
+        produtoCSV.demandaFinal,
+
+      csvLinhaALinha:
+        true,
+
+      csvRegistroId:
+        produtoCSV.csvRegistroId,
+
+      chavePlanejamentoCSV:
+        produtoCSV.chavePlanejamentoCSV || produtoCSV.csvRegistroId,
+
+      csvLinhaNumero:
+        produtoCSV.csvLinhaNumero,
+
+      indiceOrigemCSV:
+        produtoCSV.indiceOrigemCSV,
+
+      linhaOrigemCSV:
+        produtoCSV.linhaOrigemCSV,
+
+      linhasOrigemCSV:
+        produtoCSV.linhasOrigemCSV || [],
 
       origemPlanejamento: {
         csvAtual: true,
