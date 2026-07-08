@@ -1,3 +1,5 @@
+import { inferirFamiliaSetup } from "./familiaSetupService.js";
+
 /**
  * ======================================================
  * JFC FLOW
@@ -28,8 +30,6 @@
  * os dados técnicos do TXT continuam preservados no produto.
  * ======================================================
  */
-
-import { inferirFamiliaSetup } from "./familiaSetupService.js";
 
 function numero(valor) {
 
@@ -358,18 +358,34 @@ function linhaEstaPermitida(linha, linhasPermitidas) {
 
 }
 
-function obterLinhaSequenciamento(
-  produtoMestre,
-  linhaTecnica,
-  linhasPermitidas
-) {
+function linhaNormalizadaEhValida(linha) {
 
-  const usarLinhaCadastro =
-    produtoMestre.usarLinhaCadastro === true ||
-    produtoMestre.usarLinhaCadastro === "true" ||
-    produtoMestre.usarLinhaCadastro === "SIM" ||
-    produtoMestre.usarLinhaCadastro === "S" ||
-    produtoMestre.usarLinhaCadastro === 1;
+  const valor =
+    texto(linha);
+
+  return Boolean(
+    valor &&
+    valor !== "Sem linha" &&
+    valor.toUpperCase() !== "SEM LINHA"
+  );
+
+}
+
+function obterLinhaCadastroMestre(produtoMestre = {}) {
+
+  /**
+   * Regra operacional do PCP:
+   * A linha de sequenciamento cadastrada no Cadastro Mestre
+   * é a linha onde o produto deve aparecer no Sequenciamento
+   * por Família.
+   *
+   * Antes, o sistema só usava essa linha se
+   * usarLinhaCadastro estivesse marcado. Isso fazia alguns produtos
+   * continuarem presos à linha técnica do TXT.
+   *
+   * Agora, se linhaSequenciamento estiver preenchida, ela tem
+   * prioridade para o sequenciamento.
+   */
 
   const linhaCadastro =
     normalizarLinha(
@@ -379,34 +395,61 @@ function obterLinhaSequenciamento(
       ""
     );
 
-  const linhasPermitidasCadastro =
-    normalizarListaLinhas(
-      produtoMestre.linhasPermitidas ||
-      []
-    );
-
-  const linhaCadastroPermitida =
-    linhasPermitidasCadastro.length === 0 ||
-    linhaEstaPermitida(
-      linhaCadastro,
-      linhasPermitidasCadastro
-    );
-
-  if (
-    usarLinhaCadastro &&
-    linhaCadastro &&
-    linhaCadastro !== "Sem linha" &&
-    linhaCadastroPermitida
-  ) {
+  if (linhaNormalizadaEhValida(linhaCadastro)) {
     return linhaCadastro;
   }
 
-  return normalizarLinha(
-    linhaTecnica ||
-    produtoMestre.linhaPrincipal ||
-    linhasPermitidas?.[0] ||
-    "Sem linha"
-  );
+  const linhaPrincipalCadastro =
+    normalizarLinha(
+      produtoMestre.linhaPrincipal ||
+      produtoMestre.linhaTXT ||
+      ""
+    );
+
+  if (linhaNormalizadaEhValida(linhaPrincipalCadastro)) {
+    return linhaPrincipalCadastro;
+  }
+
+  return "";
+
+}
+
+function obterLinhaSequenciamento(
+  produtoMestre,
+  linhaTecnica,
+  linhasPermitidas
+) {
+
+  const linhaCadastroMestre =
+    obterLinhaCadastroMestre(
+      produtoMestre
+    );
+
+  if (linhaCadastroMestre) {
+    return linhaCadastroMestre;
+  }
+
+  const linhaTecnicaNormalizada =
+    normalizarLinha(
+      linhaTecnica ||
+      ""
+    );
+
+  if (linhaNormalizadaEhValida(linhaTecnicaNormalizada)) {
+    return linhaTecnicaNormalizada;
+  }
+
+  const primeiraLinhaPermitida =
+    normalizarLinha(
+      linhasPermitidas?.[0] ||
+      ""
+    );
+
+  if (linhaNormalizadaEhValida(primeiraLinhaPermitida)) {
+    return primeiraLinhaPermitida;
+  }
+
+  return "Sem linha";
 
 }
 
@@ -430,23 +473,19 @@ function obterFamiliaSequenciamento(produtoMestre, rota = {}) {
 
   /**
    * Regra importante:
-   *
    * familiaSequenciamento é a família operacional usada para agrupar
-   * os blocos no sequenciamento.
+   * os blocos no sequenciamento. Ela não deve herdar automaticamente
+   * familiaSetup/classeSetup quando o PCP não preencheu esse campo.
    *
-   * Ela NÃO deve herdar automaticamente familiaSetup/classeSetup,
-   * porque familiaSetup é uma família técnica e pode estar ampla,
-   * antiga ou contaminada.
-   *
-   * Exemplo do erro:
-   * CHICORIA e ALFACE ROMANA entrando dentro do bloco RUCULA.
+   * Motivo: familiaSetup é técnica e pode vir ampla ou contaminada por
+   * cadastro antigo. Foi isso que permitiu produtos como CHICÓRIA e
+   * ALFACE ROMANA aparecerem dentro do bloco RÚCULA.
    *
    * Prioridade correta:
-   * 1. familiaSequenciamento cadastrada pelo PCP;
-   * 2. familiaOperacional cadastrada;
-   * 3. familiaSequenciamento da rota, se existir;
-   * 4. inferência segura pelo nome do produto;
-   * 5. familiaSetup técnica apenas como último recurso.
+   * 1) família operacional explicitamente cadastrada pelo PCP;
+   * 2) família operacional da rota, se existir;
+   * 3) inferência segura pelo nome do produto;
+   * 4) fallback técnico apenas em último caso.
    */
 
   const familiaOperacionalCadastro =
@@ -776,6 +815,12 @@ function criarProdutoPlanejado(produtoMestre, rota) {
       rota
     );
 
+  const familiaSetupTecnica =
+    obterFamiliaSetupTecnica(
+      produtoMestre,
+      rota
+    ) || familiaSequenciamento;
+
   return {
 
     codigo:
@@ -809,10 +854,12 @@ function criarProdutoPlanejado(produtoMestre, rota) {
     familiaSequenciamento,
 
     familiaSetup:
-      familiaSequenciamento,
+      familiaSetupTecnica,
+
+    familiaSetupTecnica,
 
     classeSetup:
-      familiaSequenciamento,
+      familiaSetupTecnica,
 
     sequenciaTXT:
       ordemTXT,

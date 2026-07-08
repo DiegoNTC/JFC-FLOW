@@ -81,6 +81,54 @@ function traduzirStatus(status) {
 
 }
 
+function obterResumoLinhaParaCapacidade(
+  linhaPlanejada
+) {
+
+  const resumoSequenciamento =
+    linhaPlanejada?.resumoSequenciamento;
+
+  const resumo =
+    linhaPlanejada?.resumo || {};
+
+  if (resumoSequenciamento) {
+
+    return {
+      ...resumo,
+
+      tempoTotalMin:
+        resumoSequenciamento.tempoTotalMin ??
+        resumo.tempoTotalMin,
+
+      setupTotalMin:
+        resumoSequenciamento.setupAplicadoMin ??
+        resumo.setupTotalMin,
+
+      tempoProducaoMin:
+        resumoSequenciamento.tempoProducaoMin ??
+        resumo.tempoProducaoMin,
+
+      kgTotalPlanejado:
+        resumoSequenciamento.kgTotal ??
+        resumo.kgTotalPlanejado,
+
+      kgTotal:
+        resumoSequenciamento.kgTotal ??
+        resumo.kgTotal,
+
+      origemSequencia:
+        "SEQUENCIAMENTO_POR_FAMILIA",
+
+      sequenciaAplicada:
+        true
+    };
+
+  }
+
+  return resumo;
+
+}
+
 function avaliarLinha(linhaPlanejada) {
 
   const linha =
@@ -90,11 +138,16 @@ function avaliarLinha(linhaPlanejada) {
     capacidadeLinhas[linha]?.capacidadeMin ??
     capacidadePadraoMin;
 
+  const resumoLinha =
+    obterResumoLinhaParaCapacidade(
+      linhaPlanejada
+    );
+
   const tempoPlanejadoMin =
-    numero(linhaPlanejada.resumo?.tempoTotalMin);
+    numero(resumoLinha?.tempoTotalMin);
 
   const setupTotalMin =
-    numero(linhaPlanejada.resumo?.setupTotalMin);
+    numero(resumoLinha?.setupTotalMin);
 
   const saldoMin =
     capacidade - tempoPlanejadoMin;
@@ -115,6 +168,9 @@ function avaliarLinha(linhaPlanejada) {
 
     ...linhaPlanejada,
 
+    resumo:
+      resumoLinha,
+
     capacidade: {
 
       capacidadeMin: capacidade,
@@ -129,7 +185,12 @@ function avaliarLinha(linhaPlanejada) {
 
       status,
 
-      statusTexto: traduzirStatus(status)
+      statusTexto: traduzirStatus(status),
+
+      origemCalculo:
+        resumoLinha?.sequenciaAplicada
+          ? "SEQUENCIAMENTO_POR_FAMILIA"
+          : "PLANEJAMENTO_REAL"
 
     }
 

@@ -12,6 +12,10 @@ import {
   gerarSequenciamentoPlanejamento
 } from "./geradorSequenciamentoLinha.js";
 
+import {
+  salvarSequenciaManualFamiliasLinha
+} from "../repositories/sequenciamentoManualRepository.js";
+
 function texto(valor) {
 
   return String(valor ?? "").trim();
@@ -52,6 +56,19 @@ function obterNomeLinha(linha) {
     linha?.nomeLinha ??
     linha?.nome ??
     linha?.id
+  );
+
+}
+
+
+function obterFamiliaBloco(bloco) {
+
+  return texto(
+    bloco?.familiaSetup ??
+    bloco?.familiaSequenciamento ??
+    bloco?.classeSetup ??
+    bloco?.familia ??
+    bloco?.nomeFamilia
   );
 
 }
@@ -166,22 +183,61 @@ export function moverBlocoPlanejamento(
   blocos[novoIndice] =
     temporario;
 
+  const familiasOrdenadas =
+    blocos
+      .map(obterFamiliaBloco)
+      .filter(Boolean);
+
+  salvarSequenciaManualFamiliasLinha(
+    obterNomeLinha(linha),
+    familiasOrdenadas
+  );
+
+  const mapaOrdemFamiliaManual =
+    new Map(
+      familiasOrdenadas.map((familia, index) => {
+
+        return [
+          familia,
+          index + 1
+        ];
+
+      })
+    );
+
   const produtosReordenados =
     blocos.flatMap(bloco => {
 
-      return bloco.produtos || [];
+      const familiaBloco =
+        obterFamiliaBloco(
+          bloco
+        );
 
-    }).map((produto, index) => {
+      const ordemFamiliaManual =
+        mapaOrdemFamiliaManual.get(
+          familiaBloco
+        ) || null;
 
-      return {
-        ...produto,
+      return (bloco.produtos || [])
+        .map((produto, indexProdutoNoBloco) => {
 
-        ordemSequenciamentoManual:
-          index + 1,
+          return {
+            ...produto,
 
-        ordemManual:
-          index + 1
-      };
+            ordemBlocoFamiliaManual:
+              ordemFamiliaManual,
+
+            ordemFamiliaManual:
+              ordemFamiliaManual,
+
+            origemOrdemBlocoFamilia:
+              "MANUAL_PCP",
+
+            indiceProdutoNaFamiliaManual:
+              indexProdutoNoBloco + 1
+          };
+
+        });
 
     });
 

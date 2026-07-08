@@ -41,6 +41,10 @@ import {
   aplicarFamiliaCadastradaAoProduto
 } from "./familiaCadastroService.js";
 
+import {
+  obterOrdemManualFamilia
+} from "../repositories/sequenciamentoManualRepository.js";
+
 function texto(valor) {
 
   return String(valor ?? "").trim();
@@ -211,6 +215,18 @@ export function obterOrdemManual(produto = {}) {
     produto.ordemPlanejadaManual ??
     produto.ordemEditada ??
     produto.ordemUsuario
+  );
+
+}
+
+
+function obterOrdemBlocoFamiliaManual(produto = {}) {
+
+  return normalizarNumeroOrdem(
+    produto.ordemBlocoFamiliaManual ??
+    produto.ordemFamiliaManual ??
+    produto.ordemManualFamilia ??
+    produto.sequenciaManualFamilia
   );
 
 }
@@ -528,10 +544,16 @@ function calcularMapaOrdemFamilia(produtos = []) {
 
 }
 
-function aplicarOrdemBlocoFamilia(produto, mapaOrdemFamilia) {
+function aplicarOrdemBlocoFamilia(produto, mapaOrdemFamilia, nomeLinha) {
 
   const familia =
     obterFamiliaSetup(produto);
+
+  const ordemManualFamilia =
+    obterOrdemManualFamilia(
+      nomeLinha,
+      familia
+    );
 
   return {
     ...produto,
@@ -545,6 +567,17 @@ function aplicarOrdemBlocoFamilia(produto, mapaOrdemFamilia) {
 
     classeSetup:
       familia,
+
+    ordemBlocoFamiliaManual:
+      ordemManualFamilia,
+
+    ordemFamiliaManual:
+      ordemManualFamilia,
+
+    origemOrdemBlocoFamilia:
+      ordemManualFamilia !== null
+        ? "MANUAL_PCP"
+        : "TXT",
 
     ordemBlocoFamiliaTXT:
       mapaOrdemFamilia.get(familia) ??
@@ -885,6 +918,27 @@ function aplicarOrdemPreservada(
  */
 function compararProdutosSequenciamento(produtoA, produtoB) {
 
+  const ordemBlocoManualA =
+    obterOrdemBlocoFamiliaManual(produtoA);
+
+  const ordemBlocoManualB =
+    obterOrdemBlocoFamiliaManual(produtoB);
+
+  if (
+    ordemBlocoManualA !== null ||
+    ordemBlocoManualB !== null
+  ) {
+
+    const diferencaBlocoManual =
+      (ordemBlocoManualA ?? 999999) -
+      (ordemBlocoManualB ?? 999999);
+
+    if (diferencaBlocoManual !== 0) {
+      return diferencaBlocoManual;
+    }
+
+  }
+
   const ordemManualA =
     obterOrdemManual(produtoA);
 
@@ -1040,6 +1094,9 @@ function criarProdutoSequenciado(
 
     ordemSequenciamentoManual,
 
+    familiaSequenciamento:
+      familiaSetup,
+
     familiaSetup,
 
     classeSetup:
@@ -1104,6 +1161,384 @@ function criarResumoSequenciamento(produtos, blocos) {
 
     produtosComSequenciaPreservada:
       produtos.filter(produto => produto.sequenciamentoPreservado).length
+  };
+
+}
+
+function somarQuantidadeCSV(produtos = []) {
+
+  return produtos.reduce((total, produto) => {
+
+    return total + numero(
+      produto.quantidadeCSV ??
+      produto.demandaFinal ??
+      produto.demandaReferencia ??
+      produto.demanda,
+      0
+    );
+
+  }, 0);
+
+}
+
+function classificarStatusCapacidade(
+  utilizacaoPercentual,
+  tempoPlanejadoMin
+) {
+
+  if (tempoPlanejadoMin <= 0) {
+    return "SEM_CARGA";
+  }
+
+  if (utilizacaoPercentual < 70) {
+    return "OCIOSA";
+  }
+
+  if (utilizacaoPercentual <= 100) {
+    return "OK";
+  }
+
+  if (utilizacaoPercentual <= 110) {
+    return "ATENCAO";
+  }
+
+  return "ESTOURADA";
+
+}
+
+function traduzirStatusCapacidade(status) {
+
+  const mapa = {
+    SEM_CARGA: "Sem carga",
+    OCIOSA: "Ociosa",
+    OK: "OK",
+    ATENCAO: "Atenção",
+    ESTOURADA: "Estourada"
+  };
+
+  return mapa[status] || status;
+
+}
+
+function criarResumoLinhaSequenciada(
+  linhaPlanejada = {},
+  produtosSequenciados = [],
+  blocos = [],
+  resumoSequenciamento = {}
+) {
+
+  const resumoAnterior =
+    linhaPlanejada.resumo || {};
+
+  const quantidadeTotalCSV =
+    somarQuantidadeCSV(
+      produtosSequenciados
+    );
+
+  const kgTotalPlanejado =
+    numero(
+      resumoSequenciamento.kgTotal,
+      0
+    );
+
+  return {
+    ...resumoAnterior,
+
+    totalProdutos:
+      produtosSequenciados.length,
+
+    totalBlocos:
+      blocos.length,
+
+    totalFamilias:
+      blocos.length,
+
+    demandaTotal:
+      quantidadeTotalCSV,
+
+    quantidadeTotalCSV,
+
+    kgTotalPlanejado,
+
+    kgTotal:
+      kgTotalPlanejado,
+
+    tempoProducaoMin:
+      numero(
+        resumoSequenciamento.tempoProducaoMin,
+        0
+      ),
+
+    setupTotalMin:
+      numero(
+        resumoSequenciamento.setupAplicadoMin,
+        0
+      ),
+
+    tempoTotalMin:
+      numero(
+        resumoSequenciamento.tempoTotalMin,
+        0
+      ),
+
+    produtosComSequenciaPreservada:
+      numero(
+        resumoSequenciamento.produtosComSequenciaPreservada,
+        0
+      ),
+
+    origemSequencia:
+      "SEQUENCIAMENTO_POR_FAMILIA",
+
+    sequenciaAplicada:
+      true
+  };
+
+}
+
+function recalcularCapacidadeLinhaSequenciada(
+  capacidadeAnterior = {},
+  resumoLinha = {}
+) {
+
+  if (
+    !capacidadeAnterior ||
+    Object.keys(capacidadeAnterior).length === 0
+  ) {
+    return capacidadeAnterior;
+  }
+
+  const capacidadeMin =
+    numero(
+      capacidadeAnterior.capacidadeMin,
+      0
+    );
+
+  const tempoPlanejadoMin =
+    numero(
+      resumoLinha.tempoTotalMin,
+      0
+    );
+
+  const setupTotalMin =
+    numero(
+      resumoLinha.setupTotalMin,
+      0
+    );
+
+  const saldoMin =
+    capacidadeMin - tempoPlanejadoMin;
+
+  const utilizacaoPercentual =
+    capacidadeMin > 0
+      ? Math.round(
+          (tempoPlanejadoMin / capacidadeMin) * 100
+        )
+      : 0;
+
+  const status =
+    classificarStatusCapacidade(
+      utilizacaoPercentual,
+      tempoPlanejadoMin
+    );
+
+  return {
+    ...capacidadeAnterior,
+
+    tempoPlanejadoMin,
+
+    setupTotalMin,
+
+    saldoMin,
+
+    utilizacaoPercentual,
+
+    status,
+
+    statusTexto:
+      traduzirStatusCapacidade(status),
+
+    origemCalculo:
+      "SEQUENCIAMENTO_POR_FAMILIA"
+  };
+
+}
+
+function recalcularCapacidadeGeralSequenciada(
+  capacidadeAnterior = {},
+  linhasSequenciadas = []
+) {
+
+  if (
+    !capacidadeAnterior ||
+    Object.keys(capacidadeAnterior).length === 0
+  ) {
+    return capacidadeAnterior;
+  }
+
+  const resumo =
+    linhasSequenciadas.reduce((acumulado, linha) => {
+
+      const capacidade =
+        linha.capacidade || {};
+
+      acumulado.capacidadeTotalMin +=
+        numero(
+          capacidade.capacidadeMin,
+          0
+        );
+
+      acumulado.tempoPlanejadoTotalMin +=
+        numero(
+          capacidade.tempoPlanejadoMin,
+          0
+        );
+
+      acumulado.setupTotalMin +=
+        numero(
+          capacidade.setupTotalMin,
+          0
+        );
+
+      if (capacidade.status === "OK") {
+        acumulado.linhasOK += 1;
+      }
+
+      if (capacidade.status === "OCIOSA") {
+        acumulado.linhasOciosas += 1;
+      }
+
+      if (capacidade.status === "ATENCAO") {
+        acumulado.linhasAtencao += 1;
+      }
+
+      if (capacidade.status === "ESTOURADA") {
+        acumulado.linhasEstouradas += 1;
+      }
+
+      if (capacidade.status === "SEM_CARGA") {
+        acumulado.linhasSemCarga += 1;
+      }
+
+      return acumulado;
+
+    }, {
+      capacidadeTotalMin: 0,
+      tempoPlanejadoTotalMin: 0,
+      setupTotalMin: 0,
+      linhasOK: 0,
+      linhasOciosas: 0,
+      linhasAtencao: 0,
+      linhasEstouradas: 0,
+      linhasSemCarga: 0
+    });
+
+  const utilizacaoGeralPercentual =
+    resumo.capacidadeTotalMin > 0
+      ? Math.round(
+          (
+            resumo.tempoPlanejadoTotalMin /
+            resumo.capacidadeTotalMin
+          ) * 100
+        )
+      : 0;
+
+  return {
+    ...capacidadeAnterior,
+    ...resumo,
+
+    saldoTotalMin:
+      resumo.capacidadeTotalMin -
+      resumo.tempoPlanejadoTotalMin,
+
+    utilizacaoGeralPercentual,
+
+    origemCalculo:
+      "SEQUENCIAMENTO_POR_FAMILIA"
+  };
+
+}
+
+function criarResumoPlanejamentoSequenciado(
+  resumoAnterior = {},
+  linhasSequenciadas = [],
+  resumoSequenciamento = {}
+) {
+
+  const quantidadeTotalCSV =
+    linhasSequenciadas.reduce((total, linha) => {
+
+      return total + numero(
+        linha.resumo?.quantidadeTotalCSV ??
+        linha.resumo?.demandaTotal,
+        0
+      );
+
+    }, 0);
+
+  const kgTotalPlanejado =
+    numero(
+      resumoSequenciamento.kgTotal,
+      0
+    );
+
+  return {
+    ...resumoAnterior,
+
+    totalLinhas:
+      linhasSequenciadas.length,
+
+    totalProdutos:
+      numero(
+        resumoSequenciamento.totalProdutos,
+        0
+      ),
+
+    totalFamilias:
+      numero(
+        resumoSequenciamento.totalBlocos,
+        0
+      ),
+
+    totalBlocos:
+      numero(
+        resumoSequenciamento.totalBlocos,
+        0
+      ),
+
+    demandaTotal:
+      quantidadeTotalCSV,
+
+    quantidadeTotalCSV,
+
+    kgTotalPlanejado,
+
+    kgTotal:
+      kgTotalPlanejado,
+
+    tempoTotalMin:
+      numero(
+        resumoSequenciamento.tempoTotalMin,
+        0
+      ),
+
+    tempoProducaoMin:
+      numero(
+        resumoSequenciamento.tempoProducaoMin,
+        0
+      ),
+
+    setupTotalMin:
+      numero(
+        resumoSequenciamento.setupAplicadoMin,
+        0
+      ),
+
+    origemSequencia:
+      "SEQUENCIAMENTO_POR_FAMILIA",
+
+    sequenciaAplicada:
+      true
   };
 
 }
@@ -1324,7 +1759,8 @@ export function gerarSequenciamentoLinha(
 
         return aplicarOrdemBlocoFamilia(
           produto,
-          mapaOrdemFamilia
+          mapaOrdemFamilia,
+          nomeLinha
         );
 
       })
@@ -1358,6 +1794,26 @@ export function gerarSequenciamentoLinha(
       nomeLinha
     );
 
+  const resumoSequenciamento =
+    criarResumoSequenciamento(
+      produtosSequenciados,
+      blocos
+    );
+
+  const resumoLinha =
+    criarResumoLinhaSequenciada(
+      linhaPlanejada,
+      produtosSequenciados,
+      blocos,
+      resumoSequenciamento
+    );
+
+  const capacidadeLinha =
+    recalcularCapacidadeLinhaSequenciada(
+      linhaPlanejada.capacidade,
+      resumoLinha
+    );
+
   return {
     ...linhaPlanejada,
 
@@ -1369,11 +1825,16 @@ export function gerarSequenciamentoLinha(
 
     blocos,
 
-    resumoSequenciamento:
-      criarResumoSequenciamento(
-        produtosSequenciados,
-        blocos
-      ),
+    resumo:
+      resumoLinha,
+
+    resumoSequenciamento,
+
+    capacidade:
+      capacidadeLinha,
+
+    sequenciaAplicadaAoPlanejamentoReal:
+      true,
 
     preservacaoSequencia: {
       ativa:
@@ -1485,13 +1946,35 @@ export function gerarSequenciamentoPlanejamento(
         0
     });
 
+  const resumoPlanejamentoSequenciado =
+    criarResumoPlanejamentoSequenciado(
+      planejamento.resumo,
+      linhasSequenciadas,
+      resumoSequenciamento
+    );
+
+  const capacidadeSequenciada =
+    recalcularCapacidadeGeralSequenciada(
+      planejamento.capacidade,
+      linhasSequenciadas
+    );
+
   return {
     ...planejamento,
 
     linhas:
       linhasSequenciadas,
 
+    resumo:
+      resumoPlanejamentoSequenciado,
+
     resumoSequenciamento,
+
+    capacidade:
+      capacidadeSequenciada,
+
+    sequenciaAplicadaAoPlanejamentoReal:
+      true,
 
     preservacaoSequencia: {
       ativa:

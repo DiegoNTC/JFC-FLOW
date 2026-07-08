@@ -91,6 +91,57 @@ function textoSeguro(valor) {
 
 }
 
+function obterSequenciaProduto(
+  produto = {}
+) {
+
+  return produto.ordemPlanejada ??
+    produto.ordemProducao ??
+    produto.ordemSequenciamentoManual ??
+    produto.sequenciaPrincipal ??
+    produto.ordemTXT ??
+    produto.sequenciaTXT;
+
+}
+
+function obterFamiliaProduto(
+  produto = {}
+) {
+
+  return produto.familiaSequenciamento ??
+    produto.familiaSetup ??
+    produto.classeSetup ??
+    produto.familiaOperacional;
+
+}
+
+function obterSetupAplicadoProduto(
+  produto = {}
+) {
+
+  return produto.setupAplicadoMin ??
+    produto.setupMin ??
+    produto.setupBaseMin ??
+    0;
+
+}
+
+function obterOrigemSequencia(
+  linhaPlanejada = {}
+) {
+
+  if (linhaPlanejada.sequenciaAplicadaAoPlanejamentoReal) {
+    return "Sequência: Sequenciamento por Família";
+  }
+
+  if (linhaPlanejada.resumo?.sequenciaAplicada) {
+    return "Sequência: Sequenciamento por Família";
+  }
+
+  return "Sequência: TXT";
+
+}
+
 function criarTabelaLinha(linhaPlanejada) {
 
   const linha =
@@ -119,7 +170,9 @@ function criarTabelaLinha(linhaPlanejada) {
 
           <td>${textoSeguro(produto.zonasTexto)}</td>
 
-          <td>${textoSeguro(produto.sequenciaPrincipal)}</td>
+          <td>${textoSeguro(obterSequenciaProduto(produto))}</td>
+
+          <td>${textoSeguro(obterFamiliaProduto(produto))}</td>
 
           <td>${formatarNumero(produto.quantidadeCSV ?? produto.demandaFinal)}</td>
 
@@ -129,7 +182,7 @@ function criarTabelaLinha(linhaPlanejada) {
 
           <td>${formatarTempo(produto.tempoProducaoPlanejadoMin)}</td>
 
-          <td>${formatarTempo(produto.setupMin)}</td>
+          <td>${formatarTempo(obterSetupAplicadoProduto(produto))}</td>
 
           <td>${formatarTempo(produto.tempoTotalPlanejadoMin)}</td>
 
@@ -168,6 +221,10 @@ function criarTabelaLinha(linhaPlanejada) {
             ${textoSeguro(capacidade.statusTexto)}
           </span>
 
+          <span>
+            ${obterOrigemSequencia(linhaPlanejada)}
+          </span>
+
           <button
             type="button"
             class="real-balance-line-btn"
@@ -189,6 +246,7 @@ function criarTabelaLinha(linhaPlanejada) {
               <th>Nome oficial</th>
               <th>Zonas</th>
               <th>Seq.</th>
+              <th>Família</th>
               <th>Qtd. CSV</th>
               <th>Kg/un TXT</th>
               <th>Kg planejado</th>
