@@ -124,6 +124,11 @@ import {
   renderTimelineTurno
 } from "./render/renderTimelineTurno.js";
 
+
+import {
+  gerarPdfOrdemProducao
+} from "./services/geradorPdfOrdemProducaoService.js";
+
 // =========================
 // ELEMENTOS
 // =========================
@@ -1612,6 +1617,64 @@ function inicializarDropzones() {
 }
 
 
+
+// =========================
+// PDF - ORDEM DE PRODUÇÃO POR LINHA
+// =========================
+
+async function executarGeracaoPDFOrdemProducao(evento = {}) {
+
+  if (!ultimoPlanejamentoComCapacidade) {
+
+    alert(
+      "Nenhum planejamento sequenciado disponível para gerar PDF. Importe TXT, CSV e sincronize primeiro."
+    );
+
+    return;
+
+  }
+
+  try {
+
+    const linhaSelecionada =
+      evento?.detail?.linha || null;
+
+    await gerarPdfOrdemProducao(
+      ultimoPlanejamentoComCapacidade,
+      {
+        inicioTurno: "07:00",
+        linhasSelecionadas:
+          linhaSelecionada
+            ? [linhaSelecionada]
+            : null,
+        linhaSelecionada
+      }
+    );
+
+  } catch (erro) {
+
+    console.error(
+      "Erro ao gerar PDF da ordem de produção:",
+      erro
+    );
+
+    alert(
+      erro?.message || "Não foi possível gerar o PDF da ordem de produção."
+    );
+
+  }
+
+}
+
+function inicializarGeracaoPDFOrdemProducao() {
+
+  window.addEventListener(
+    "jfc:gerar-pdf-ordem-producao",
+    executarGeracaoPDFOrdemProducao
+  );
+
+}
+
 // =========================
 // INICIALIZAÇÃO
 // =========================
@@ -1629,6 +1692,8 @@ function iniciarJFCFlow() {
   inicializarBalanceamentoReal();
 
   inicializarBotoesSequenciador();
+
+  inicializarGeracaoPDFOrdemProducao();
 
   inicializarDropzones();
 

@@ -91,6 +91,80 @@ function textoSeguro(valor) {
 
 }
 
+function obterNomeLinhaPlanejamento(linha = {}) {
+
+  return String(
+    linha.linha ??
+    linha.nomeLinha ??
+    linha.nome ??
+    linha.id ??
+    ""
+  ).trim();
+
+}
+
+function obterProdutosLinhaPlanejamento(linha = {}) {
+
+  if (Array.isArray(linha.produtos)) {
+    return linha.produtos;
+  }
+
+  if (Array.isArray(linha.itens)) {
+    return linha.itens;
+  }
+
+  if (Array.isArray(linha.produtosSequenciados)) {
+    return linha.produtosSequenciados;
+  }
+
+  if (Array.isArray(linha.produtosPlanejados)) {
+    return linha.produtosPlanejados;
+  }
+
+  if (Array.isArray(linha.itensSequenciados)) {
+    return linha.itensSequenciados;
+  }
+
+  if (Array.isArray(linha.itensPlanejados)) {
+    return linha.itensPlanejados;
+  }
+
+  return [];
+
+}
+
+function criarOpcoesLinhasPDF(linhas = []) {
+
+  const opcoes =
+    linhas
+      .filter(linha => obterProdutosLinhaPlanejamento(linha).length > 0)
+      .map(linha => {
+
+        const nomeLinha =
+          obterNomeLinhaPlanejamento(linha);
+
+        if (!nomeLinha) {
+          return "";
+        }
+
+        return `
+          <option value="${nomeLinha}">
+            ${nomeLinha}
+          </option>
+        `;
+
+      })
+      .join("");
+
+  return `
+    <option value="TODAS">
+      Todas as linhas
+    </option>
+    ${opcoes}
+  `;
+
+}
+
 
 function criarPainelAuditoriaSKUs(
   auditoriaSKUs
@@ -379,6 +453,53 @@ function ativarBotoesBalanceamentoPorLinha(
 
 }
 
+
+function ativarBotaoGerarPDF(
+  container
+) {
+
+  if (!container) {
+    return;
+  }
+
+  const botao =
+    container.querySelector("[data-gerar-pdf-ordem-producao]");
+
+  if (!botao) {
+    return;
+  }
+
+  botao.addEventListener("click", (event) => {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    const seletorLinha =
+      container.querySelector("[data-selecionar-linha-pdf]");
+
+    const linhaSelecionada =
+      seletorLinha?.value || "TODAS";
+
+    window.dispatchEvent(
+      new CustomEvent(
+        "jfc:gerar-pdf-ordem-producao",
+        {
+          detail: {
+            linha:
+              linhaSelecionada === "TODAS"
+                ? null
+                : linhaSelecionada
+          }
+        }
+      )
+    );
+
+  });
+
+}
+
+
 export function renderPlanejamentoReal(
   planejamentoComCapacidade
 ) {
@@ -431,9 +552,35 @@ export function renderPlanejamentoReal(
           </p>
         </div>
 
-        <span class="real-badge">
-          Motor de Planejamento
-        </span>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+
+          <span class="real-badge">
+            Motor de Planejamento
+          </span>
+
+          <label
+            style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #334155; font-weight: 700;"
+          >
+            Linha do PDF
+
+            <select
+              data-selecionar-linha-pdf
+              style="height: 34px; border: 1px solid #cbd5e1; border-radius: 999px; padding: 0 12px; font-size: 13px; font-weight: 700; background: #fff; color: #0f172a;"
+            >
+              ${criarOpcoesLinhasPDF(linhas)}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            class="action-button secondary-action"
+            data-gerar-pdf-ordem-producao
+            style="padding: 8px 14px; border-radius: 999px; font-size: 13px;"
+          >
+            📄 Gerar PDF
+          </button>
+
+        </div>
 
       </div>
 
@@ -496,6 +643,10 @@ export function renderPlanejamentoReal(
   `;
 
   ativarBotoesBalanceamentoPorLinha(
+    container
+  );
+
+  ativarBotaoGerarPDF(
     container
   );
 
