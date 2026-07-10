@@ -21,6 +21,11 @@ body {
   overflow-x: hidden;
 }
 
+:root {
+  --jfc-content-max-width: 1500px;
+  --jfc-content-side-gap: 24px;
+}
+
 /* =========================
    HEADER / LAYOUT
 ========================= */
@@ -28,7 +33,10 @@ body {
 .header {
   background: #111827;
   color: #ffffff;
-  padding: 18px 24px;
+  padding-top: 18px;
+  padding-bottom: 18px;
+  padding-left: max(var(--jfc-content-side-gap), calc((100vw - var(--jfc-content-max-width)) / 2));
+  padding-right: max(var(--jfc-content-side-gap), calc((100vw - var(--jfc-content-max-width)) / 2));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -46,7 +54,10 @@ body {
 .content {
   flex: 1;
   min-width: 0;
-  padding: 28px;
+  width: min(calc(100% - (var(--jfc-content-side-gap) * 2)), var(--jfc-content-max-width));
+  max-width: var(--jfc-content-max-width);
+  margin: 0 auto;
+  padding: 28px 0 36px;
 }
 
 .content h2 {
@@ -197,7 +208,8 @@ body {
   }
 
   .content {
-    padding: 18px;
+    width: calc(100% - 24px);
+    padding: 18px 0 28px;
   }
 
   .planning-header,
@@ -246,4 +258,16 @@ body {
     width: 100%;
     min-width: 100%;
   }
+}
+
+/* Segurança pós-remoção do sequenciador manual legado. */
+aside.sidebar,
+.manual-section,
+#dropzone-l1,
+#dropzone-l2,
+#gantt-l1,
+#gantt-l2,
+#optimizeBtn,
+#balanceBtn {
+  display: none !important;
 }
