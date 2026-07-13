@@ -22,30 +22,6 @@
   </header>
 
   <main class="container">
-
-    <!-- SIDEBAR / LEGADO -->
-    <aside class="sidebar">
-
-      <h2>SKUs</h2>
-
-      <p class="sidebar-note">
-        Modo manual / simulação
-      </p>
-
-      <div class="sku-card" draggable="true">
-        ALFACE AMERICANA
-      </div>
-
-      <div class="sku-card" draggable="true">
-        RÚCULA 140G
-      </div>
-
-      <div class="sku-card" draggable="true">
-        CENOURA RALADA
-      </div>
-
-    </aside>
-
     <!-- CONTENT -->
     <section class="content">
 
@@ -58,13 +34,13 @@
             <h2>Planejamento Real</h2>
 
             <p>
-              Fluxo principal do JFC FLOW: importar CSV de pedidos, importar TXT da base técnica
-              e gerar o Cadastro Mestre de Produtos.
+              Fluxo principal do JFC FLOW: subir o CSV de pedidos. A Base Técnica, o Cadastro Mestre
+              e as Famílias são carregados automaticamente dos JSONs do projeto/GitHub.
             </p>
           </div>
 
           <span class="planning-badge">
-            CSV + TXT
+CSV + Base Técnica
           </span>
 
         </div>
@@ -80,11 +56,11 @@
           </label>
 
           <label id="importTxtBtn" for="txtInput" class="action-button">
-            📘 Importar Base TXT
+📘 Atualizar Base Técnica TXT
           </label>
 
           <button id="syncBtn" class="action-button">
-            🔄 Sincronizar CSV + TXT
+🔄 Sincronizar manualmente
           </button>
 
           <button id="balanceamentoGeralBtn" class="action-button secondary-action">
@@ -109,6 +85,48 @@
 
         </div>
 
+        <!-- DADOS OFICIAIS DO PROJETO / JSONS -->
+        <section id="dadosProjetoContainer" class="dados-projeto-container">
+          <div class="dados-projeto-header">
+            <div>
+              <h3>Dados oficiais do projeto</h3>
+              <p>
+                Cadastro Mestre, Famílias, Ordem manual das famílias e Base Técnica carregados dos JSONs versionados no GitHub.
+              </p>
+            </div>
+
+            <span id="dadosProjetoStatus" class="dados-projeto-status">
+              Carregando dados do projeto...
+            </span>
+          </div>
+
+          <div class="dados-projeto-actions">
+            <button id="btnExportCadastroMestreJson" class="action-button secondary-action" type="button">
+              ⬇️ Exportar Cadastro Mestre JSON
+            </button>
+
+            <button id="btnExportFamiliasSetupJson" class="action-button secondary-action" type="button">
+              ⬇️ Exportar Famílias JSON
+            </button>
+
+            <button id="btnExportSequenciaFamiliasJson" class="action-button secondary-action" type="button">
+              ⬇️ Exportar Ordem das Famílias JSON
+            </button>
+
+            <button id="btnExportBaseTecnicaJson" class="action-button secondary-action" type="button">
+              ⬇️ Exportar Base Técnica JSON
+            </button>
+
+            <button id="btnRecarregarDadosGithub" class="action-button" type="button">
+              🔄 Recarregar JSONs do GitHub
+            </button>
+
+            <button id="btnDescartarAlteracoesLocais" class="action-button danger-action" type="button">
+              🧹 Descartar alterações locais
+            </button>
+          </div>
+        </section>
+
         <!-- CAPACIDADE POR LINHA -->
         <section id="capacidadeContainer" class="capacidade-container"></section>
 
@@ -127,18 +145,10 @@
         <!-- SEQUENCIAMENTO POR FAMÍLIA -->
         <section id="sequenciamentoContainer" class="sequenciamento-container"></section>
 
-        <!-- SEQUENCIAMENTO POR FAMÍLIA -->
-        <section id="sequenciamentoContainer" class="sequenciamento-container"></section>
-
         <!-- PLANO FINAL DO DIA -->
         <section id="planoFinalContainer" class="plano-final-container"></section>
 
-        <section id="planoFinalContainer" class="plano-final-container"></section>
-
         <section id="timelineTurnoContainer" class="timeline-turno-container"></section>
-
-        <!-- BALANCEAMENTO -->
-        <section id="balanceamentoContainer" class="balanceamento-container"></section>
 
         <!-- BALANCEAMENTO -->
         <section id="balanceamentoContainer" class="balanceamento-container"></section>
@@ -150,189 +160,6 @@
         <section id="sincronizacaoContainer" class="sync-container"></section>
 
       </section>
-
-      <!-- SEQUENCIAMENTO MANUAL / LEGADO -->
-      <section class="manual-section">
-
-        <div class="manual-header">
-
-          <div>
-            <h2>Sequenciamento Manual / Simulação</h2>
-
-            <p>
-              Área antiga do projeto. Mantida para testes manuais com drag and drop.
-              O planejamento real será alimentado pelo CSV, TXT e Cadastro Mestre.
-            </p>
-          </div>
-
-          <span class="manual-badge">
-            Modo legado
-          </span>
-
-        </div>
-
-        <div class="action-buttons manual-actions">
-
-          <button id="optimizeBtn" class="action-button">
-            Otimizar Sequência
-          </button>
-
-          <button id="balanceBtn" class="action-button">
-            Balancear Linhas
-          </button>
-
-        </div>
-
-        <div class="lines-container">
-
-          <!-- LINHA 1 -->
-          <div class="line">
-
-            <div class="line-header">
-
-              <div class="line-title">
-                L1
-              </div>
-
-              <div class="kpi-container">
-
-                <div class="kpi-box kpi-time">
-                  <div class="kpi-label">Tempo</div>
-                  <div class="kpi-value" id="kpi-l1">
-                    0 min
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-clock">
-                  <div class="kpi-label">Janela</div>
-                  <div class="kpi-value" id="clock-l1">
-                    08:00
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-capacity">
-                  <div class="kpi-label">Capacidade</div>
-                  <div class="kpi-value" id="capacity-l1">
-                    480
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-status status-normal">
-                  <div class="kpi-label">Status</div>
-                  <div class="kpi-value" id="status-l1">
-                    NORMAL
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-oee">
-                  <div class="kpi-label">OEE</div>
-                  <div class="kpi-value" id="oee-l1">
-                    0%
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div class="dropzone" id="dropzone-l1">
-              Arraste os SKUs aqui
-            </div>
-
-            <div class="gantt-wrapper">
-
-              <div class="gantt-scroll">
-
-                <div class="gantt-timeline">
-
-                  <div class="gantt-scale" id="scale-l1"></div>
-
-                  <div class="gantt" id="gantt-l1"></div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <!-- LINHA 2 -->
-          <div class="line">
-
-            <div class="line-header">
-
-              <div class="line-title">
-                L2
-              </div>
-
-              <div class="kpi-container">
-
-                <div class="kpi-box kpi-time">
-                  <div class="kpi-label">Tempo</div>
-                  <div class="kpi-value" id="kpi-l2">
-                    0 min
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-clock">
-                  <div class="kpi-label">Janela</div>
-                  <div class="kpi-value" id="clock-l2">
-                    08:00
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-capacity">
-                  <div class="kpi-label">Capacidade</div>
-                  <div class="kpi-value" id="capacity-l2">
-                    480
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-status status-normal">
-                  <div class="kpi-label">Status</div>
-                  <div class="kpi-value" id="status-l2">
-                    NORMAL
-                  </div>
-                </div>
-
-                <div class="kpi-box kpi-oee">
-                  <div class="kpi-label">OEE</div>
-                  <div class="kpi-value" id="oee-l2">
-                    0%
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div class="dropzone" id="dropzone-l2">
-              Arraste os SKUs aqui
-            </div>
-
-            <div class="gantt-wrapper">
-
-              <div class="gantt-scroll">
-
-                <div class="gantt-timeline">
-
-                  <div class="gantt-scale" id="scale-l2"></div>
-
-                  <div class="gantt" id="gantt-l2"></div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
     </section>
 
   </main>

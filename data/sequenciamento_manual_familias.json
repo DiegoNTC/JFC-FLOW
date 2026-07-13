@@ -1,0 +1,93 @@
+{
+  "tipo": "sequenciamento_manual_familias",
+  "geradoEm": "2026-07-13T11:52:33.996Z",
+  "totalLinhas": 1,
+  "sequenciamentoManualFamilias": {
+    "L5": {
+      "linha": "L5",
+      "atualizadoEm": "2026-07-07T15:10:48.788Z",
+      "familias": [
+        {
+          "chave": "RUCULA",
+          "familia": "RUCULA",
+          "ordem": 1
+        },
+        {
+          "chave": "AGRIAO",
+          "familia": "AGRIAO",
+          "ordem": 2
+        },
+        {
+          "chave": "BROCOLIS C",
+          "familia": "BROCOLIS C",
+          "ordem": 3
+        },
+        {
+          "chave": "BROCOLIS",
+          "familia": "BROCOLIS",
+          "ordem": 4
+        },
+        {
+          "chave": "ESPINAFRE",
+          "familia": "ESPINAFRE",
+          "ordem": 5
+        },
+        {
+          "chave": "ALFACE LISA",
+          "familia": "ALFACE LISA",
+          "ordem": 6
+        },
+        {
+          "chave": "ALFACE MIMOSA",
+          "familia": "ALFACE MIMOSA",
+          "ordem": 7
+        },
+        {
+          "chave": "CHICORIA",
+          "familia": "CHICORIA",
+          "ordem": 8
+        },
+        {
+          "chave": "ALFACE ROMANA",
+          "familia": "ALFACE ROMANA",
+          "ordem": 9
+        },
+        {
+          "chave": "RADICCHIO",
+          "familia": "RADICCHIO",
+          "ordem": 10
+        },
+        {
+          "chave": "COUVE FLOR",
+          "familia": "COUVE FLOR",
+          "ordem": 11
+        },
+        {
+          "chave": "ALFACE CRESPA",
+          "familia": "ALFACE CRESPA",
+          "ordem": 12
+        },
+        {
+          "chave": "REPOLHO",
+          "familia": "REPOLHO",
+          "ordem": 13
+        },
+        {
+          "chave": "YAKISSOBA",
+          "familia": "YAKISSOBA",
+          "ordem": 14
+        },
+        {
+          "chave": "COUVE MANTEIGA",
+          "familia": "COUVE MANTEIGA",
+          "ordem": 15
+        },
+        {
+          "chave": "ACELGA",
+          "familia": "ACELGA",
+          "ordem": 16
+        }
+      ]
+    }
+  }
+}

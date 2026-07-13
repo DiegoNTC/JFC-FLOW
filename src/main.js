@@ -102,6 +102,13 @@ import {
   gerarPdfOrdemProducao
 } from "./services/geradorPdfOrdemProducaoService.js";
 
+import {
+  inicializarDadosProjetoJSON,
+  inicializarPainelDadosProjeto,
+  marcarAlteracaoLocal,
+  garantirBaseTecnicaNativaCarregada
+} from "./services/persistenciaDadosProjetoService.js";
+
 // =========================
 // ELEMENTOS
 // =========================
@@ -752,6 +759,10 @@ function moverBlocoSequenciamento({
 
   }
 
+  marcarAlteracaoLocal(
+    "sequenciaManualFamilias"
+  );
+
   ultimoPlanejamentoComCapacidade =
     resultado.planejamento;
 
@@ -892,6 +903,10 @@ function renderizarResultadoSincronizacao(
             sugestao
           );
 
+        marcarAlteracaoLocal(
+          "cadastroMestre"
+        );
+
         console.log(
           "PRODUTO CONFIRMADO MANUALMENTE:",
           produtoConfirmado
@@ -995,7 +1010,7 @@ function executarSincronizacao() {
   ) {
 
     alert(
-      "Importe primeiro o TXT da Base Técnica."
+      "A base técnica nativa ainda não foi carregada. Recarregue os JSONs do GitHub ou importe o TXT técnico manualmente."
     );
 
     return;
@@ -1016,6 +1031,10 @@ function executarSincronizacao() {
     aplicarResultadoSincronizacao(
       resultadoSincronizacao
     );
+
+  marcarAlteracaoLocal(
+    "cadastroMestre"
+  );
 
   const {
     planejamentoComCapacidade
@@ -1057,6 +1076,10 @@ function recalcularPlanejamentoComCapacidade() {
 
   renderFamiliasSetup({
     onSalvar: () => {
+
+      marcarAlteracaoLocal(
+        "familiasSetup"
+      );
 
       recalcularPlanejamentoComCapacidade();
 
@@ -1165,7 +1188,7 @@ function executarBalanceamentoGeral() {
   if (!ultimoPlanejamentoComCapacidade) {
 
     alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+      "Suba o CSV e aguarde a sincronização com a base técnica antes de analisar o balanceamento."
     );
 
     return;
@@ -1192,7 +1215,7 @@ function executarBalanceamentoPorLinha() {
   if (!ultimoPlanejamentoComCapacidade) {
 
     alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+      "Suba o CSV e aguarde a sincronização com a base técnica antes de analisar o balanceamento."
     );
 
     return;
@@ -1237,7 +1260,7 @@ function executarBalanceamentoLinhaDireta(
   if (!ultimoPlanejamentoComCapacidade) {
 
     alert(
-      "Sincronize o CSV e o TXT antes de analisar o balanceamento."
+      "Suba o CSV e aguarde a sincronização com a base técnica antes de analisar o balanceamento."
     );
 
     return;
@@ -1329,9 +1352,59 @@ function inicializarBalanceamentoReal() {
 // IMPORTAÇÕES CSV / TXT
 // =========================
 
+function baseTecnicaEstaCarregada() {
+
+  const baseTXT =
+    getBaseTXT();
+
+  return Boolean(
+    baseTXT &&
+    Array.isArray(baseTXT.produtosTecnicos) &&
+    baseTXT.produtosTecnicos.length > 0
+  );
+
+}
+
+function csvEstaCarregado() {
+
+  const dadosCSV =
+    getDadosCSV();
+
+  return Boolean(
+    Array.isArray(dadosCSV) &&
+    dadosCSV.length > 0
+  );
+
+}
+
+function tentarSincronizarAutomaticamente(origem = "") {
+
+  if (
+    !csvEstaCarregado() ||
+    !baseTecnicaEstaCarregada()
+  ) {
+
+    console.log(
+      "Sincronização automática aguardando CSV e base técnica.",
+      origem
+    );
+
+    return;
+
+  }
+
+  console.log(
+    "Sincronização automática iniciada.",
+    origem
+  );
+
+  executarSincronizacao();
+
+}
+
 function inicializarImportacoes() {
 
-  configurarImportacaoCSV((dados) => {
+  configurarImportacaoCSV(async (dados) => {
 
     setDadosCSV(
       dados
@@ -1341,6 +1414,35 @@ function inicializarImportacoes() {
       "CSV salvo temporariamente para sincronização:",
       dados.length,
       "registros"
+    );
+
+    try {
+
+      const resultadoBaseTecnica =
+        await garantirBaseTecnicaNativaCarregada({
+          forcarRecarregar: true
+        });
+
+      console.log(
+        "Base Técnica carregada automaticamente ao importar CSV:",
+        resultadoBaseTecnica
+      );
+
+    } catch (erro) {
+
+      console.error(
+        "Não foi possível carregar data/base_tecnica.json ao importar CSV:",
+        erro
+      );
+
+      alert(
+        "CSV importado, mas a Base Técnica nativa não foi carregada. Verifique se data/base_tecnica.json existe, se está preenchido e se você está abrindo pelo Live Server ou GitHub Pages."
+      );
+
+    }
+
+    tentarSincronizarAutomaticamente(
+      "csv + base_tecnica_json"
     );
 
   });
@@ -1354,6 +1456,14 @@ function inicializarImportacoes() {
     console.log(
       "TXT salvo temporariamente para sincronização:",
       baseTecnica?.estatisticas
+    );
+
+    marcarAlteracaoLocal(
+      "baseTecnica"
+    );
+
+    tentarSincronizarAutomaticamente(
+      "txt"
     );
 
   });
@@ -1394,7 +1504,7 @@ async function executarGeracaoPDFOrdemProducao(evento = {}) {
   if (!ultimoPlanejamentoComCapacidade) {
 
     alert(
-      "Nenhum planejamento sequenciado disponível para gerar PDF. Importe TXT, CSV e sincronize primeiro."
+      "Nenhum planejamento sequenciado disponível para gerar PDF. Suba o CSV e aguarde a sincronização com a base técnica."
     );
 
     return;
@@ -1442,15 +1552,50 @@ function inicializarGeracaoPDFOrdemProducao() {
 
 }
 
+
+// =========================
+// DADOS OFICIAIS JSON / GITHUB
+// =========================
+
+function renderizarCadastrosBase() {
+
+  renderCadastroProduto({
+    onSalvar: () => {
+
+      marcarAlteracaoLocal(
+        "cadastroMestre"
+      );
+
+      recalcularPlanejamentoComCapacidade();
+
+    }
+  });
+
+  renderFamiliasSetup({
+    onSalvar: () => {
+
+      marcarAlteracaoLocal(
+        "familiasSetup"
+      );
+
+      recalcularPlanejamentoComCapacidade();
+
+    }
+  });
+
+}
+
 // =========================
 // INICIALIZAÇÃO
 // =========================
 
-function iniciarJFCFlow() {
+async function iniciarJFCFlow() {
 
   console.log(
     "JFC FLOW iniciado."
   );
+
+  await inicializarDadosProjetoJSON();
 
   inicializarImportacoes();
 
@@ -1460,17 +1605,21 @@ function iniciarJFCFlow() {
 
   inicializarGeracaoPDFOrdemProducao();
 
-  renderEditorCapacidade(
-    recalcularPlanejamentoComCapacidade
-  );
+  inicializarPainelDadosProjeto({
+    onDadosRecarregados: () => {
 
-  renderCadastroProduto({
-    onSalvar: () => {
+      renderizarCadastrosBase();
 
       recalcularPlanejamentoComCapacidade();
 
     }
   });
+
+  renderEditorCapacidade(
+    recalcularPlanejamentoComCapacidade
+  );
+
+  renderizarCadastrosBase();
 
   recalcularPlanejamentoComCapacidade();
 

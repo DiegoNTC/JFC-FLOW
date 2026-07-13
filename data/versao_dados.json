@@ -1,0 +1,7 @@
+{
+  "versao": "2026-07-13-001",
+  "cadastroMestre": "data/cadastro_mestre.json",
+  "familiasSetup": "data/familias_setup.json",
+  "sequenciamentoManualFamilias": "data/sequenciamento_manual_familias.json",
+  "baseTecnica": "data/base_tecnica.json"
+}

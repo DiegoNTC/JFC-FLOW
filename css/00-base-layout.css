@@ -271,3 +271,95 @@ aside.sidebar,
 #balanceBtn {
   display: none !important;
 }
+
+
+/* ======================================================
+   DADOS OFICIAIS DO PROJETO / JSONS
+   ====================================================== */
+
+.dados-projeto-container {
+  width: 100%;
+  border: 1px solid #d8dee9;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 18px 0 22px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.dados-projeto-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.dados-projeto-header h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.dados-projeto-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.dados-projeto-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 240px;
+  max-width: 420px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.dados-projeto-status.ok {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.dados-projeto-status.alerta {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dados-projeto-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-button.danger-action {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.action-button.danger-action:hover {
+  background: #ffe4e6;
+}
+
+@media (max-width: 900px) {
+  .dados-projeto-header {
+    flex-direction: column;
+  }
+
+  .dados-projeto-status {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+}
