@@ -327,6 +327,26 @@ function normalizarFamilia(valor) {
   }
 
   /**
+   * Correção operacional:
+   * algumas famílias são nomes oficiais curtos usados pelo PCP.
+   * Elas não podem entrar na limpeza de palavras do nome do produto.
+   * Exemplo: família cadastrada como SALADA estava sendo removida
+   * pela normalização e virava SEM FAMÍLIA no Sequenciamento.
+   */
+  const familiasOficiaisCurtas = new Set([
+    "SALADA",
+    "MISTA",
+    "TROPICAL",
+    "ARCO",
+    "MIX",
+    "KIT MAIONSE"
+  ]);
+
+  if (familiasOficiaisCurtas.has(familia)) {
+    return familia;
+  }
+
+  /**
    * ======================================================
    * DICIONÁRIO DE EQUIVALÊNCIA DE FAMÍLIAS
    *
@@ -435,6 +455,16 @@ function normalizarFamilia(valor) {
         "CEBOLA RODELA",
         "CEBOLA ROD",
         "CEBOLA EM RODELA"
+      ]
+    },
+
+    {
+      destino: "SALADA",
+      termos: [
+        "SALADA",
+        "SALADA CAMPANHA",
+        "SALADA NAT",
+        "SALADA NATURAL"
       ]
     },
 
@@ -2030,27 +2060,384 @@ function criarLinhaSequenciamentoVazia(
 
 }
 
+
+function obterIdentificadorRegistroCSV(produto = {}) {
+
+  return normalizarChaveComparacao(
+    produto.csvRegistroId ??
+    produto.chavePlanejamentoCSV ??
+    produto.idPlanejamentoCSV ??
+    produto.idRegistroCSV ??
+    produto.linhaCSV ??
+    ""
+  );
+
+}
+
+function obterForcaLinhaSequenciamentoProduto(
+  produto = {},
+  linhaAtual = ""
+) {
+
+  const rota =
+    obterPrimeiraRota(
+      produto
+    );
+
+  const fontes = [
+    {
+      valor:
+        produto.linhaSequenciamentoCadastro ??
+        produto.linhaCadastroOperacional ??
+        produto.linhaOperacionalCadastro ??
+        produto.cadastroMestre?.linhaSequenciamento ??
+        produto.cadastro?.linhaSequenciamento,
+      forca: 120
+    },
+    {
+      valor:
+        produto.linhaSequenciamento,
+      forca: 110
+    },
+    {
+      valor:
+        produto.linhaPlanejada ??
+        produto.linhaCadastro,
+      forca: 90
+    },
+    {
+      valor:
+        produto.linhaPrincipal,
+      forca: 70
+    },
+    {
+      valor:
+        produto.linha,
+      forca: 50
+    },
+    {
+      valor:
+        rota.linhaSequenciamento ??
+        rota.linhaPlanejada ??
+        rota.linhaCadastro,
+      forca: 40
+    },
+    {
+      valor:
+        rota.linhaPrincipal ??
+        rota.linha,
+      forca: 30
+    },
+    {
+      valor:
+        linhaAtual,
+      forca: 10
+    }
+  ];
+
+  for (const fonte of fontes) {
+
+    if (texto(fonte.valor)) {
+      return fonte.forca;
+    }
+
+  }
+
+  return 0;
+
+}
+
+function produtoTemFamiliaDefinida(produto = {}) {
+
+  const familia =
+    obterFamiliaSetup(
+      produto
+    );
+
+  return Boolean(
+    familia &&
+    familia !== "SEM FAMÍLIA"
+  );
+
+}
+
+function escolherProdutoMaisCompleto(
+  produtoAtual = {},
+  produtoNovo = {},
+  linhaAtual = "",
+  linhaNova = ""
+) {
+
+  const pontuar = (produto, linha) => {
+
+    let pontos = 0;
+
+    if (obterCodigoProduto(produto)) {
+      pontos += 40;
+    }
+
+    if (obterNomeProduto(produto)) {
+      pontos += 20;
+    }
+
+    if (produtoTemFamiliaDefinida(produto)) {
+      pontos += 50;
+    }
+
+    pontos +=
+      obterForcaLinhaSequenciamentoProduto(
+        produto,
+        linha
+      );
+
+    if (obterKgPlanejado(produto) > 0) {
+      pontos += 15;
+    }
+
+    if (obterTempoProducaoMin(produto) > 0) {
+      pontos += 15;
+    }
+
+    return pontos;
+
+  };
+
+  return pontuar(produtoNovo, linhaNova) > pontuar(produtoAtual, linhaAtual)
+    ? produtoNovo
+    : produtoAtual;
+
+}
+
+function escolherLinhaDestinoProdutoUnico(
+  registroAtual,
+  produtoNovo = {},
+  linhaDestinoNova = "",
+  linhaOrigemNova = ""
+) {
+
+  if (!registroAtual?.linhaDestino) {
+    return linhaDestinoNova;
+  }
+
+  const forcaAtual =
+    obterForcaLinhaSequenciamentoProduto(
+      registroAtual.produtoBase,
+      registroAtual.linhaOrigemPreferida
+    );
+
+  const forcaNova =
+    obterForcaLinhaSequenciamentoProduto(
+      produtoNovo,
+      linhaOrigemNova
+    );
+
+  if (forcaNova > forcaAtual) {
+    return linhaDestinoNova;
+  }
+
+  return registroAtual.linhaDestino;
+
+}
+
+function somarCampoNumericoProduto(
+  produtoAcumulado,
+  produtoNovo,
+  campo
+) {
+
+  const total =
+    numero(produtoAcumulado[campo], 0) +
+    numero(produtoNovo[campo], 0);
+
+  if (total > 0) {
+    produtoAcumulado[campo] = total;
+  }
+
+}
+
+function manterMaiorCampoNumericoProduto(
+  produtoAcumulado,
+  produtoNovo,
+  campo
+) {
+
+  const atual =
+    numero(produtoAcumulado[campo], 0);
+
+  const novo =
+    numero(produtoNovo[campo], 0);
+
+  if (novo > atual) {
+    produtoAcumulado[campo] = novo;
+  }
+
+}
+
+function consolidarProdutoUnicoSequenciamento(
+  registroAtual,
+  produtoNovo = {},
+  linhaOrigemNova = "",
+  linhaDestinoNova = ""
+) {
+
+  const camposPlanejamento = [
+    "quantidadeCSV",
+    "demandaFinal",
+    "demandaReferencia",
+    "demanda",
+    "unidades",
+    "kgPlanejado",
+    "demandaKg",
+    "demandaTotalKg",
+    "kgTotal",
+    "tempoProducaoPlanejadoMin",
+    "tempoTotalPlanejadoMin",
+    "tempoPlanejadoMin"
+  ];
+
+  const registroCSV =
+    obterIdentificadorRegistroCSV(
+      produtoNovo
+    );
+
+  const deveSomar =
+    Boolean(registroCSV) &&
+    !registroAtual.registrosCSV.has(registroCSV);
+
+  if (registroCSV) {
+    registroAtual.registrosCSV.add(
+      registroCSV
+    );
+  }
+
+  const produtoMaisCompleto =
+    escolherProdutoMaisCompleto(
+      registroAtual.produtoBase,
+      produtoNovo,
+      registroAtual.linhaOrigemPreferida,
+      linhaOrigemNova
+    );
+
+  const produtoConsolidado = {
+    ...produtoMaisCompleto,
+    ...registroAtual.produtoBase
+  };
+
+  /**
+   * Se o mesmo SKU veio de linhas diferentes, ele precisa virar
+   * uma única operação. Quando os registros vêm de linhas distintas
+   * do CSV, somamos a demanda. Quando é o mesmo registro repetido
+   * por rota/linha, mantemos o maior valor para não dobrar produção.
+   */
+  camposPlanejamento.forEach(campo => {
+
+    if (deveSomar) {
+      somarCampoNumericoProduto(
+        produtoConsolidado,
+        produtoNovo,
+        campo
+      );
+    } else {
+      manterMaiorCampoNumericoProduto(
+        produtoConsolidado,
+        produtoNovo,
+        campo
+      );
+    }
+
+  });
+
+  registroAtual.produtoBase =
+    produtoConsolidado;
+
+  registroAtual.linhaDestino =
+    escolherLinhaDestinoProdutoUnico(
+      registroAtual,
+      produtoNovo,
+      linhaDestinoNova,
+      linhaOrigemNova
+    );
+
+  if (
+    obterForcaLinhaSequenciamentoProduto(produtoNovo, linhaOrigemNova) >
+    obterForcaLinhaSequenciamentoProduto(registroAtual.produtoBase, registroAtual.linhaOrigemPreferida)
+  ) {
+    registroAtual.linhaOrigemPreferida = linhaOrigemNova;
+  }
+
+  registroAtual.linhasOrigem.add(
+    linhaOrigemNova
+  );
+
+  return registroAtual;
+
+}
+
+function criarProdutoFinalSequenciamento(
+  registro
+) {
+
+  const linhaDestino =
+    registro.linhaDestino;
+
+  const linhasOrigem =
+    Array.from(
+      registro.linhasOrigem
+    ).filter(Boolean);
+
+  return {
+    ...registro.produtoBase,
+
+    linha:
+      linhaDestino,
+
+    linhaPlanejada:
+      linhaDestino,
+
+    linhaSequenciamento:
+      linhaDestino,
+
+    linhaOrigemAntesSequenciamento:
+      linhasOrigem.join(" / "),
+
+    linhasOrigemAntesSequenciamento:
+      linhasOrigem,
+
+    consolidadoPorCodigoSequenciamento:
+      linhasOrigem.length > 1 || registro.registrosCSV.size > 1,
+
+    totalRegistrosCSVConsolidados:
+      registro.registrosCSV.size
+  };
+
+}
+
 function redistribuirProdutosPorLinhaSequenciamento(
   linhasOriginais = []
 ) {
 
   /**
-   * Correção importante:
-   * O Sequenciamento por Família precisa usar a linha operacional
-   * do produto, principalmente `linhaSequenciamento` do Cadastro Mestre.
+   * Regra oficial:
+   * o mesmo SKU não pode aparecer em duas linhas ao mesmo tempo.
    *
-   * Antes, se um produto chegasse dentro da linha técnica do TXT,
-   * mas o Cadastro Mestre já estivesse apontando outra linha,
-   * ele podia ficar invisível na linha esperada pelo PCP.
+   * Quando o produto muda de linha no Cadastro Mestre, podem sobrar
+   * registros vindos da linha técnica antiga, da linha operacional nova
+   * ou de linhas diferentes do CSV. Antes, o sistema deduplicava apenas
+   * dentro de cada linha; por isso o mesmo código podia aparecer em L3
+   * e L5 ao mesmo tempo.
    *
-   * Agora, antes de sequenciar, todos os produtos do planejamento são
-   * reagrupados pela linha final de sequenciamento do próprio produto.
+   * Agora a consolidação é global por SKU antes de montar as linhas:
+   * - junta o mesmo código em uma única operação;
+   * - escolhe a linha mais forte, priorizando Cadastro Mestre;
+   * - preserva família/setup/produtividade do cadastro;
+   * - soma somente registros diferentes do CSV;
+   * - evita dobrar a demanda quando o mesmo registro aparece repetido.
    */
 
   const mapaLinhas =
     new Map();
 
-  const mapaChavesPorLinha =
+  const mapaProdutosGlobais =
     new Map();
 
   linhasOriginais.forEach(linhaOriginal => {
@@ -2085,58 +2472,85 @@ function redistribuirProdutosPorLinhaSequenciamento(
         return;
       }
 
+      const chaveProduto =
+        criarChaveUnicaProdutoSequenciamento(
+          produto
+        );
+
       const linhaDestino =
         obterLinhaSequenciamentoProduto(
           produto,
           linhaAtual
         );
 
-      if (!mapaLinhas.has(linhaDestino)) {
-        mapaLinhas.set(
-          linhaDestino,
-          criarLinhaSequenciamentoVazia(
-            linhaDestino
-          )
-        );
-      }
+      if (!mapaProdutosGlobais.has(chaveProduto)) {
 
-      if (!mapaChavesPorLinha.has(linhaDestino)) {
-        mapaChavesPorLinha.set(
-          linhaDestino,
-          new Set()
-        );
-      }
+        const registroCSV =
+          obterIdentificadorRegistroCSV(
+            produto
+          );
 
-      const chaveProduto =
-        criarChaveUnicaProdutoSequenciamento(
-          produto
+        mapaProdutosGlobais.set(
+          chaveProduto,
+          {
+            produtoBase: {
+              ...produto
+            },
+            linhaDestino,
+            linhaOrigemPreferida:
+              linhaAtual,
+            linhasOrigem:
+              new Set([
+                linhaAtual
+              ].filter(Boolean)),
+            registrosCSV:
+              new Set(
+                registroCSV ? [registroCSV] : []
+              )
+          }
         );
 
-      const chavesLinha =
-        mapaChavesPorLinha.get(
-          linhaDestino
-        );
-
-      if (chavesLinha.has(chaveProduto)) {
         return;
+
       }
 
-      chavesLinha.add(
-        chaveProduto
+      const registroAtual =
+        mapaProdutosGlobais.get(
+          chaveProduto
+        );
+
+      consolidarProdutoUnicoSequenciamento(
+        registroAtual,
+        produto,
+        linhaAtual,
+        linhaDestino
       );
 
-      mapaLinhas.get(linhaDestino)
-        .produtos
-        .push({
-          ...produto,
-          linha: linhaDestino,
-          linhaPlanejada: linhaDestino,
-          linhaSequenciamento: linhaDestino,
-          linhaOrigemAntesSequenciamento:
-            linhaAtual
-        });
-
     });
+
+  });
+
+  mapaProdutosGlobais.forEach(registro => {
+
+    const linhaDestino =
+      registro.linhaDestino || "Sem linha";
+
+    if (!mapaLinhas.has(linhaDestino)) {
+      mapaLinhas.set(
+        linhaDestino,
+        criarLinhaSequenciamentoVazia(
+          linhaDestino
+        )
+      );
+    }
+
+    mapaLinhas.get(linhaDestino)
+      .produtos
+      .push(
+        criarProdutoFinalSequenciamento(
+          registro
+        )
+      );
 
   });
 

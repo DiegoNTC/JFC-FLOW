@@ -1,7 +1,7 @@
 {
   "tipo": "familias_setup",
-  "geradoEm": "2026-07-13T11:52:32.636Z",
-  "total": 56,
+  "geradoEm": "2026-07-14T12:30:04.266Z",
+  "total": 58,
   "familiasSetup": [
     {
       "chave": "SALADA",
@@ -12,7 +12,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "INHAME",
@@ -23,7 +23,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:12:50.060Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "KIT MAIONSE",
@@ -34,7 +34,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:40:13.975Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "KIT SOPAO",
@@ -45,7 +45,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:42:49.138Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "MACA",
@@ -56,7 +56,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:22:26.581Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "MIX",
@@ -67,7 +67,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "MIX COLESLAW",
@@ -78,7 +78,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:01:02.509Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "MIX TROPICAL",
@@ -89,7 +89,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:03:36.282Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "SUKIYAKI",
@@ -100,7 +100,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:20:16.893Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "TOMATE CAPRESE",
@@ -111,7 +111,18 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:18:03.141Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "BROCOLIS",
+      "familiaOriginal": "BROCOLIS",
+      "nomeFamilia": "BROCOLIS",
+      "nomeTXTReferencia": "BROCOLIS",
+      "ordemTXT": 1,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "CEBOLA",
@@ -122,7 +133,139 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "RUCULA",
+      "familiaOriginal": "RUCULA",
+      "nomeFamilia": "RUCULA",
+      "nomeTXTReferencia": "RUCULA",
+      "ordemTXT": 1,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "TOMATE",
+      "familiaOriginal": "TOMATE",
+      "nomeFamilia": "TOMATE",
+      "nomeTXTReferencia": "TOMATE",
+      "ordemTXT": 1,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "COUVE FLOR",
+      "familiaOriginal": "COUVE FLOR",
+      "nomeFamilia": "COUVE FLOR",
+      "nomeTXTReferencia": "COUVE FLOR",
+      "ordemTXT": 2,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "TOMATE GRAPE",
+      "familiaOriginal": "TOMATE GRAPE",
+      "nomeFamilia": "TOMATE GRAPE",
+      "nomeTXTReferencia": "TOMATE GRAPE",
+      "ordemTXT": 3,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "AGRIAO",
+      "familiaOriginal": "AGRIAO",
+      "nomeFamilia": "AGRIAO",
+      "nomeTXTReferencia": "AGRIAO",
+      "ordemTXT": 5,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "CHICORIA",
+      "familiaOriginal": "CHICORIA",
+      "nomeFamilia": "CHICORIA",
+      "nomeTXTReferencia": "CHICORIA",
+      "ordemTXT": 6,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "VAGEM MANTEIGA",
+      "familiaOriginal": "VAGEM MANTEIGA",
+      "nomeFamilia": "VAGEM MANTEIGA",
+      "nomeTXTReferencia": "VAGEM MANTEIGA",
+      "ordemTXT": 6,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ALFACE ROXA",
+      "familiaOriginal": "ALFACE ROXA",
+      "nomeFamilia": "ALFACE ROXA",
+      "nomeTXTReferencia": "ALFACE ROXA",
+      "ordemTXT": 9,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "PEPINO",
+      "familiaOriginal": "PEPINO",
+      "nomeFamilia": "PEPINO",
+      "nomeTXTReferencia": "PEPINO",
+      "ordemTXT": 9,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "PIMENTAO VERDE",
+      "familiaOriginal": "PIMENTAO VERDE",
+      "nomeFamilia": "PIMENTAO VERDE",
+      "nomeTXTReferencia": "PIMENTAO VERDE",
+      "ordemTXT": 11,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "LIMAO",
+      "familiaOriginal": "LIMAO",
+      "nomeFamilia": "LIMAO",
+      "nomeTXTReferencia": "LIMAO",
+      "ordemTXT": 12,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "CEBOLA ROXA",
+      "familiaOriginal": "CEBOLA ROXA",
+      "nomeFamilia": "CEBOLA ROXA",
+      "nomeTXTReferencia": "CEBOLA ROXA",
+      "ordemTXT": 14,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ALFACE AMERICANA",
@@ -133,7 +276,51 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "RADICCHIO",
+      "familiaOriginal": "RADICCHIO",
+      "nomeFamilia": "RADICCHIO",
+      "nomeTXTReferencia": "RADICCHIO",
+      "ordemTXT": 15,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "CENOURA",
+      "familiaOriginal": "CENOURA",
+      "nomeFamilia": "CENOURA",
+      "nomeTXTReferencia": "CENOURA",
+      "ordemTXT": 16,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ALFACE",
+      "familiaOriginal": "ALFACE",
+      "nomeFamilia": "ALFACE",
+      "nomeTXTReferencia": "ALFACE",
+      "ordemTXT": 20,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "CHUCHU",
+      "familiaOriginal": "CHUCHU",
+      "nomeFamilia": "CHUCHU",
+      "nomeTXTReferencia": "CHUCHU",
+      "ordemTXT": 23,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ACELGA",
@@ -144,7 +331,18 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ALFACE LISA",
+      "familiaOriginal": "ALFACE LISA",
+      "nomeFamilia": "ALFACE LISA",
+      "nomeTXTReferencia": "ALFACE LISA",
+      "ordemTXT": 34,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "REPOLHO",
@@ -155,7 +353,18 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "YAKISSOBA",
+      "familiaOriginal": "YAKISSOBA",
+      "nomeFamilia": "YAKISSOBA",
+      "nomeTXTReferencia": "YAKISSOBA",
+      "ordemTXT": 42,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "BETERRABA",
@@ -166,7 +375,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "REPOLHO ROXO",
@@ -177,7 +386,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "COUVE MANTEIGA",
@@ -188,7 +397,73 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "SELETA",
+      "familiaOriginal": "SELETA",
+      "nomeFamilia": "SELETA",
+      "nomeTXTReferencia": "SELETA",
+      "ordemTXT": 50,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ESCAROLA",
+      "familiaOriginal": "ESCAROLA",
+      "nomeFamilia": "ESCAROLA",
+      "nomeTXTReferencia": "ESCAROLA",
+      "ordemTXT": 52,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "MANDIOCA",
+      "familiaOriginal": "MANDIOCA",
+      "nomeFamilia": "MANDIOCA",
+      "nomeTXTReferencia": "MANDIOCA",
+      "ordemTXT": 52,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "MANDIOQUINHA",
+      "familiaOriginal": "MANDIOQUINHA",
+      "nomeFamilia": "MANDIOQUINHA",
+      "nomeTXTReferencia": "MANDIOQUINHA",
+      "ordemTXT": 54,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "AIPIM",
+      "familiaOriginal": "AIPIM",
+      "nomeFamilia": "AIPIM",
+      "nomeTXTReferencia": "AIPIM",
+      "ordemTXT": 55,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "BATATA BAROA",
+      "familiaOriginal": "BATATA BAROA",
+      "nomeFamilia": "BATATA BAROA",
+      "nomeTXTReferencia": "BATATA BAROA",
+      "ordemTXT": 56,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ALFACE ROMANA",
@@ -199,7 +474,29 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "BATATA",
+      "familiaOriginal": "BATATA",
+      "nomeFamilia": "BATATA",
+      "nomeTXTReferencia": "BATATA",
+      "ordemTXT": 59,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "BATATA DOCE",
+      "familiaOriginal": "BATATA DOCE",
+      "nomeFamilia": "BATATA DOCE",
+      "nomeTXTReferencia": "BATATA DOCE",
+      "ordemTXT": 63,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ALFACE CRESPA",
@@ -210,7 +507,29 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ESPINAFRE",
+      "familiaOriginal": "ESPINAFRE",
+      "nomeFamilia": "ESPINAFRE",
+      "nomeTXTReferencia": "ESPINAFRE",
+      "ordemTXT": 68,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ABOBRINHA",
+      "familiaOriginal": "ABOBRINHA",
+      "nomeFamilia": "ABOBRINHA",
+      "nomeTXTReferencia": "ABOBRINHA",
+      "ordemTXT": 75,
+      "setupTrocaMin": 5,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ABOBORA",
@@ -221,7 +540,29 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "ABOBORA JAPONESA",
+      "familiaOriginal": "ABOBORA JAPONESA",
+      "nomeFamilia": "ABOBORA JAPONESA",
+      "nomeTXTReferencia": "ABOBORA JAPONESA",
+      "ordemTXT": 83,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+    },
+    {
+      "chave": "BERINJELA",
+      "familiaOriginal": "BERINJELA",
+      "nomeFamilia": "BERINJELA",
+      "nomeTXTReferencia": "BERINJELA",
+      "ordemTXT": 90,
+      "setupTrocaMin": 0,
+      "ativa": true,
+      "criadoEm": "2026-07-03T15:30:18.488Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "VINAGRETE",
@@ -232,29 +573,18 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
-      "chave": "ABOBORA JAPONESA",
-      "familiaOriginal": "ABOBORA JAPONESA",
-      "nomeFamilia": "ABOBORA JAPONESA",
-      "nomeTXTReferencia": "ABOBORA JAPONESA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
+      "chave": "SALSA",
+      "familiaOriginal": "SALSA",
+      "nomeFamilia": "SALSA",
+      "nomeTXTReferencia": "SALSA",
+      "ordemTXT": 95,
+      "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ABOBRINHA",
-      "familiaOriginal": "ABOBRINHA",
-      "nomeFamilia": "ABOBRINHA",
-      "nomeTXTReferencia": "ABOBRINHA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "ACELGA FOLHA",
@@ -265,106 +595,18 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
-      "chave": "AGRIAO",
-      "familiaOriginal": "AGRIAO",
-      "nomeFamilia": "AGRIAO",
-      "nomeTXTReferencia": "AGRIAO",
+      "chave": "BETERRABA CUBO",
+      "familiaOriginal": "BETERRABA CUBO",
+      "nomeFamilia": "BETERRABA CUBO",
+      "nomeTXTReferencia": "BETERRABA CUBO",
       "ordemTXT": null,
       "setupTrocaMin": null,
       "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "AIPIM",
-      "familiaOriginal": "AIPIM",
-      "nomeFamilia": "AIPIM",
-      "nomeTXTReferencia": "AIPIM",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ALFACE",
-      "familiaOriginal": "ALFACE",
-      "nomeFamilia": "ALFACE",
-      "nomeTXTReferencia": "ALFACE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ALFACE LISA",
-      "familiaOriginal": "ALFACE LISA",
-      "nomeFamilia": "ALFACE LISA",
-      "nomeTXTReferencia": "ALFACE LISA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ALFACE ROXA",
-      "familiaOriginal": "ALFACE ROXA",
-      "nomeFamilia": "ALFACE ROXA",
-      "nomeTXTReferencia": "ALFACE ROXA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "BATATA",
-      "familiaOriginal": "BATATA",
-      "nomeFamilia": "BATATA",
-      "nomeTXTReferencia": "BATATA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "BATATA BAROA",
-      "familiaOriginal": "BATATA BAROA",
-      "nomeFamilia": "BATATA BAROA",
-      "nomeTXTReferencia": "BATATA BAROA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "BATATA DOCE",
-      "familiaOriginal": "BATATA DOCE",
-      "nomeFamilia": "BATATA DOCE",
-      "nomeTXTReferencia": "BATATA DOCE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "BERINJELA",
-      "familiaOriginal": "BERINJELA",
-      "nomeFamilia": "BERINJELA",
-      "nomeTXTReferencia": "BERINJELA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "criadoEm": "2026-07-14T11:25:46.821Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "BETERRABA PALITO",
@@ -375,172 +617,18 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
-      "chave": "BROCOLIS",
-      "familiaOriginal": "BROCOLIS",
-      "nomeFamilia": "BROCOLIS",
-      "nomeTXTReferencia": "BROCOLIS",
+      "chave": "ESCAROLA FOLHAS",
+      "familiaOriginal": "ESCAROLA FOLHAS",
+      "nomeFamilia": "ESCAROLA FOLHAS",
+      "nomeTXTReferencia": "ESCAROLA FOLHAS",
       "ordemTXT": null,
       "setupTrocaMin": null,
       "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "CEBOLA ROXA",
-      "familiaOriginal": "CEBOLA ROXA",
-      "nomeFamilia": "CEBOLA ROXA",
-      "nomeTXTReferencia": "CEBOLA ROXA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "CENOURA",
-      "familiaOriginal": "CENOURA",
-      "nomeFamilia": "CENOURA",
-      "nomeTXTReferencia": "CENOURA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "CHICORIA",
-      "familiaOriginal": "CHICORIA",
-      "nomeFamilia": "CHICORIA",
-      "nomeTXTReferencia": "CHICORIA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "CHUCHU",
-      "familiaOriginal": "CHUCHU",
-      "nomeFamilia": "CHUCHU",
-      "nomeTXTReferencia": "CHUCHU",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "COUVE FLOR",
-      "familiaOriginal": "COUVE FLOR",
-      "nomeFamilia": "COUVE FLOR",
-      "nomeTXTReferencia": "COUVE FLOR",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ESCAROLA",
-      "familiaOriginal": "ESCAROLA",
-      "nomeFamilia": "ESCAROLA",
-      "nomeTXTReferencia": "ESCAROLA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "ESPINAFRE",
-      "familiaOriginal": "ESPINAFRE",
-      "nomeFamilia": "ESPINAFRE",
-      "nomeTXTReferencia": "ESPINAFRE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "LIMAO",
-      "familiaOriginal": "LIMAO",
-      "nomeFamilia": "LIMAO",
-      "nomeTXTReferencia": "LIMAO",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "MANDIOCA",
-      "familiaOriginal": "MANDIOCA",
-      "nomeFamilia": "MANDIOCA",
-      "nomeTXTReferencia": "MANDIOCA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "MANDIOQUINHA",
-      "familiaOriginal": "MANDIOQUINHA",
-      "nomeFamilia": "MANDIOQUINHA",
-      "nomeTXTReferencia": "MANDIOQUINHA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "PEPINO",
-      "familiaOriginal": "PEPINO",
-      "nomeFamilia": "PEPINO",
-      "nomeTXTReferencia": "PEPINO",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "PIMENTAO VERDE",
-      "familiaOriginal": "PIMENTAO VERDE",
-      "nomeFamilia": "PIMENTAO VERDE",
-      "nomeTXTReferencia": "PIMENTAO VERDE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "RADICCHIO",
-      "familiaOriginal": "RADICCHIO",
-      "nomeFamilia": "RADICCHIO",
-      "nomeTXTReferencia": "RADICCHIO",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "RUCULA",
-      "familiaOriginal": "RUCULA",
-      "nomeFamilia": "RUCULA",
-      "nomeTXTReferencia": "RUCULA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "criadoEm": "2026-07-14T11:25:46.821Z",
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     },
     {
       "chave": "RUCULA HIG",
@@ -551,73 +639,7 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-08T12:38:21.080Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "SALSA",
-      "familiaOriginal": "SALSA",
-      "nomeFamilia": "SALSA",
-      "nomeTXTReferencia": "SALSA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "SELETA",
-      "familiaOriginal": "SELETA",
-      "nomeFamilia": "SELETA",
-      "nomeTXTReferencia": "SELETA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "TOMATE",
-      "familiaOriginal": "TOMATE",
-      "nomeFamilia": "TOMATE",
-      "nomeTXTReferencia": "TOMATE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "TOMATE GRAPE",
-      "familiaOriginal": "TOMATE GRAPE",
-      "nomeFamilia": "TOMATE GRAPE",
-      "nomeTXTReferencia": "TOMATE GRAPE",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "VAGEM MANTEIGA",
-      "familiaOriginal": "VAGEM MANTEIGA",
-      "nomeFamilia": "VAGEM MANTEIGA",
-      "nomeTXTReferencia": "VAGEM MANTEIGA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
-    },
-    {
-      "chave": "YAKISSOBA",
-      "familiaOriginal": "YAKISSOBA",
-      "nomeFamilia": "YAKISSOBA",
-      "nomeTXTReferencia": "YAKISSOBA",
-      "ordemTXT": null,
-      "setupTrocaMin": null,
-      "ativa": true,
-      "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-13T11:49:27.166Z"
+      "atualizadoEm": "2026-07-14T12:20:11.373Z"
     }
   ]
 }
