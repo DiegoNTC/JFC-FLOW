@@ -1,11 +1,11 @@
 {
   "tipo": "sequenciamento_manual_familias",
-  "geradoEm": "2026-07-13T11:52:33.996Z",
-  "totalLinhas": 1,
+  "geradoEm": "2026-07-14T12:30:04.866Z",
+  "totalLinhas": 3,
   "sequenciamentoManualFamilias": {
     "L5": {
       "linha": "L5",
-      "atualizadoEm": "2026-07-07T15:10:48.788Z",
+      "atualizadoEm": "2026-07-13T19:27:50.949Z",
       "familias": [
         {
           "chave": "RUCULA",
@@ -18,74 +18,331 @@
           "ordem": 2
         },
         {
-          "chave": "BROCOLIS C",
-          "familia": "BROCOLIS C",
+          "chave": "MIX",
+          "familia": "MIX",
           "ordem": 3
         },
         {
-          "chave": "BROCOLIS",
-          "familia": "BROCOLIS",
+          "chave": "SALADA",
+          "familia": "SALADA",
           "ordem": 4
-        },
-        {
-          "chave": "ESPINAFRE",
-          "familia": "ESPINAFRE",
-          "ordem": 5
-        },
-        {
-          "chave": "ALFACE LISA",
-          "familia": "ALFACE LISA",
-          "ordem": 6
-        },
-        {
-          "chave": "ALFACE MIMOSA",
-          "familia": "ALFACE MIMOSA",
-          "ordem": 7
-        },
-        {
-          "chave": "CHICORIA",
-          "familia": "CHICORIA",
-          "ordem": 8
-        },
-        {
-          "chave": "ALFACE ROMANA",
-          "familia": "ALFACE ROMANA",
-          "ordem": 9
         },
         {
           "chave": "RADICCHIO",
           "familia": "RADICCHIO",
-          "ordem": 10
+          "ordem": 5
+        },
+        {
+          "chave": "BROCOLIS",
+          "familia": "BROCOLIS",
+          "ordem": 6
+        },
+        {
+          "chave": "BROCOLIS C",
+          "familia": "BROCOLIS C",
+          "ordem": 7
         },
         {
           "chave": "COUVE FLOR",
           "familia": "COUVE FLOR",
+          "ordem": 8
+        },
+        {
+          "chave": "ALFACE LISA",
+          "familia": "ALFACE LISA",
+          "ordem": 9
+        },
+        {
+          "chave": "ALFACE MIMOSA",
+          "familia": "ALFACE MIMOSA",
+          "ordem": 10
+        },
+        {
+          "chave": "CHICORIA",
+          "familia": "CHICORIA",
           "ordem": 11
         },
         {
-          "chave": "ALFACE CRESPA",
-          "familia": "ALFACE CRESPA",
+          "chave": "ALFACE ROMANA",
+          "familia": "ALFACE ROMANA",
           "ordem": 12
+        },
+        {
+          "chave": "ESPINAFRE",
+          "familia": "ESPINAFRE",
+          "ordem": 13
         },
         {
           "chave": "REPOLHO",
           "familia": "REPOLHO",
-          "ordem": 13
+          "ordem": 14
         },
         {
           "chave": "YAKISSOBA",
           "familia": "YAKISSOBA",
-          "ordem": 14
+          "ordem": 15
         },
         {
           "chave": "COUVE MANTEIGA",
           "familia": "COUVE MANTEIGA",
-          "ordem": 15
+          "ordem": 16
         },
         {
           "chave": "ACELGA",
           "familia": "ACELGA",
+          "ordem": 17
+        }
+      ]
+    },
+    "L3": {
+      "linha": "L3",
+      "atualizadoEm": "2026-07-13T19:21:00.948Z",
+      "familias": [
+        {
+          "chave": "ALFACE CRESPA",
+          "familia": "ALFACE CRESPA",
+          "ordem": 1
+        },
+        {
+          "chave": "ALFACE AMERICANA",
+          "familia": "ALFACE AMERICANA",
+          "ordem": 2
+        },
+        {
+          "chave": "ARCO IRIS AMERICANA",
+          "familia": "ARCO IRIS AMERICANA",
+          "ordem": 3
+        },
+        {
+          "chave": "MISTA NAT",
+          "familia": "MISTA NAT",
+          "ordem": 4
+        },
+        {
+          "chave": "ACELGA",
+          "familia": "ACELGA",
+          "ordem": 5
+        },
+        {
+          "chave": "REPOLHO",
+          "familia": "REPOLHO",
+          "ordem": 6
+        },
+        {
+          "chave": "YAKISSOBA",
+          "familia": "YAKISSOBA",
+          "ordem": 7
+        },
+        {
+          "chave": "BROCOLIS AMERICANO",
+          "familia": "BROCOLIS AMERICANO",
+          "ordem": 8
+        },
+        {
+          "chave": "BROCOLIS COUVE",
+          "familia": "BROCOLIS COUVE",
+          "ordem": 9
+        },
+        {
+          "chave": "COUVE FLOR",
+          "familia": "COUVE FLOR",
+          "ordem": 10
+        },
+        {
+          "chave": "ALFACE ROXA",
+          "familia": "ALFACE ROXA",
+          "ordem": 11
+        },
+        {
+          "chave": "COUVE MANTEIGA",
+          "familia": "COUVE MANTEIGA",
+          "ordem": 12
+        },
+        {
+          "chave": "CENOURA CUBO",
+          "familia": "CENOURA CUBO",
+          "ordem": 13
+        },
+        {
+          "chave": "CENOURA EM",
+          "familia": "CENOURA EM",
+          "ordem": 14
+        },
+        {
+          "chave": "ALFACE BABY",
+          "familia": "ALFACE BABY",
+          "ordem": 15
+        },
+        {
+          "chave": "CENOURA",
+          "familia": "CENOURA",
           "ordem": 16
+        },
+        {
+          "chave": "CENOURA RALADA",
+          "familia": "CENOURA RALADA",
+          "ordem": 17
+        },
+        {
+          "chave": "BETERRABA RALADA",
+          "familia": "BETERRABA RALADA",
+          "ordem": 18
+        },
+        {
+          "chave": "CHUCHU CUBO",
+          "familia": "CHUCHU CUBO",
+          "ordem": 19
+        },
+        {
+          "chave": "CHUCHU CUBOS",
+          "familia": "CHUCHU CUBOS",
+          "ordem": 20
+        }
+      ]
+    },
+    "L6": {
+      "linha": "L6",
+      "atualizadoEm": "2026-07-14T12:29:36.050Z",
+      "familias": [
+        {
+          "chave": "SALADA",
+          "familia": "SALADA",
+          "ordem": 1
+        },
+        {
+          "chave": "TOMATE GRAPE",
+          "familia": "TOMATE GRAPE",
+          "ordem": 2
+        },
+        {
+          "chave": "VAGEM MANTEIGA",
+          "familia": "VAGEM MANTEIGA",
+          "ordem": 3
+        },
+        {
+          "chave": "PEPINO",
+          "familia": "PEPINO",
+          "ordem": 4
+        },
+        {
+          "chave": "PIMENTAO VERDE",
+          "familia": "PIMENTAO VERDE",
+          "ordem": 5
+        },
+        {
+          "chave": "LIMAO",
+          "familia": "LIMAO",
+          "ordem": 6
+        },
+        {
+          "chave": "CEBOLA ROXA",
+          "familia": "CEBOLA ROXA",
+          "ordem": 7
+        },
+        {
+          "chave": "CEBOLA",
+          "familia": "CEBOLA",
+          "ordem": 8
+        },
+        {
+          "chave": "CENOURA",
+          "familia": "CENOURA",
+          "ordem": 9
+        },
+        {
+          "chave": "BETERRABA",
+          "familia": "BETERRABA",
+          "ordem": 10
+        },
+        {
+          "chave": "MANDIOCA",
+          "familia": "MANDIOCA",
+          "ordem": 11
+        },
+        {
+          "chave": "AIPIM",
+          "familia": "AIPIM",
+          "ordem": 12
+        },
+        {
+          "chave": "BATATA",
+          "familia": "BATATA",
+          "ordem": 13
+        },
+        {
+          "chave": "BATATA BAROA",
+          "familia": "BATATA BAROA",
+          "ordem": 14
+        },
+        {
+          "chave": "BATATA DOCE",
+          "familia": "BATATA DOCE",
+          "ordem": 15
+        },
+        {
+          "chave": "CHUCHU",
+          "familia": "CHUCHU",
+          "ordem": 16
+        },
+        {
+          "chave": "ABOBRINHA",
+          "familia": "ABOBRINHA",
+          "ordem": 17
+        },
+        {
+          "chave": "ABOBORA",
+          "familia": "ABOBORA",
+          "ordem": 18
+        },
+        {
+          "chave": "BERINJELA",
+          "familia": "BERINJELA",
+          "ordem": 19
+        },
+        {
+          "chave": "VINAGRETE",
+          "familia": "VINAGRETE",
+          "ordem": 20
+        },
+        {
+          "chave": "SALSA",
+          "familia": "SALSA",
+          "ordem": 21
+        },
+        {
+          "chave": "MIX COLESLAW",
+          "familia": "MIX COLESLAW",
+          "ordem": 22
+        },
+        {
+          "chave": "MIX TROPICAL",
+          "familia": "MIX TROPICAL",
+          "ordem": 23
+        },
+        {
+          "chave": "INHAME",
+          "familia": "INHAME",
+          "ordem": 24
+        },
+        {
+          "chave": "MIX",
+          "familia": "MIX",
+          "ordem": 25
+        },
+        {
+          "chave": "TOMATE",
+          "familia": "TOMATE",
+          "ordem": 26
+        },
+        {
+          "chave": "RUCULA",
+          "familia": "RUCULA",
+          "ordem": 27
+        },
+        {
+          "chave": "SELETA",
+          "familia": "SELETA",
+          "ordem": 28
         }
       ]
     }
