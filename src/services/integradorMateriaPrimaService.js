@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Modulo: integradorMateriaPrimaService
- * Versao: 1.0.0
+ * Versao: 1.1.0
  *
  * Responsabilidade:
  * Integrar a importacao XLSX de materia-prima ao fluxo atual
@@ -10,6 +10,11 @@
  *
  * Ao clicar em Gerar PDF da linha, o sistema tambem gera
  * o PDF consolidado de materia-prima da mesma linha.
+ *
+ * Correcao 1.1.0:
+ * Para PDF de uma linha especifica, o relatorio de materia-prima
+ * passa a filtrar pelos produtos que aparecem na Ordem de Producao
+ * daquela linha na tela, e nao apenas pela coluna "linha" da planilha.
  * ======================================================
  */
 
@@ -32,6 +37,61 @@ if (!window.__jfcMateriaPrimaIntegradorAtivo) {
   window.__jfcMateriaPrimaIntegradorAtivo = true;
 
   inicializarIntegradorMateriaPrima();
+
+}
+
+function texto(valor) {
+
+  return String(valor ?? "").trim();
+
+}
+
+function normalizarTexto(valor) {
+
+  return texto(valor)
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+}
+
+function normalizarLinha(valor) {
+
+  const textoNormalizado =
+    normalizarTexto(valor);
+
+  if (!textoNormalizado) {
+    return "";
+  }
+
+  if (
+    textoNormalizado === "TOMATE" ||
+    textoNormalizado === "LT" ||
+    textoNormalizado.includes("LINHA TOMATE")
+  ) {
+    return "TOMATE";
+  }
+
+  const numeroLinha =
+    textoNormalizado.match(/\d+/)?.[0];
+
+  if (numeroLinha) {
+    return `L${Number(numeroLinha)}`;
+  }
+
+  return textoNormalizado.replace(/\s+/g, "");
+
+}
+
+function normalizarCodigoProduto(valor) {
+
+  return texto(valor)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .trim();
 
 }
 
@@ -228,6 +288,95 @@ function prepararControleMateriaPrima() {
 
 }
 
+function adicionarUnico(lista, valor, normalizador) {
+
+  const valorNormalizado =
+    normalizador(valor);
+
+  if (
+    valorNormalizado &&
+    !lista.includes(valorNormalizado)
+  ) {
+    lista.push(valorNormalizado);
+  }
+
+}
+
+function coletarProdutosPlanejadosDaLinhaNaTela(linhaSelecionada) {
+
+  const linhaAlvo =
+    normalizarLinha(linhaSelecionada);
+
+  const resultado = {
+    linha:
+      linhaAlvo,
+    codigos: [],
+    nomes: [],
+    encontrouLinha:
+      false
+  };
+
+  if (!linhaAlvo) {
+    return resultado;
+  }
+
+  const cards =
+    Array.from(
+      document.querySelectorAll(".real-line-card")
+    );
+
+  cards.forEach(card => {
+
+    const linhaCard =
+      normalizarLinha(
+        card.querySelector("summary strong")?.textContent || ""
+      );
+
+    if (linhaCard !== linhaAlvo) {
+      return;
+    }
+
+    resultado.encontrouLinha =
+      true;
+
+    const linhasTabela =
+      Array.from(
+        card.querySelectorAll("tbody tr")
+      );
+
+    linhasTabela.forEach(tr => {
+
+      const colunas =
+        Array.from(
+          tr.querySelectorAll("td")
+        );
+
+      const codigo =
+        texto(colunas[0]?.textContent || "");
+
+      const nome =
+        texto(colunas[1]?.textContent || "");
+
+      adicionarUnico(
+        resultado.codigos,
+        codigo,
+        normalizarCodigoProduto
+      );
+
+      adicionarUnico(
+        resultado.nomes,
+        nome,
+        normalizarTexto
+      );
+
+    });
+
+  });
+
+  return resultado;
+
+}
+
 async function gerarRelatorioMateriaPrimaDoEvento(evento = {}) {
 
   const baseMateriaPrima =
@@ -264,6 +413,42 @@ async function gerarRelatorioMateriaPrimaDoEvento(evento = {}) {
      */
     await aguardar(550);
 
+    const filtroProdutos =
+      linhaSelecionada
+        ? coletarProdutosPlanejadosDaLinhaNaTela(linhaSelecionada)
+        : {
+            codigos: [],
+            nomes: []
+          };
+
+    const usandoFiltroDaOrdem =
+      linhaSelecionada &&
+      (
+        filtroProdutos.codigos.length > 0 ||
+        filtroProdutos.nomes.length > 0
+      );
+
+    if (
+      linhaSelecionada &&
+      !usandoFiltroDaOrdem
+    ) {
+
+      console.warn(
+        "Materia-prima: nao foi possivel coletar produtos da Ordem de Producao na tela. O relatorio usara a coluna linha da planilha como fallback.",
+        {
+          linhaSelecionada,
+          filtroProdutos
+        }
+      );
+
+    }
+
+    window.__jfcMateriaPrimaUltimoFiltro = {
+      linhaSelecionada,
+      usandoFiltroDaOrdem,
+      filtroProdutos
+    };
+
     const resultado =
       await gerarPdfMateriaPrimaConsolidada(
         baseMateriaPrima,
@@ -272,13 +457,23 @@ async function gerarRelatorioMateriaPrimaDoEvento(evento = {}) {
             linhaSelecionada
               ? [linhaSelecionada]
               : null,
-          linhaSelecionada
+          linhaSelecionada,
+          codigosProdutosPermitidos:
+            usandoFiltroDaOrdem
+              ? filtroProdutos.codigos
+              : [],
+          nomesProdutosPermitidos:
+            usandoFiltroDaOrdem
+              ? filtroProdutos.nomes
+              : []
         }
       );
 
     atualizarStatusMateriaPrima(
       baseMateriaPrima,
-      `Matéria-prima: PDF gerado (${resultado.arquivo})`
+      usandoFiltroDaOrdem
+        ? `Matéria-prima: PDF gerado pela Ordem da ${linhaSelecionada} (${resultado.arquivo})`
+        : `Matéria-prima: PDF gerado (${resultado.arquivo})`
     );
 
     console.log(
