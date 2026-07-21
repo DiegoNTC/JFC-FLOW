@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Modulo: geradorPdfMateriaPrimaService
- * Versao: 1.0.0
+ * Versao: 1.1.0
  *
  * Responsabilidade:
  * Gerar PDF consolidado de materia-prima por linha.
@@ -183,6 +183,47 @@ function adicionarCabecalho(doc, relatorio, opcoes = {}) {
 
 }
 
+
+function obterNumeroPaginaAtual(doc) {
+
+  const infoPagina =
+    doc.internal.getCurrentPageInfo?.();
+
+  return infoPagina?.pageNumber || doc.internal.getNumberOfPages();
+
+}
+
+function adicionarRodape(doc) {
+
+  const pageWidth =
+    doc.internal.pageSize.getWidth();
+
+  const pageHeight =
+    doc.internal.pageSize.getHeight();
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Pagina ${obterNumeroPaginaAtual(doc)} - JFC FLOW`,
+    pageWidth / 2,
+    pageHeight - 5,
+    {
+      align: "center"
+    }
+  );
+
+}
+
+function adicionarTituloSecao(doc, titulo) {
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(titulo, 10, 29);
+
+}
+
 function montarBodyResumo(relatorio) {
 
   const body = [];
@@ -320,6 +361,11 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
     opcoes
   );
 
+  adicionarTituloSecao(
+    doc,
+    "RESUMO CONSOLIDADO POR MATERIA-PRIMA"
+  );
+
   doc.autoTable({
     head: [[
       "Linha",
@@ -330,7 +376,7 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
     ]],
     body:
       montarBodyResumo(relatorio),
-    startY: 27,
+    startY: 34,
     theme: "grid",
     styles: {
       font: "helvetica",
@@ -357,7 +403,7 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
       4: { cellWidth: 36, halign: "right" }
     },
     margin: {
-      top: 25,
+      top: 34,
       right: 7,
       bottom: 16,
       left: 7
@@ -401,29 +447,31 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
         opcoes
       );
 
-      const pageWidth =
-        doc.internal.pageSize.getWidth();
-
-      const pageHeight =
-        doc.internal.pageSize.getHeight();
-
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        `Pagina ${data.pageNumber} - JFC FLOW`,
-        pageWidth / 2,
-        pageHeight - 5,
-        {
-          align: "center"
-        }
+      adicionarTituloSecao(
+        doc,
+        "RESUMO CONSOLIDADO POR MATERIA-PRIMA"
       );
+
+      adicionarRodape(doc);
 
     }
   });
 
-  const inicioDetalhe =
-    (doc.lastAutoTable?.finalY || 27) + 8;
+  doc.addPage(
+    "a4",
+    "landscape"
+  );
+
+  adicionarCabecalho(
+    doc,
+    relatorio,
+    opcoes
+  );
+
+  adicionarTituloSecao(
+    doc,
+    "DETALHADO POR PRODUTO"
+  );
 
   doc.autoTable({
     head: [[
@@ -437,7 +485,7 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
     body:
       montarBodyDetalhado(relatorio),
     startY:
-      inicioDetalhe,
+      34,
     theme: "grid",
     styles: {
       font: "helvetica",
@@ -465,7 +513,7 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
       5: { cellWidth: 31, halign: "right" }
     },
     margin: {
-      top: 25,
+      top: 34,
       right: 7,
       bottom: 16,
       left: 7
@@ -497,23 +545,12 @@ export async function gerarPdfMateriaPrimaConsolidada(baseMateriaPrima, opcoes =
         opcoes
       );
 
-      const pageWidth =
-        doc.internal.pageSize.getWidth();
-
-      const pageHeight =
-        doc.internal.pageSize.getHeight();
-
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        `Pagina ${data.pageNumber} - JFC FLOW`,
-        pageWidth / 2,
-        pageHeight - 5,
-        {
-          align: "center"
-        }
+      adicionarTituloSecao(
+        doc,
+        "DETALHADO POR PRODUTO"
       );
+
+      adicionarRodape(doc);
 
     }
   });
