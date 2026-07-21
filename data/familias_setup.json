@@ -1,7 +1,7 @@
 {
   "tipo": "familias_setup",
-  "geradoEm": "2026-07-14T12:30:04.266Z",
-  "total": 58,
+  "geradoEm": "2026-07-21T14:15:43.318Z",
+  "total": 59,
   "familiasSetup": [
     {
       "chave": "SALADA",
@@ -12,7 +12,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "INHAME",
@@ -23,7 +23,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:12:50.060Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "KIT MAIONSE",
@@ -34,7 +34,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:40:13.975Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "KIT SOPAO",
@@ -45,7 +45,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:42:49.138Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MACA",
@@ -56,7 +56,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:22:26.581Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MIX",
@@ -67,7 +67,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MIX COLESLAW",
@@ -78,7 +78,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:01:02.509Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MIX TROPICAL",
@@ -89,7 +89,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:03:36.282Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "SUKIYAKI",
@@ -100,7 +100,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:20:16.893Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "TOMATE CAPRESE",
@@ -111,7 +111,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-08T13:18:03.141Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BROCOLIS",
@@ -122,7 +122,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "CEBOLA",
@@ -133,7 +133,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "RUCULA",
@@ -144,7 +144,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "TOMATE",
@@ -155,7 +155,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "COUVE FLOR",
@@ -166,7 +166,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "TOMATE GRAPE",
@@ -177,7 +177,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "AGRIAO",
@@ -188,7 +188,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "CHICORIA",
@@ -199,7 +199,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "VAGEM MANTEIGA",
@@ -210,7 +210,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE ROXA",
@@ -221,7 +221,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "PEPINO",
@@ -232,7 +232,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "PIMENTAO VERDE",
@@ -243,7 +243,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "LIMAO",
@@ -254,7 +254,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "CEBOLA ROXA",
@@ -265,7 +265,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE AMERICANA",
@@ -276,7 +276,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "RADICCHIO",
@@ -287,7 +287,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "CENOURA",
@@ -298,7 +298,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE",
@@ -309,7 +309,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "CHUCHU",
@@ -320,7 +320,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ACELGA",
@@ -331,7 +331,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE LISA",
@@ -342,7 +342,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "REPOLHO",
@@ -353,7 +353,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "YAKISSOBA",
@@ -364,7 +364,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BETERRABA",
@@ -375,7 +375,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "REPOLHO ROXO",
@@ -386,7 +386,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "COUVE MANTEIGA",
@@ -397,7 +397,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "SELETA",
@@ -408,7 +408,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ESCAROLA",
@@ -419,7 +419,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MANDIOCA",
@@ -430,7 +430,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "MANDIOQUINHA",
@@ -441,7 +441,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "AIPIM",
@@ -452,7 +452,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BATATA BAROA",
@@ -463,7 +463,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE ROMANA",
@@ -474,7 +474,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BATATA",
@@ -485,7 +485,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BATATA DOCE",
@@ -496,7 +496,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ALFACE CRESPA",
@@ -507,7 +507,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ESPINAFRE",
@@ -518,7 +518,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ABOBRINHA",
@@ -529,7 +529,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ABOBORA",
@@ -540,7 +540,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ABOBORA JAPONESA",
@@ -551,7 +551,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BERINJELA",
@@ -562,7 +562,7 @@
       "setupTrocaMin": 0,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "VINAGRETE",
@@ -573,7 +573,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "SALSA",
@@ -584,7 +584,7 @@
       "setupTrocaMin": 5,
       "ativa": true,
       "criadoEm": "2026-07-03T15:30:18.488Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ACELGA FOLHA",
@@ -595,7 +595,18 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
+    },
+    {
+      "chave": "BATATA BOLINHA",
+      "familiaOriginal": "BATATA BOLINHA",
+      "nomeFamilia": "BATATA BOLINHA",
+      "nomeTXTReferencia": "BATATA BOLINHA",
+      "ordemTXT": null,
+      "setupTrocaMin": null,
+      "ativa": true,
+      "criadoEm": "2026-07-21T14:11:01.985Z",
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BETERRABA CUBO",
@@ -606,7 +617,7 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-14T11:25:46.821Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "BETERRABA PALITO",
@@ -617,7 +628,7 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-06T12:58:27.562Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "ESCAROLA FOLHAS",
@@ -628,7 +639,7 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-14T11:25:46.821Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     },
     {
       "chave": "RUCULA HIG",
@@ -639,7 +650,7 @@
       "setupTrocaMin": null,
       "ativa": true,
       "criadoEm": "2026-07-08T12:38:21.080Z",
-      "atualizadoEm": "2026-07-14T12:20:11.373Z"
+      "atualizadoEm": "2026-07-21T14:15:25.400Z"
     }
   ]
 }
