@@ -2,7 +2,7 @@
  * ======================================================
  * JFC FLOW
  * Modulo: relatorioMateriaPrimaService
- * Versao: 1.0.0
+ * Versao: 1.1.0
  *
  * Responsabilidade:
  * Consolidar materia-prima por linha, materia-prima e produto.
@@ -11,6 +11,14 @@
  * Se a mesma materia-prima aparecer mais de uma vez na mesma linha,
  * o peso bruto sera somado no total da materia-prima.
  * Ex.: CRESPA 150 + CRESPA 250 = CRESPA 400.
+ *
+ * Correcao 1.1.0:
+ * Quando o relatorio e gerado junto com a Ordem de Producao de uma linha,
+ * a selecao passa a ser feita pelos produtos planejados na linha, e nao
+ * somente pela coluna "linha" da planilha XLSX de materia-prima.
+ *
+ * Isso evita incluir materia-prima de produtos com rota cruzada, por exemplo:
+ * produto produzido na L6, mas com destino/embalagem na L3.
  * ======================================================
  */
 
@@ -39,6 +47,15 @@ function normalizarTexto(valor) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Z0-9]+/g, " ")
     .replace(/\s+/g, " ")
+    .trim();
+
+}
+
+function normalizarCodigoProduto(valor) {
+
+  return texto(valor)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
     .trim();
 
 }
@@ -105,6 +122,43 @@ function escolherNomeMateriaPrima(atual, novo, chave) {
 
 }
 
+function construirConjuntoNormalizado(valores, normalizador) {
+
+  if (!Array.isArray(valores)) {
+    return new Set();
+  }
+
+  return new Set(
+    valores
+      .map(normalizador)
+      .filter(Boolean)
+  );
+
+}
+
+function criarFiltroProdutosPlanejados(opcoes = {}) {
+
+  const codigos =
+    construirConjuntoNormalizado(
+      opcoes.codigosProdutosPermitidos,
+      normalizarCodigoProduto
+    );
+
+  const nomes =
+    construirConjuntoNormalizado(
+      opcoes.nomesProdutosPermitidos,
+      normalizarTexto
+    );
+
+  return {
+    codigos,
+    nomes,
+    ativo:
+      codigos.size > 0 || nomes.size > 0
+  };
+
+}
+
 function linhaFoiSelecionada(linha, opcoes = {}) {
 
   const selecionadas =
@@ -124,6 +178,78 @@ function linhaFoiSelecionada(linha, opcoes = {}) {
   return selecionadas
     .map(normalizarLinhaMateriaPrima)
     .some(linhaSelecionada => linhaSelecionada === linhaAtual);
+
+}
+
+function registroPertenceAoFiltroPlanejado(registro, filtroProdutosPlanejados) {
+
+  if (!filtroProdutosPlanejados?.ativo) {
+    return false;
+  }
+
+  const codigo =
+    normalizarCodigoProduto(registro.codigoProduto);
+
+  if (
+    codigo &&
+    filtroProdutosPlanejados.codigos.has(codigo)
+  ) {
+    return true;
+  }
+
+  const nome =
+    normalizarTexto(registro.produtoVenda);
+
+  if (
+    nome &&
+    filtroProdutosPlanejados.nomes.has(nome)
+  ) {
+    return true;
+  }
+
+  return false;
+
+}
+
+function registroFoiSelecionado(registro, opcoes = {}, filtroProdutosPlanejados) {
+
+  /**
+   * Quando o PDF esta sendo gerado para uma linha especifica e recebemos
+   * os produtos que estao de fato planejados naquela linha, essa passa a
+   * ser a fonte mais confiavel.
+   *
+   * A coluna "linha" da planilha de materia-prima pode representar destino,
+   * embalagem ou espelho de rota cruzada. Por isso ela nao deve ser usada
+   * sozinha para decidir o que entra no relatorio da Ordem de Producao.
+   */
+  if (filtroProdutosPlanejados?.ativo) {
+    return registroPertenceAoFiltroPlanejado(
+      registro,
+      filtroProdutosPlanejados
+    );
+  }
+
+  return linhaFoiSelecionada(
+    registro.linha,
+    opcoes
+  );
+
+}
+
+function obterLinhaRelatorio(registro, opcoes = {}, filtroProdutosPlanejados) {
+
+  if (
+    filtroProdutosPlanejados?.ativo &&
+    opcoes.linhaSelecionada
+  ) {
+    return normalizarLinhaMateriaPrima(
+      opcoes.linhaSelecionada
+    );
+  }
+
+  return normalizarLinhaMateriaPrima(
+    registro.linha
+  );
 
 }
 
@@ -366,18 +492,24 @@ export function consolidarMateriaPrimaPorLinha(baseMateriaPrima, opcoes = {}) {
   const mapaLinhas =
     new Map();
 
+  const filtroProdutosPlanejados =
+    criarFiltroProdutosPlanejados(opcoes);
+
   registros
     .filter(registro =>
-      linhaFoiSelecionada(
-        registro.linha,
-        opcoes
+      registroFoiSelecionado(
+        registro,
+        opcoes,
+        filtroProdutosPlanejados
       )
     )
     .forEach(registro => {
 
       const linha =
-        normalizarLinhaMateriaPrima(
-          registro.linha
+        obterLinhaRelatorio(
+          registro,
+          opcoes,
+          filtroProdutosPlanejados
         );
 
       if (!mapaLinhas.has(linha)) {
@@ -421,6 +553,14 @@ export function consolidarMateriaPrimaPorLinha(baseMateriaPrima, opcoes = {}) {
     importadoEm:
       baseMateriaPrima?.importadoEm || null,
     linhas,
+    filtroProdutosPlanejados: {
+      ativo:
+        filtroProdutosPlanejados.ativo,
+      codigos:
+        filtroProdutosPlanejados.codigos.size,
+      nomes:
+        filtroProdutosPlanejados.nomes.size
+    },
     resumo: {
       totalLinhas:
         linhas.length,
